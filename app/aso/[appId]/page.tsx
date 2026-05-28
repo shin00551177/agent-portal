@@ -95,7 +95,7 @@ export default async function AsoAppPage({
         ) : (
           <div className="py-16 text-center border border-dashed border-[#d2d2d7] rounded-2xl">
             <p className="text-[#6e6e73] text-[15px] mb-2">データ未取得</p>
-            <p className="text-[13px] text-[#86868b]">「Apptweak 同期」ボタンを押してデータを取得してください</p>
+            <p className="text-[13px] text-[#86868b]">「データ更新」ボタンを押してデータを取得してください</p>
           </div>
         )}
       </section>
