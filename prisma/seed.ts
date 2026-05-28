@@ -10,6 +10,7 @@ const ASO_APPS = [
   { id: "soulriza",     name: "SOULRiZA",     googlePlayId: "com.soulriza.app",         iosId: "6749605293", active: false },
   { id: "king-together",name: "KING Together", googlePlayId: "com.aiavatarshogun.app",  iosId: "6761701026", active: false },
   { id: "education",    name: "Education",    googlePlayId: null,                        iosId: "6772054421", active: false },
+  { id: "pachinavi",    name: "パチナビ",      googlePlayId: "com.pachin.navi.app",       iosId: "6759152034", active: false },
 ];
 
 const TWOMI_KEYWORDS = [
@@ -50,6 +51,13 @@ const APP_KEYWORDS: Record<string, { keyword: string; priority: string }[]> = {
     { keyword: "学習 AI",          priority: "high" },
     { keyword: "英語 学習",        priority: "medium" },
     { keyword: "子供 アプリ",      priority: "medium" },
+  ],
+  "pachinavi": [
+    { keyword: "パチスロ 設定",    priority: "high" },
+    { keyword: "スロット 設定推測", priority: "high" },
+    { keyword: "パチンコ AI",      priority: "high" },
+    { keyword: "スロット アプリ",  priority: "medium" },
+    { keyword: "設定判別",         priority: "medium" },
   ],
 };
 
