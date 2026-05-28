@@ -2,16 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { writeAuditLog } from "@/lib/audit";
 import { fetchKeywordRankings, fetchKeywordMetrics, fetchAppMetrics } from "@/lib/apptweak";
+import { isAuthenticated } from "@/lib/auth";
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ appId: string }> },
 ) {
-  // API key auth fallback (middleware may not pass env vars in edge runtime)
-  const apiKey = process.env.PORTAL_API_KEY;
-  if (apiKey && req.headers.get("x-api-key") !== apiKey) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
+  // セッション認証 or API キー認証
+  const portalKey = process.env.PORTAL_API_KEY;
+  const incomingKey = req.headers.get("x-api-key");
+  const authed = (portalKey && incomingKey === portalKey) || (await isAuthenticated());
+  if (!authed) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const { appId } = await params;
 
