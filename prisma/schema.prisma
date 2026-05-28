@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model AsoApp {
+  id           String       @id
+  name         String
+  googlePlayId String?
+  iosId        String?
+  country      String       @default("jp")
+  language     String       @default("ja")
+  active         Boolean @default(false)
+  workflowStates Json    @default("{}")
+  // Governance (行動規範 #8/#12/#13)
+  escalationRules  Json   @default("{}")
+  haltConditions   Json   @default("{}")
+  fallbackBehavior String @default("pause")
+  keywords       AsoKeyword[]
+  reports      AsoReport[]
+  releases     AsoRelease[]
+  createdAt    DateTime     @default(now())
+}
+
+model AsoKeyword {
+  id        String   @id @default(cuid())
+  appId     String
+  app       AsoApp   @relation(fields: [appId], references: [id])
+  keyword   String
+  priority  String   @default("medium")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([appId, keyword])
+}
+
+model AsoReport {
+  id        String   @id @default(cuid())
+  appId     String
+  app       AsoApp   @relation(fields: [appId], references: [id])
+  date      String
+  data      Json
+  slackSent Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AsoRelease {
+  id          String   @id @default(cuid())
+  appId       String
+  app         AsoApp   @relation(fields: [appId], references: [id])
+  releaseDate String
+  notes       String?
+  effectData  Json?
+  createdAt   DateTime @default(now())
+}
+
+model SnsApp {
+  id        String       @id
+  name      String
+  active    Boolean      @default(false)
+  platforms Json
+  // Governance (行動規範 #8/#12/#13)
+  escalationRules  Json   @default("{}")
+  haltConditions   Json   @default("{}")
+  fallbackBehavior String @default("pause")
+  drafts    SnsDraft[]
+  egoHits   EgoHit[]
+  accounts  SnsAccount[]
+  createdAt DateTime     @default(now())
+}
+
+model SnsAccount {
+  id        String   @id @default(cuid())
+  appId     String
+  app       SnsApp   @relation(fields: [appId], references: [id])
+  platform  String
+  username  String
+  url       String?
+  memo      String?
+  createdAt DateTime @default(now())
+}
+
+model SnsDraft {
+  id          String   @id @default(cuid())
+  appId       String
+  app         SnsApp   @relation(fields: [appId], references: [id])
+  platform    String
+  copy        String
+  hashtags    Json
+  imagePrompt String?
+  notes       String?
+  status      String   @default("pending")
+  // Governance (行動規範 #11)
+  confidence    String   @default("medium")
+  dataFreshness DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model EgoHit {
+  id           String    @id @default(cuid())
+  appId        String?
+  app          SnsApp?   @relation(fields: [appId], references: [id])
+  source       String
+  keyword      String
+  title        String
+  url          String
+  snippet      String?
+  author       String?
+  score        Int
+  publishedAt  DateTime?
+  dismissed    Boolean   @default(false)
+  // classification
+  category     String?   // "buzz" | "feedback" | "other"
+  sentiment    String?   // "positive" | "negative" | "neutral"
+  feedbackType String?   // "bug" | "feature_request" | "praise" | "comparison"
+  engagement   Json?     // { views, likes, reposts, comments }
+  createdAt    DateTime  @default(now())
+}
+
+// --------------------------------------------------------------------------
+// 改善ループ: 分析 → 提案 → 承認 → 実行
+// --------------------------------------------------------------------------
+
+model AnalysisRun {
+  id          String     @id @default(cuid())
+  domain      String     // "aso" | "sns" | "ego" | "all"
+  targetId    String?    // app ID（特定アプリに絞った場合）
+  status      String     @default("running") // "running" | "done" | "failed"
+  summary     String?    // 分析サマリー（自然文）
+  proposals   Proposal[]
+  createdAt   DateTime   @default(now())
+  finishedAt  DateTime?
+}
+
+model Proposal {
+  id           String       @id @default(cuid())
+
+  // 対象
+  domain       String       // "aso" | "sns" | "ego" | "general"
+  targetType   String?      // "aso_app" | "sns_app" | null（横断的な提案）
+  targetId     String?      // アプリID
+
+  // 提案内容
+  title        String
+  summary      String       // 1〜2文のインボックス表示用
+  rationale    String       // 根拠となる分析（長文可）
+
+  // 意思決定構造
+  decisionType String       @default("yesno") // "yesno" | "choice"
+  options      Json?        // [{ id, label, description }]（choice時）
+
+  // ステータス
+  status       String       @default("pending") // "pending" | "approved" | "rejected" | "executing" | "done" | "failed"
+  decision     String?      // "yes" | "no" | option.id
+  decidedAt    DateTime?
+
+  // 実行
+  actionType   String       // "add_keywords" | "update_setting" | "github_workflow" | "manual"
+  actionPayload Json?       // 実行パラメータ
+  executedAt   DateTime?
+  result       Json?        // 実行結果
+
+  // Governance (行動規範 #11)
+  confidence    String    @default("medium")
+  dataFreshness DateTime?
+
+  // プロバナンス
+  sourceJobId  String?
+  analysisRun  AnalysisRun? @relation(fields: [sourceJobId], references: [id])
+  sourceData   Json?        // 根拠となった生データ
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([status])
+  @@index([domain, targetId])
+  @@index([sourceJobId])
+}
