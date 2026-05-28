@@ -6,11 +6,11 @@ const db = new PrismaClient({ adapter });
 
 const ASO_APPS = [
   { id: "twomi",        name: "Twomi",        googlePlayId: "com.torilab.twomi",        iosId: "6756947139", active: true  },
-  { id: "ai-avatar",    name: "AI AVATAR",    googlePlayId: "com.wallet.walkthedog",    iosId: "6443651909", active: false },
-  { id: "soulriza",     name: "SOULRiZA",     googlePlayId: "com.soulriza.app",         iosId: "6749605293", active: false },
-  { id: "king-together",name: "KING Together", googlePlayId: "com.aiavatarshogun.app",  iosId: "6761701026", active: false },
-  { id: "education",    name: "Education",    googlePlayId: null,                        iosId: "6772054421", active: false },
-  { id: "pachinavi",    name: "パチナビ",      googlePlayId: "com.pachin.navi.app",       iosId: "6759152034", active: false },
+  { id: "ai-avatar",    name: "AI AVATAR",    googlePlayId: "com.wallet.walkthedog",    iosId: "6443651909", active: true  },
+  { id: "soulriza",     name: "SOULRiZA",     googlePlayId: "com.soulriza.app",         iosId: "6749605293", active: true  },
+  { id: "king-together",name: "KING Together", googlePlayId: "com.aiavatarshogun.app",  iosId: "6761701026", active: true  },
+  { id: "education",    name: "Education",    googlePlayId: null,                        iosId: "6772054421", active: true  },
+  { id: "pachinavi",    name: "パチナビ",      googlePlayId: "com.pachin.navi.app",       iosId: "6759152034", active: true  },
 ];
 
 const TWOMI_KEYWORDS = [
