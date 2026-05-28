@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { writeAuditLog } from "@/lib/audit";
 
 // POST /api/proposals/[id]/execute  — 承認済み提案を実行する
 export async function POST(
@@ -23,6 +24,14 @@ export async function POST(
     const updated = await db.proposal.update({
       where: { id },
       data: { status: "done", executedAt: new Date(), result: result as never },
+    });
+    await writeAuditLog({
+      action: `proposal_executed:${proposal.actionType}`,
+      targetTable: "Proposal",
+      targetId: id,
+      beforeValue: { status: "approved" },
+      afterValue:  { status: "done", result },
+      req,
     });
     return NextResponse.json(updated);
   } catch (err) {

@@ -47,6 +47,14 @@ model AsoReport {
   date      String
   data      Json
   slackSent Boolean  @default(false)
+  // §8 ストア指標（Backend Base Spec準拠）
+  store            String?  // "apple" | "google"
+  country          String?  // ISO country code
+  storeImpressions Int?
+  storePageViews   Int?
+  downloads        Int?
+  source           String?  // "organic" | "paid" | "unknown"
+  lookerSyncedAt   DateTime?
   createdAt DateTime @default(now())
 }
 
@@ -183,4 +191,20 @@ model Proposal {
   @@index([status])
   @@index([domain, targetId])
   @@index([sourceJobId])
+}
+
+// §7 監査ログ (Backend Base Spec 準拠 / 行動規範 #9)
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // "proposal_approved" | "proposal_rejected" | "setting_changed" | "agent_toggled" | "governance_review_sent"
+  targetTable String   // "Proposal" | "SnsApp" | "AsoApp"
+  targetId    String
+  beforeValue Json?
+  afterValue  Json?
+  performedAt DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+
+  @@index([targetTable, targetId])
+  @@index([performedAt])
 }

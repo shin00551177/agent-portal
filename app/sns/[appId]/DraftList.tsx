@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/Button";
 
 type Draft = {
   id: string; platform: string; copy: string; hashtags: unknown;
@@ -108,14 +109,8 @@ function DraftRow({ draft, onUpdate }: { draft: Draft; onUpdate: (id: string, s:
 
       {isPending && (
         <div className="flex flex-col gap-2 shrink-0">
-          <button onClick={() => onUpdate(draft.id, "approved")}
-            className="px-4 py-1.5 bg-[#1d1d1f] hover:bg-black text-white rounded-xl text-[13px] font-medium transition-colors">
-            承認
-          </button>
-          <button onClick={() => onUpdate(draft.id, "rejected")}
-            className="px-4 py-1.5 bg-[#f5f5f7] hover:bg-[#e8e8e8] text-[#6e6e73] rounded-xl text-[13px] font-medium transition-colors">
-            却下
-          </button>
+          <Button size="sm" onClick={() => onUpdate(draft.id, "approved")}>承認</Button>
+          <Button size="sm" variant="secondary" onClick={() => onUpdate(draft.id, "rejected")}>却下</Button>
         </div>
       )}
     </div>

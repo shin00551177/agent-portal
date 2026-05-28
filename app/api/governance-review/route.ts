@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
+import { writeAuditLog } from "@/lib/audit";
 
 // POST /api/governance-review
 // GovernancePanelから呼ばれる。閾値変更をProposalとして登録し、/proposalsへのレビューを依頼する。
@@ -88,6 +89,15 @@ export async function POST(req: NextRequest) {
         },
       })),
     },
+  });
+
+  await writeAuditLog({
+    action: "governance_review_sent",
+    targetTable: domain === "sns" ? "SnsApp" : "AsoApp",
+    targetId: appId,
+    beforeValue: current as Record<string, unknown>,
+    afterValue:  proposed as Record<string, unknown>,
+    req,
   });
 
   return NextResponse.json({ proposalId: proposal.id }, { status: 201 });

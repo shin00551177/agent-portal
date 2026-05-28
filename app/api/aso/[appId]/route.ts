@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { writeAuditLog } from "@/lib/audit";
 
 export async function PATCH(
   req: NextRequest,
@@ -8,14 +9,27 @@ export async function PATCH(
   const { appId } = await params;
   const body = await req.json();
 
+  const before = await db.asoApp.findUnique({ where: { id: appId }, select: { active: true, fallbackBehavior: true } });
+
   const data: Record<string, unknown> = {};
   if (typeof body.active === "boolean") data.active = body.active;
-  if (body.workflowStates !== undefined) data.workflowStates = body.workflowStates;
+  if (body.workflowStates  !== undefined) data.workflowStates  = body.workflowStates;
   if (typeof body.fallbackBehavior === "string") data.fallbackBehavior = body.fallbackBehavior;
   if (body.escalationRules !== undefined) data.escalationRules = body.escalationRules;
   if (body.haltConditions  !== undefined) data.haltConditions  = body.haltConditions;
   if (body.agentMeta       !== undefined) data.agentMeta       = body.agentMeta;
 
   const app = await db.asoApp.update({ where: { id: appId }, data });
+
+  const action = typeof body.active === "boolean" ? "agent_toggled" : "setting_changed";
+  await writeAuditLog({
+    action,
+    targetTable: "AsoApp",
+    targetId: appId,
+    beforeValue: before as Record<string, unknown>,
+    afterValue:  data,
+    req,
+  });
+
   return NextResponse.json({ active: app.active, workflowStates: app.workflowStates });
 }
