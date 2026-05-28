@@ -1,0 +1,4 @@
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+startCommand = "prisma migrate deploy && prisma db seed && next start"
