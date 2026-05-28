@@ -91,12 +91,12 @@ function OpportunityTag({ kw }: { kw: KwData }) {
   const rank = kw.rank ?? 501;
   const vol = kw.volume ?? 0;
   const diff = kw.difficulty ?? 100;
-  if (rank <= 10) return <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f0faf4] text-[#1d7a47]">✓ 維持</span>;
-  if (rank <= 50) return <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#fff7e6] text-[#a05c00]">⚡ 強化</span>;
+  if (rank <= 10) return <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f0faf4] text-[#1d7a47]">✓ 守る</span>;
+  if (rank <= 50) return <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#fff7e6] text-[#a05c00]">↑ 伸ばす</span>;
   if (rank >= 500 && vol >= 20 && diff <= 65)
-    return <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#fff1f0] text-[#c0392b] font-medium">🔴 攻める</span>;
+    return <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#fff1f0] text-[#c0392b] font-medium">🎯 ねらう</span>;
   if (diff > 70)
-    return <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#86868b]">✗ 難</span>;
+    return <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#86868b]">激戦区</span>;
   return <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#6e6e73]">様子見</span>;
 }
 
@@ -502,7 +502,7 @@ export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rank
           <p className="text-[15px] font-semibold text-[#1d1d1f] mb-4">キーワード順位</p>
           <div className="grid grid-cols-[2fr_80px_40px_130px_130px_90px] gap-3 pb-2 border-b border-[#f0f0f0] text-[11px] text-[#86868b] uppercase tracking-wide">
             <span>キーワード</span><span>順位</span><span>変動</span>
-            <span>検索ボリューム</span><span>参入難易度</span><span>推奨戦略</span>
+            <span>検索ボリューム</span><span>競合密度</span><span>推奨戦略</span>
           </div>
           <div className="divide-y divide-[#f0f0f0]">
             {sortedKws.map((kw) => (
@@ -519,8 +519,8 @@ export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rank
           </div>
           <div className="mt-3 flex items-center gap-6 text-[11px] text-[#86868b]">
             <span><span className="inline-block w-2 h-2 rounded-full bg-[#0071e3] mr-1" />検索ボリューム（数値が大きいほど検索数多い）</span>
-            <span><span className="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1" />参入難易度 低（攻めやすい）</span>
-            <span><span className="inline-block w-2 h-2 rounded-full bg-red-400 mr-1" />参入難易度 高（競争激しい）</span>
+            <span><span className="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1" />競合密度 低（競合が弱く入りやすい）</span>
+            <span><span className="inline-block w-2 h-2 rounded-full bg-red-400 mr-1" />競合密度 高（強豪が占拠している）</span>
           </div>
         </div>
       )}
