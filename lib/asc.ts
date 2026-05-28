@@ -39,6 +39,63 @@ async function asc(path: string, options: RequestInit = {}) {
   return res.json();
 }
 
+// 画像タイプ定義
+export const ASC_IMAGE_TYPES = {
+  APP_IPHONE_65: { label: "iPhone 6.5\" スクリーンショット", slot: "APP_IPHONE_65" },
+  APP_IPHONE_61: { label: "iPhone 6.1\" スクリーンショット", slot: "APP_IPHONE_61" },
+  APP_IPAD_PRO_3GEN_129: { label: "iPad Pro 12.9\" スクリーンショット", slot: "APP_IPAD_PRO_3GEN_129" },
+} as const;
+
+export type AscImageType = keyof typeof ASC_IMAGE_TYPES;
+
+// App Store Connect 画像アップロード（3ステップ）
+export async function uploadAscScreenshot(
+  versionId: string,
+  locId: string,
+  imageType: AscImageType,
+  imageData: ArrayBuffer,
+  fileName: string,
+  mimeType: string,
+): Promise<string> {
+  // Step 1: 予約
+  const reservation = await asc("/v1/appScreenshots", {
+    method: "POST",
+    body: JSON.stringify({
+      data: {
+        type: "appScreenshots",
+        attributes: { fileSize: imageData.byteLength, fileName },
+        relationships: {
+          appStoreVersionLocalization: { data: { type: "appStoreVersionLocalizations", id: locId } },
+        },
+      },
+    }),
+  });
+
+  const screenshotId = reservation.data.id;
+  const uploadOps = reservation.data.attributes.uploadOperations ?? [];
+
+  // Step 2: S3 にアップロード
+  for (const op of uploadOps) {
+    const headers: Record<string, string> = {};
+    for (const h of op.requestHeaders ?? []) headers[h.name] = h.value;
+    await fetch(op.url, { method: op.method, headers, body: imageData });
+  }
+
+  // Step 3: 確認
+  await asc(`/v1/appScreenshots/${screenshotId}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      data: {
+        type: "appScreenshots",
+        id: screenshotId,
+        attributes: { uploaded: true },
+      },
+    }),
+  });
+
+  return screenshotId;
+}
+
 // 編集可能なバージョンを探す
 const EDITABLE = new Set([
   "PREPARE_FOR_SUBMISSION", "REJECTED", "METADATA_REJECTED",

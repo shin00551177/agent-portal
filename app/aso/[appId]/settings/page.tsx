@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { WorkflowTrigger } from "../WorkflowTrigger";
 import { GovernancePanel } from "@/components/GovernancePanel";
+import { ImageUploadSection } from "../ImageUploadSection";
 
 export default async function AsoSettingsPage({
   params,
@@ -26,6 +27,21 @@ export default async function AsoSettingsPage({
           appId={appId}
           initialActive={app.active}
           initialWorkflowStates={(app.workflowStates ?? {}) as Record<string, boolean>}
+        />
+      </section>
+
+      <div className="border-t border-[#f0f0f0]" />
+
+      {/* Image Upload */}
+      <section>
+        <h2 className="text-[20px] font-semibold text-[#1d1d1f] tracking-tight mb-1">画像・バナー差し替え</h2>
+        <p className="text-[13px] text-[#6e6e73] mb-6">
+          スクリーンショット・フィーチャーグラフィック・アイコンをストアに直接アップロードします。
+        </p>
+        <ImageUploadSection
+          appId={appId}
+          hasIos={!!app.iosId}
+          hasAndroid={!!app.googlePlayId}
         />
       </section>
 

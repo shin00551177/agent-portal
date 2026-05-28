@@ -52,6 +52,55 @@ async function deleteEdit(packageName: string, editId: string): Promise<void> {
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
+// 画像タイプ定義
+export const GPLAY_IMAGE_TYPES = {
+  featureGraphic:       { label: "フィーチャーグラフィック", size: "1024×500px" },
+  icon:                 { label: "アイコン",                size: "512×512px"   },
+  phoneScreenshots:     { label: "スクリーンショット (Phone)", size: "最大8枚"  },
+  sevenInchScreenshots: { label: "スクリーンショット (7inch)", size: "最大8枚"  },
+} as const;
+
+export type GPlayImageType = keyof typeof GPLAY_IMAGE_TYPES;
+
+// 画像アップロード（Google Play）
+export async function uploadGPlayImage(
+  packageName: string,
+  language: string,
+  imageType: GPlayImageType,
+  imageData: ArrayBuffer,
+  mimeType: string,
+): Promise<{ url: string; sha1: string }> {
+  const token = await getAccessToken();
+  const editId = await createEdit(packageName);
+
+  try {
+    const res = await fetch(
+      `https://androidpublisher.googleapis.com/upload/androidpublisher/v3/applications/${packageName}/edits/${editId}/listings/${language}/images/${imageType}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": mimeType,
+        },
+        body: imageData,
+      }
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`GPlay image upload ${res.status}: ${text.slice(0, 200)}`);
+    }
+
+    const result = await res.json();
+    await commitEdit(packageName, editId);
+
+    return { url: result.image?.url ?? "", sha1: result.image?.sha1 ?? "" };
+  } catch (err) {
+    await deleteEdit(packageName, editId);
+    throw err;
+  }
+}
+
 export type PlayListing = {
   language: string;
   title: string;
