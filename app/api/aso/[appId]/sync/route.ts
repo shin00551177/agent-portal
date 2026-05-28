@@ -98,6 +98,10 @@ export async function POST(
     req,
   });
 
+  // 同期後に自動で分析・提案生成（fire-and-forget）
+  const baseUrl = req.nextUrl.origin;
+  fetch(`${baseUrl}/api/aso/${appId}/analyze`, { method: "POST" }).catch(() => {});
+
   return NextResponse.json({ reportId: report.id, date: today, data: reportData });
 }
 

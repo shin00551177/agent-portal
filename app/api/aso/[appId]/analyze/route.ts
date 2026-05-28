@@ -27,8 +27,13 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ appId: string }> },
 ) {
+  // セッション認証（ブラウザ）または未認証で許可（sync からの fire-and-forget 用）
+  // sync エンドポイントと同様の方針
+  const syncSecret = process.env.SYNC_SECRET;
   const authed = await isAuthenticated();
-  if (!authed) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!authed && syncSecret && req.headers.get("x-sync-secret") !== syncSecret) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const { appId } = await params;
 

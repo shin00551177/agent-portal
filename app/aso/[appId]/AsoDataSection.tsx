@@ -224,7 +224,7 @@ function ProposalCard({
 
 export function AsoDataSection({ appId, periodFrom, periodTo, syncedAt, metrics, keywords, pendingProposals }: Props) {
   const router = useRouter();
-  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzing, setAnalyzing] = useState<"idle" | "running" | "done" | "error">("idle");
   const [localProposals, setLocalProposals] = useState(pendingProposals);
 
   // 集計期間ラベル
@@ -236,10 +236,22 @@ export function AsoDataSection({ appId, periodFrom, periodTo, syncedAt, metrics,
   })();
 
   async function analyze() {
-    setAnalyzing(true);
-    const res = await fetch(`/api/aso/${appId}/analyze`, { method: "POST" });
-    setAnalyzing(false);
-    if (res.ok) router.refresh();
+    setAnalyzing("running");
+    try {
+      const res = await fetch(`/api/aso/${appId}/analyze`, { method: "POST", credentials: "include" });
+      if (res.ok) {
+        setAnalyzing("done");
+        setTimeout(() => { setAnalyzing("idle"); router.refresh(); }, 800);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        console.error("analyze failed:", err);
+        setAnalyzing("error");
+        setTimeout(() => setAnalyzing("idle"), 3000);
+      }
+    } catch {
+      setAnalyzing("error");
+      setTimeout(() => setAnalyzing("idle"), 3000);
+    }
   }
 
   async function onDecide(proposalId: string, decision: "yes" | "no", note?: string) {
@@ -316,7 +328,7 @@ export function AsoDataSection({ appId, periodFrom, periodTo, syncedAt, metrics,
           <p className="text-[15px] font-semibold text-[#1d1d1f] mb-4">キーワード順位</p>
           <div className="grid grid-cols-[2fr_80px_40px_130px_130px_90px] gap-3 pb-2 border-b border-[#f0f0f0] text-[11px] text-[#86868b] uppercase tracking-wide">
             <span>キーワード</span><span>順位</span><span>変動</span>
-            <span>ボリューム</span><span>難易度</span><span>アクション</span>
+            <span>検索ボリューム</span><span>参入難易度</span><span>推奨戦略</span>
           </div>
           <div className="divide-y divide-[#f0f0f0]">
             {sortedKws.map((kw) => (
@@ -332,9 +344,9 @@ export function AsoDataSection({ appId, periodFrom, periodTo, syncedAt, metrics,
             ))}
           </div>
           <div className="mt-3 flex items-center gap-6 text-[11px] text-[#86868b]">
-            <span><span className="inline-block w-2 h-2 rounded-full bg-[#0071e3] mr-1" />ボリューム（検索数）</span>
-            <span><span className="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1" />難易度 低</span>
-            <span><span className="inline-block w-2 h-2 rounded-full bg-red-400 mr-1" />難易度 高</span>
+            <span><span className="inline-block w-2 h-2 rounded-full bg-[#0071e3] mr-1" />検索ボリューム（数値が大きいほど検索数多い）</span>
+            <span><span className="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1" />参入難易度 低（攻めやすい）</span>
+            <span><span className="inline-block w-2 h-2 rounded-full bg-red-400 mr-1" />参入難易度 高（競争激しい）</span>
           </div>
         </div>
       )}
@@ -346,8 +358,13 @@ export function AsoDataSection({ appId, periodFrom, periodTo, syncedAt, metrics,
             <p className="text-[15px] font-semibold text-[#1d1d1f]">分析・改善提案</p>
             <p className="text-[12px] text-[#86868b] mt-0.5">結果 → 原因分析 → ネクストアクション の3点セット</p>
           </div>
-          <Button size="sm" variant="secondary" onClick={analyze} disabled={analyzing}>
-            {analyzing ? "分析中..." : "Claude で再分析"}
+          <Button
+            size="sm"
+            variant={analyzing === "error" ? "danger" : "secondary"}
+            onClick={analyze}
+            disabled={analyzing === "running"}
+          >
+            {analyzing === "running" ? "分析中..." : analyzing === "done" ? "完了 ✓" : analyzing === "error" ? "エラー（再試行）" : "Claude で再分析"}
           </Button>
         </div>
 
