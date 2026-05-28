@@ -5,11 +5,10 @@ import { ProposalCard } from "./ProposalCard";
 import Link from "next/link";
 
 const DOMAIN_TABS = [
-  { value: "",        label: "すべて" },
-  { value: "ego",     label: "エゴサ" },
-  { value: "aso",     label: "ASO" },
-  { value: "sns",     label: "SNS" },
-  { value: "general", label: "全般" },
+  { value: "",    label: "すべて" },
+  { value: "ego", label: "エゴサ" },
+  { value: "aso", label: "ASO" },
+  { value: "sns", label: "SNS" },
 ];
 
 export default async function ProposalsPage({
