@@ -41,9 +41,13 @@ export async function POST(
   });
   if (!report) return NextResponse.json({ error: "no report data" }, { status: 400 });
 
-  const data = report.data as { keywords?: KwData[]; appMetrics?: AppMetrics };
+  const data = report.data as { keywords?: KwData[]; appMetrics?: AppMetrics; periodFrom?: string; periodTo?: string };
   const keywords = data.keywords ?? [];
   const metrics = data.appMetrics;
+  const periodFrom = data.periodFrom ?? report.date;
+  const periodTo = data.periodTo ?? report.date;
+  const periodDays = Math.round((new Date(periodTo).getTime() - new Date(periodFrom).getTime()) / 86400000);
+  const periodLabel = periodFrom === periodTo ? periodTo : `${periodFrom} 〜 ${periodTo}（${periodDays}日間）`;
 
   const kwSummary = keywords
     .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
@@ -58,7 +62,9 @@ export async function POST(
 
   const prompt = `あなたはApp Store最適化（ASO）の専門家です。以下の ${app.name} のASO データを分析し、売上向上に直結する改善提案を3件生成してください。
 
-## アプリ指標（${report.date}）
+## 集計期間: ${periodLabel}
+
+## アプリ指標
 - DL数: ${metrics?.downloads ?? "?"}
 - 売上: $${metrics?.revenues ?? "?"} ${metrics?.revenueCurrency ?? "USD"}
 - 評価: ${metrics?.ratingsAvg ?? "?"}（${metrics?.ratingsTotal ?? "?"}件）
@@ -67,23 +73,22 @@ export async function POST(
 ## キーワード順位
 ${kwSummary}
 
-## 分析指針
-- App Power 0.9/10 は非常に低い → 検索露出が極めて弱い
-- 「圏外」かつ volume が高く difficulty が低いキーワードは最大の機会
-- タイトル/サブタイトルにキーワードを含めるとランクが大幅改善しやすい
-- iOS では「キーワードフィールド」（100文字）が重要だが、空白・カンマの使い方がポイント
+各提案は以下の3点セットで構成してください：
+1. **結果**（現状の数値・事実のみ。判断・意見を含まない）
+2. **原因分析**（なぜその結果になっているか。データに基づく推論）
+3. **ネクストアクション**（具体的な変更内容と期待される効果）
 
 以下のJSON配列形式で3件の提案を返してください。コードブロックや説明文は不要、JSONのみ返してください。
 
 [
   {
     "title": "提案タイトル（20文字以内）",
-    "summary": "1〜2文の要約（画面表示用）",
-    "rationale": "根拠となる分析（なぜこの変更が効くか、期待される効果を含む。200文字程度）",
+    "summary": "1〜2文の要約（UI表示用）",
+    "result": "【結果】現状の数値・事実（例: 「アバター」はvol:59にもかかわらず圏外）",
+    "cause": "【原因分析】なぜこの結果になっているか（例: サブタイトルに「アバター」が含まれていないため検索インデックスに含まれていない可能性が高い）",
+    "nextAction": "【ネクストアクション】具体的な変更内容と期待効果（例: サブタイトルを「AIアバターと話そう」に変更→アバターキーワードでTop50入り見込み）",
     "field": "title" | "subtitle" | "keywords" | "description",
-    "current": "現在の値（不明な場合は空文字）",
-    "proposed": "変更後の値の提案",
-    "expectedImpact": "期待される効果（例: 「アバター」で圏外→top50入り見込み）"
+    "proposed": "変更後の具体的な値"
   }
 ]`;
 
@@ -102,11 +107,11 @@ ${kwSummary}
   type ProposalInput = {
     title: string;
     summary: string;
-    rationale: string;
+    result: string;
+    cause: string;
+    nextAction: string;
     field: string;
-    current: string;
     proposed: string;
-    expectedImpact: string;
   };
 
   const proposals: ProposalInput[] = JSON.parse(jsonMatch[0]);
@@ -126,10 +131,17 @@ ${kwSummary}
           targetId: appId,
           title: p.title,
           summary: p.summary,
-          rationale: `${p.rationale}\n\n**対象フィールド**: ${p.field}\n**現在**: ${p.current || "（未取得）"}\n**提案**: ${p.proposed}\n**期待効果**: ${p.expectedImpact}`,
+          rationale: JSON.stringify({
+            result: p.result,
+            cause: p.cause,
+            nextAction: p.nextAction,
+            field: p.field,
+            proposed: p.proposed,
+            periodLabel,
+          }),
           decisionType: "yesno",
           actionType: "manual",
-          actionPayload: { field: p.field, current: p.current, proposed: p.proposed },
+          actionPayload: { field: p.field, proposed: p.proposed },
           confidence: "medium",
         },
       })

@@ -53,6 +53,8 @@ export async function POST(
   const typedKwMetrics = kwMetrics as Record<string, KwMetricResult>;
 
   const reportData = {
+    periodFrom: prevReport?.date ?? today,  // 集計期間（前回レポート日〜今日）
+    periodTo: today,
     keywords: Object.entries(typedRankings).map(([kw, r]) => ({
       keyword: kw,
       rank: r.rank,
@@ -86,13 +88,7 @@ export async function POST(
         },
       });
 
-  // Slack 通知
-  const slackMsg = buildSlackMessage(app.name, reportData, today);
-  const slackSent = await sendSlack(slackMsg);
-
-  if (slackSent) {
-    await db.asoReport.update({ where: { id: report.id }, data: { slackSent: true } });
-  }
+  // Slack 通知は Web UI で確認後に手動送信するため自動送信しない
 
   await writeAuditLog({
     action: "aso_sync",

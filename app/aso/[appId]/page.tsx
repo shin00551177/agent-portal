@@ -38,6 +38,8 @@ export default async function AsoAppPage({
   const latestData = (latestReport?.data ?? {}) as {
     appMetrics?: { downloads: number | null; revenues: number | null; revenueCurrency: string; ratingsAvg: number | null; ratingsTotal: number | null; appPower: number | null };
     keywords?: { keyword: string; rank: number | null; prevRank: number | null; volume: number | null; difficulty: number | null }[];
+    periodFrom?: string;
+    periodTo?: string;
     syncedAt?: string;
   };
 
@@ -79,7 +81,8 @@ export default async function AsoAppPage({
         {latestData.appMetrics ? (
           <AsoDataSection
             appId={appId}
-            reportDate={latestReport?.date ?? null}
+            periodFrom={latestData.periodFrom ?? latestReport?.date ?? null}
+            periodTo={latestData.periodTo ?? latestReport?.date ?? null}
             syncedAt={latestData.syncedAt ?? null}
             metrics={latestData.appMetrics}
             keywords={latestData.keywords ?? []}
