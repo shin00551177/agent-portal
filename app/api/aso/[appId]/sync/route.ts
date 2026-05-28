@@ -7,6 +7,12 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ appId: string }> },
 ) {
+  // API key auth fallback (middleware may not pass env vars in edge runtime)
+  const apiKey = process.env.PORTAL_API_KEY;
+  if (apiKey && req.headers.get("x-api-key") !== apiKey) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   const { appId } = await params;
 
   const app = await db.asoApp.findUnique({

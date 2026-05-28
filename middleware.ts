@@ -12,12 +12,13 @@ async function sessionToken() {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  if (pathname.startsWith("/login") || pathname.startsWith("/_next") || pathname === "/favicon.ico" || pathname === "/health") {
-    return NextResponse.next();
-  }
-  // API key auth for server-to-server calls (GitHub Actions etc.)
-  const apiKey = process.env.PORTAL_API_KEY;
-  if (apiKey && request.headers.get("x-api-key") === apiKey) {
+  if (
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/_next") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/health" ||
+    pathname.startsWith("/api/")   // API routes handle their own auth
+  ) {
     return NextResponse.next();
   }
   const expected = await sessionToken();
