@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { writeAuditLog } from "@/lib/audit";
-import { fetchKeywordRankings, fetchKeywordMetrics, fetchAppMetrics } from "@/lib/apptweak";
+import { fetchKeywordRankings, fetchKeywordMetrics, fetchAppMetrics, fetchKeywordRankingHistory } from "@/lib/apptweak";
 import { isAuthenticated } from "@/lib/auth";
 
 export async function POST(
@@ -28,22 +28,33 @@ export async function POST(
   const today = new Date().toISOString().slice(0, 10);
   const keywords = app.keywords.map((k) => k.keyword);
 
-  // 前回レポートを取得（前週比計算用）
-  const prevReport = await db.asoReport.findFirst({
+  // リクエストボディから期間指定を読み取る（省略時は今日のスナップショット）
+  const body = await req.json().catch(() => ({})) as { startDate?: string; endDate?: string };
+  const startDate = body.startDate ?? null;
+  const endDate = body.endDate ?? today;
+  const isRangeQuery = !!startDate && startDate !== endDate;
+
+  // 前回レポートを取得（前週比計算用、スナップショット時のみ）
+  const prevReport = isRangeQuery ? null : await db.asoReport.findFirst({
     where: { appId, date: { lt: today } },
     orderBy: { date: "desc" },
   });
   const prevData = (prevReport?.data ?? {}) as Record<string, unknown>;
 
   // Apptweak からデータ取得
-  const [rankings, metrics, kwMetrics] = await Promise.all([
-    keywords.length > 0
+  const [rankings, metrics, kwMetrics, rankingHistory] = await Promise.all([
+    keywords.length > 0 && !isRangeQuery
       ? fetchKeywordRankings(app.iosId, keywords, app.country, app.language)
       : Promise.resolve({}),
-    fetchAppMetrics(app.iosId, app.country),
+    !isRangeQuery
+      ? fetchAppMetrics(app.iosId, app.country)
+      : Promise.resolve(null),
     keywords.length > 0
       ? fetchKeywordMetrics(keywords, app.country, app.language)
       : Promise.resolve({}),
+    keywords.length > 0 && isRangeQuery
+      ? fetchKeywordRankingHistory(app.iosId, keywords, startDate!, endDate, app.country, app.language)
+      : Promise.resolve(null),
   ]);
 
   // レポートデータ構築
@@ -52,8 +63,26 @@ export async function POST(
   const typedRankings = rankings as Record<string, RankResult>;
   const typedKwMetrics = kwMetrics as Record<string, KwMetricResult>;
 
-  const reportData = {
-    periodFrom: prevReport?.date ?? today,  // 集計期間（前回レポート日〜今日）
+  const reportData = isRangeQuery ? {
+    // 期間指定クエリ：履歴トレンドデータ
+    periodFrom: startDate!,
+    periodTo: endDate,
+    isRangeQuery: true,
+    rankingHistory: rankingHistory,  // { keyword: { date: rank } }
+    keywords: keywords.map((kw) => ({
+      keyword: kw,
+      rank: null,           // 今日の順位は取得しない
+      installs: null,
+      volume: typedKwMetrics[kw]?.volume ?? null,
+      difficulty: typedKwMetrics[kw]?.difficulty ?? null,
+      prevRank: null,
+    })),
+    appMetrics: null,
+    prevAppMetrics: null,
+    syncedAt: new Date().toISOString(),
+  } : {
+    // スナップショット（通常の今日のデータ）
+    periodFrom: prevReport?.date ?? today,
     periodTo: today,
     keywords: Object.entries(typedRankings).map(([kw, r]) => ({
       keyword: kw,
@@ -69,19 +98,20 @@ export async function POST(
     syncedAt: new Date().toISOString(),
   };
 
-  // AsoReport に保存（同日なら上書き）
-  const existing = await db.asoReport.findFirst({ where: { appId, date: today } });
+  // AsoReport に保存（期間クエリは専用日付キー、スナップショットは同日上書き）
+  const reportDate = isRangeQuery ? `range:${startDate}:${endDate}` : today;
+  const existing = await db.asoReport.findFirst({ where: { appId, date: reportDate } });
   const report = existing
     ? await db.asoReport.update({
         where: { id: existing.id },
-        data: { data: reportData, downloads: metrics.downloads, store: "apple", country: app.country },
+        data: { data: reportData, store: "apple", country: app.country },
       })
     : await db.asoReport.create({
         data: {
           appId,
-          date: today,
+          date: reportDate,
           data: reportData,
-          downloads: metrics.downloads,
+          downloads: isRangeQuery ? null : (metrics as Awaited<ReturnType<typeof fetchAppMetrics>>).downloads,
           store: "apple",
           country: app.country,
           slackSent: false,
@@ -98,9 +128,11 @@ export async function POST(
     req,
   });
 
-  // 同期後に自動で分析・提案生成（fire-and-forget）
-  const baseUrl = req.nextUrl.origin;
-  fetch(`${baseUrl}/api/aso/${appId}/analyze`, { method: "POST" }).catch(() => {});
+  // スナップショット時のみ自動で分析・提案生成（fire-and-forget）
+  if (!isRangeQuery) {
+    const baseUrl = req.nextUrl.origin;
+    fetch(`${baseUrl}/api/aso/${appId}/analyze`, { method: "POST" }).catch(() => {});
+  }
 
   return NextResponse.json({ reportId: report.id, date: today, data: reportData });
 }

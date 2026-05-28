@@ -74,6 +74,50 @@ export async function fetchKeywordMetrics(
   return results;
 }
 
+// キーワード順位履歴（日次トレンド）
+export async function fetchKeywordRankingHistory(
+  iosId: string,
+  keywords: string[],
+  startDate: string,
+  endDate: string,
+  country = "jp",
+  language = "ja",
+): Promise<Record<string, Record<string, number | null>>> {
+  // { keyword: { "2026-05-01": 6, "2026-05-07": 7, ... } }
+  const results: Record<string, Record<string, number | null>> = {};
+
+  for (let i = 0; i < keywords.length; i += 5) {
+    const batch = keywords.slice(i, i + 5);
+    const data = await get("/apps/keywords-rankings/history.json", {
+      apps: iosId,
+      keywords: batch.join(","),
+      metrics: "rank",
+      device: "iphone",
+      country,
+      language,
+      start_date: startDate,
+      end_date: endDate,
+    });
+    const appData = data.result?.[iosId] ?? {};
+    for (const kw of batch) {
+      const rankHistory = appData[kw]?.rank ?? {};
+      // effective_value per date
+      const byDate: Record<string, number | null> = {};
+      if (Array.isArray(rankHistory)) {
+        for (const entry of rankHistory as { date: string; effective_value: number | null }[]) {
+          byDate[entry.date] = entry.effective_value;
+        }
+      } else if (typeof rankHistory === "object") {
+        Object.entries(rankHistory).forEach(([date, val]) => {
+          byDate[date] = (val as { effective_value?: number | null })?.effective_value ?? null;
+        });
+      }
+      results[kw] = byDate;
+    }
+  }
+  return results;
+}
+
 // アプリ指標（DL・売上・評価・App Power）
 export async function fetchAppMetrics(iosId: string, country = "jp") {
   const data = await get("/apps/metrics/current.json", {

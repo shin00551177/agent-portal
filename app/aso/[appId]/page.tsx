@@ -40,6 +40,8 @@ export default async function AsoAppPage({
     keywords?: { keyword: string; rank: number | null; prevRank: number | null; volume: number | null; difficulty: number | null }[];
     periodFrom?: string;
     periodTo?: string;
+    isRangeQuery?: boolean;
+    rankingHistory?: Record<string, Record<string, number | null>> | null;
     syncedAt?: string;
   };
 
@@ -83,8 +85,10 @@ export default async function AsoAppPage({
             appId={appId}
             periodFrom={latestData.periodFrom ?? latestReport?.date ?? null}
             periodTo={latestData.periodTo ?? latestReport?.date ?? null}
+            isRangeQuery={latestData.isRangeQuery ?? false}
+            rankingHistory={latestData.rankingHistory ?? null}
             syncedAt={latestData.syncedAt ?? null}
-            metrics={latestData.appMetrics}
+            metrics={latestData.appMetrics ?? null}
             keywords={latestData.keywords ?? []}
             pendingProposals={pendingProposals}
           />

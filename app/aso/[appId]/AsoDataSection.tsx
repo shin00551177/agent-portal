@@ -38,10 +38,14 @@ type Proposal = {
   status: string;
 };
 
+type RankingHistory = Record<string, Record<string, number | null>>;
+
 type Props = {
   appId: string;
   periodFrom: string | null;
   periodTo: string | null;
+  isRangeQuery?: boolean;
+  rankingHistory?: RankingHistory | null;
   syncedAt: string | null;
   metrics: AppMetrics | null;
   keywords: KwData[];
@@ -229,7 +233,7 @@ function ProposalCard({
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export function AsoDataSection({ appId, periodFrom, periodTo, syncedAt, metrics, keywords, pendingProposals }: Props) {
+export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rankingHistory, syncedAt, metrics, keywords, pendingProposals }: Props) {
   const router = useRouter();
   const [analyzing, setAnalyzing] = useState<"idle" | "running" | "done" | "error">("idle");
   const [localProposals, setLocalProposals] = useState(pendingProposals);
@@ -329,8 +333,61 @@ export function AsoDataSection({ appId, periodFrom, periodTo, syncedAt, metrics,
         </div>
       )}
 
+      {/* ─── 期間指定トレンドテーブル ───────────────────── */}
+      {isRangeQuery && rankingHistory && (() => {
+        // 週次サンプリング（最大8点）
+        const allDates = Object.values(rankingHistory)[0] ? Object.keys(Object.values(rankingHistory)[0]).sort() : [];
+        const step = Math.max(1, Math.floor(allDates.length / 8));
+        const sampledDates = allDates.filter((_, i) => i % step === 0 || i === allDates.length - 1);
+        const kwList = Object.keys(rankingHistory);
+
+        return (
+          <div>
+            <p className="text-[15px] font-semibold text-[#1d1d1f] mb-4">順位推移（{periodFrom} 〜 {periodTo}）</p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-[12px]">
+                <thead>
+                  <tr className="border-b border-[#f0f0f0]">
+                    <th className="text-left py-2 pr-4 text-[#86868b] font-medium w-32">キーワード</th>
+                    {sampledDates.map((d) => (
+                      <th key={d} className="text-center py-2 px-2 text-[#86868b] font-medium whitespace-nowrap">
+                        {d.slice(5)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#f5f5f7]">
+                  {kwList.map((kw) => (
+                    <tr key={kw}>
+                      <td className="py-2.5 pr-4 font-medium text-[#1d1d1f]">{kw}</td>
+                      {sampledDates.map((d) => {
+                        const r = rankingHistory[kw]?.[d];
+                        const rank = r && r < 500 ? r : null;
+                        return (
+                          <td key={d} className="py-2.5 px-2 text-center">
+                            {rank ? (
+                              <span className={`px-2 py-0.5 rounded-md font-semibold ${
+                                rank <= 10 ? "bg-[#f0faf4] text-[#1d7a47]" :
+                                rank <= 50 ? "bg-[#fff7e6] text-[#a05c00]" :
+                                "bg-[#f5f5f7] text-[#6e6e73]"
+                              }`}>{rank}</span>
+                            ) : (
+                              <span className="text-[#c7c7cc]">—</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ─── Keyword Rankings ───────────────────────────── */}
-      {sortedKws.length > 0 && (
+      {!isRangeQuery && sortedKws.length > 0 && (
         <div>
           <p className="text-[15px] font-semibold text-[#1d1d1f] mb-4">キーワード順位</p>
           <div className="grid grid-cols-[2fr_80px_40px_130px_130px_90px] gap-3 pb-2 border-b border-[#f0f0f0] text-[11px] text-[#86868b] uppercase tracking-wide">
