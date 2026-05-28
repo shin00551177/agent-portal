@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { writeAuditLog } from "@/lib/audit";
 import { getEditableVersion, getLocalizationId, updateLocalization } from "@/lib/asc";
+import { updateListing } from "@/lib/gplay";
 
 // POST /api/proposals/[id]/execute  — 承認済み提案を実行する
 export async function POST(
@@ -79,6 +80,9 @@ async function _execute(proposal: {
     case "update_aso_metadata":
       return _execUpdateAsoMetadata(payload, proposal.targetId);
 
+    case "update_android_metadata":
+      return _execUpdateAndroidMetadata(payload, proposal.targetId);
+
     case "github_workflow":
       return _execGithubWorkflow(payload);
 
@@ -154,6 +158,29 @@ async function _execUpdateAsoMetadata(
     field,
     applied: proposed,
   };
+}
+
+async function _execUpdateAndroidMetadata(
+  payload: Record<string, unknown>,
+  appId: string | null,
+): Promise<Record<string, unknown>> {
+  if (!appId) throw new Error("update_android_metadata: appId required");
+
+  const app = await db.asoApp.findUnique({ where: { id: appId } });
+  if (!app?.googlePlayId) throw new Error("googlePlayId not set for app: " + appId);
+
+  const { field, proposed, locale = "ja-JP" } = payload as {
+    field: string; proposed: string; locale?: string;
+  };
+
+  const fields: Record<string, string> = {};
+  if (field === "title")            fields.title = proposed;
+  if (field === "short_description") fields.shortDescription = proposed;
+  if (field === "description")       fields.fullDescription = proposed;
+
+  await updateListing(app.googlePlayId, locale, fields);
+
+  return { packageName: app.googlePlayId, locale, field, applied: proposed };
 }
 
 async function _execUpdateGovernance(

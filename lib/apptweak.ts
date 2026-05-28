@@ -1,5 +1,6 @@
 const BASE = "https://public-api.apptweak.com/api/public/store";
 
+// platform: "ios" | "android"
 async function get(path: string, params: Record<string, string>) {
   const apiKey = process.env.APPTWEAK_API_KEY;
   if (!apiKey) throw new Error("APPTWEAK_API_KEY not set");
@@ -69,6 +70,33 @@ export async function fetchKeywordMetrics(
         volume: data.result?.[kw]?.volume?.value ?? null,
         difficulty: data.result?.[kw]?.difficulty?.value ?? null,
       };
+    }
+  }
+  return results;
+}
+
+// Android キーワード順位（Google Play）
+export async function fetchAndroidKeywordRankings(
+  packageName: string,
+  keywords: string[],
+  country = "jp",
+  language = "ja",
+): Promise<Record<string, { rank: number | null }>> {
+  const results: Record<string, { rank: number | null }> = {};
+
+  for (let i = 0; i < keywords.length; i += 5) {
+    const batch = keywords.slice(i, i + 5);
+    const data = await get("/apps/keywords-rankings/current.json", {
+      apps: packageName,
+      keywords: batch.join(","),
+      metrics: "rank",
+      device: "android",
+      country,
+      language,
+    });
+    const appData = data.result?.[packageName] ?? {};
+    for (const kw of batch) {
+      results[kw] = { rank: appData[kw]?.rank?.effective_value ?? null };
     }
   }
   return results;
