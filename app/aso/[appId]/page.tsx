@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { KeywordManager } from "./KeywordManager";
 import { Button } from "@/components/Button";
 import { SyncButton } from "./SyncButton";
+import { AsoDataSection } from "./AsoDataSection";
 
 export default async function AsoAppPage({
   params,
@@ -35,10 +36,17 @@ export default async function AsoAppPage({
   const highCount = app.keywords.filter((k) => k.priority === "high").length;
   const latestReport = recentReports[0];
   const latestData = (latestReport?.data ?? {}) as {
-    appMetrics?: { downloads: number | null; revenues: number | null; revenueCurrency: string; ratingsAvg: number | null; appPower: number | null };
+    appMetrics?: { downloads: number | null; revenues: number | null; revenueCurrency: string; ratingsAvg: number | null; ratingsTotal: number | null; appPower: number | null };
     keywords?: { keyword: string; rank: number | null; prevRank: number | null; volume: number | null; difficulty: number | null }[];
     syncedAt?: string;
   };
+
+  // 承認待ちの ASO 提案を取得
+  const pendingProposals = await db.proposal.findMany({
+    where: { domain: "aso", targetId: appId, status: "pending" },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, title: true, summary: true, rationale: true, status: true },
+  });
 
   return (
     <div>
@@ -56,74 +64,30 @@ export default async function AsoAppPage({
         ))}
       </div>
 
-      {/* Apptweak 最新データ */}
+      {/* Apptweak データ + 提案 */}
       <section className="py-12 border-b border-[#f0f0f0]">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-[24px] font-semibold text-[#1d1d1f] tracking-tight">ASO データ</h2>
+            <h2 className="text-[24px] font-semibold text-[#1d1d1f] tracking-tight">ASO ダッシュボード</h2>
             {latestReport && (
-              <p className="text-[13px] text-[#6e6e73] mt-1">
-                最終同期: {latestReport.date}
-                {latestData.syncedAt && ` ${new Date(latestData.syncedAt).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}`}
-              </p>
+              <p className="text-[13px] text-[#6e6e73] mt-1">Apptweak データ · 最終同期: {latestReport.date}</p>
             )}
           </div>
           <SyncButton appId={appId} />
         </div>
 
         {latestData.appMetrics ? (
-          <div className="space-y-8">
-            {/* App Metrics */}
-            <div className="grid grid-cols-4 divide-x divide-[#f0f0f0] border border-[#f0f0f0] rounded-2xl">
-              {[
-                { label: "DL数", value: latestData.appMetrics.downloads?.toLocaleString() ?? "—" },
-                { label: "売上", value: latestData.appMetrics.revenues != null ? `$${latestData.appMetrics.revenues} ${latestData.appMetrics.revenueCurrency}` : "—" },
-                { label: "評価", value: latestData.appMetrics.ratingsAvg?.toFixed(2) ?? "—" },
-                { label: "App Power", value: latestData.appMetrics.appPower != null ? `${latestData.appMetrics.appPower}/10` : "—" },
-              ].map(({ label, value }) => (
-                <div key={label} className="px-6 py-5 first:rounded-l-2xl last:rounded-r-2xl">
-                  <p className="text-[28px] font-semibold text-[#1d1d1f] leading-none tracking-tight">{value}</p>
-                  <p className="text-[12px] text-[#6e6e73] mt-2">{label}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Keyword Rankings */}
-            {latestData.keywords && latestData.keywords.length > 0 && (
-              <div>
-                <p className="text-[13px] font-medium text-[#1d1d1f] mb-3">キーワード順位</p>
-                <div className="divide-y divide-[#f0f0f0]">
-                  {latestData.keywords
-                    .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
-                    .map((kw) => {
-                      const rankStr = kw.rank && kw.rank < 500 ? `${kw.rank}位` : "圏外";
-                      const diff = kw.prevRank != null && kw.rank != null && kw.prevRank < 500 && kw.rank < 500
-                        ? kw.rank - kw.prevRank : null;
-                      return (
-                        <div key={kw.keyword} className="flex items-center justify-between py-3">
-                          <span className="text-[14px] font-medium text-[#1d1d1f]">{kw.keyword}</span>
-                          <div className="flex items-center gap-6 text-[13px]">
-                            <span className="text-[#6e6e73]">vol: {kw.volume ?? "?"}</span>
-                            <span className="text-[#6e6e73]">diff: {kw.difficulty ?? "?"}</span>
-                            <span className={`font-semibold ${kw.rank && kw.rank < 50 ? "text-[#1d7a47]" : kw.rank && kw.rank < 500 ? "text-[#1d1d1f]" : "text-[#86868b]"}`}>
-                              {rankStr}
-                              {diff !== null && (
-                                <span className={diff < 0 ? "text-[#1d7a47]" : diff > 0 ? "text-red-500" : ""}>
-                                  {diff < 0 ? ` ↑${Math.abs(diff)}` : diff > 0 ? ` ↓${diff}` : " →"}
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
-          </div>
+          <AsoDataSection
+            appId={appId}
+            reportDate={latestReport?.date ?? null}
+            syncedAt={latestData.syncedAt ?? null}
+            metrics={latestData.appMetrics}
+            keywords={latestData.keywords ?? []}
+            pendingProposals={pendingProposals}
+          />
         ) : (
-          <div className="py-12 text-center border border-dashed border-[#d2d2d7] rounded-2xl">
-            <p className="text-[#6e6e73] text-[15px] mb-4">データ未取得</p>
+          <div className="py-16 text-center border border-dashed border-[#d2d2d7] rounded-2xl">
+            <p className="text-[#6e6e73] text-[15px] mb-2">データ未取得</p>
             <p className="text-[13px] text-[#86868b]">「Apptweak 同期」ボタンを押してデータを取得してください</p>
           </div>
         )}
