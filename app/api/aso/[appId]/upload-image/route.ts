@@ -21,6 +21,7 @@ export async function POST(
   const platform = formData.get("platform") as string;       // "ios" | "android"
   const imageType = formData.get("imageType") as string;
   const language = formData.get("language") as string ?? "ja";
+  const dryRun = formData.get("dryRun") === "true";          // ドライラン
 
   if (!file) return NextResponse.json({ error: "file required" }, { status: 400 });
   if (!platform) return NextResponse.json({ error: "platform required" }, { status: 400 });
@@ -34,8 +35,8 @@ export async function POST(
   if (platform === "android") {
     if (!app.googlePlayId) return NextResponse.json({ error: "googlePlayId not set" }, { status: 400 });
     const locale = language === "ja" ? "ja-JP" : "en-US";
-    result = await uploadGPlayImage(app.googlePlayId, locale, imageType as GPlayImageType, imageData, mimeType);
-    result = { platform: "android", imageType, locale, ...result };
+    result = await uploadGPlayImage(app.googlePlayId, locale, imageType as GPlayImageType, imageData, mimeType, dryRun);
+    result = { platform: "android", imageType, locale, dryRun, ...result };
 
   } else if (platform === "ios") {
     if (!app.iosId) return NextResponse.json({ error: "iosId not set" }, { status: 400 });

@@ -69,7 +69,8 @@ export async function uploadGPlayImage(
   imageType: GPlayImageType,
   imageData: ArrayBuffer,
   mimeType: string,
-): Promise<{ url: string; sha1: string }> {
+  dryRun = false,
+): Promise<{ url: string; sha1: string; dryRun: boolean }> {
   const token = await getAccessToken();
   const editId = await createEdit(packageName);
 
@@ -92,9 +93,15 @@ export async function uploadGPlayImage(
     }
 
     const result = await res.json();
-    await commitEdit(packageName, editId);
 
-    return { url: result.image?.url ?? "", sha1: result.image?.sha1 ?? "" };
+    if (dryRun) {
+      // ドライラン: コミットせず削除（審査には入らない）
+      await deleteEdit(packageName, editId);
+    } else {
+      await commitEdit(packageName, editId);
+    }
+
+    return { url: result.image?.url ?? "", sha1: result.image?.sha1 ?? "", dryRun };
   } catch (err) {
     await deleteEdit(packageName, editId);
     throw err;

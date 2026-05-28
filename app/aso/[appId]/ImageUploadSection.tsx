@@ -32,6 +32,7 @@ export function ImageUploadSection({
   const [language, setLanguage] = useState("ja");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [dryRun, setDryRun] = useState(true);  // デフォルトはドライラン（安全優先）
   const [state, setState] = useState<"idle" | "uploading" | "done" | "error" | "waiting">("idle");
   const [message, setMessage] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -62,6 +63,7 @@ export function ImageUploadSection({
     form.append("platform", platform);
     form.append("imageType", imageType);
     form.append("language", language);
+    form.append("dryRun", String(dryRun));
 
     try {
       const res = await fetch(`/api/aso/${appId}/upload-image`, {
@@ -73,7 +75,7 @@ export function ImageUploadSection({
 
       if (res.ok) {
         setState("done");
-        setMessage("アップロード完了 ✓");
+        setMessage(json.dryRun ? "ドライラン完了 ✓（審査には未提出）" : "アップロード完了 ✓（審査に提出されました）");
         setFile(null);
         setPreview(null);
       } else if (json.waitingForVersion) {
@@ -165,14 +167,37 @@ export function ImageUploadSection({
         </div>
       )}
 
+      {/* Dry run toggle */}
+      <label className="flex items-center gap-3 cursor-pointer">
+        <div
+          onClick={() => setDryRun(!dryRun)}
+          className={`w-10 h-6 rounded-full transition-colors relative ${dryRun ? "bg-[#1d1d1f]" : "bg-[#d2d2d7]"}`}
+        >
+          <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${dryRun ? "left-5" : "left-1"}`} />
+        </div>
+        <div>
+          <p className="text-[13px] font-medium text-[#1d1d1f]">
+            ドライラン {dryRun ? "ON" : "OFF"}
+          </p>
+          <p className="text-[11px] text-[#86868b]">
+            {dryRun
+              ? "ON: アップロードを検証するが審査には提出しない（テスト用）"
+              : "OFF: 実際にストアの審査に提出する"}
+          </p>
+        </div>
+      </label>
+
       {/* Upload button */}
       <div className="flex items-center gap-3">
         <Button
           onClick={upload}
           disabled={!file || state === "uploading"}
-          variant={state === "error" ? "danger" : "primary"}
+          variant={state === "error" ? "danger" : dryRun ? "secondary" : "primary"}
         >
-          {state === "uploading" ? "アップロード中..." : state === "done" ? "完了 ✓" : "アップロード"}
+          {state === "uploading"
+            ? (dryRun ? "検証中..." : "提出中...")
+            : state === "done" ? "完了 ✓"
+            : dryRun ? "ドライラン実行" : "🚀 審査に提出"}
         </Button>
         {message && (
           <p className={`text-[13px] ${state === "error" ? "text-red-500" : state === "waiting" ? "text-[#a05c00]" : "text-[#1d7a47]"}`}>
