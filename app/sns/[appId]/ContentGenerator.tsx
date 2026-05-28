@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/Button";
 
 const PLATFORMS = [
   { value: "youtube",   label: "YouTube" },
@@ -70,7 +71,9 @@ export function ContentGenerator({ appId }: { appId: string }) {
         </div>
       </div>
 
-      <button
+      <Button
+        variant={state === "error" ? "danger" : state === "idle" ? "primary" : "secondary"}
+        disabled={state === "running"}
         onClick={async () => {
           setState("running");
           const res = await fetch(`/api/sns/${appId}/generate`, {
@@ -80,25 +83,12 @@ export function ContentGenerator({ appId }: { appId: string }) {
           });
           setState(res.ok ? "done" : "error");
           if (res.ok) {
-            setTimeout(() => {
-              setState("idle");
-              router.push(`/sns/${appId}/drafts`);
-            }, 1000);
+            setTimeout(() => { setState("idle"); router.push(`/sns/${appId}/drafts`); }, 1000);
           }
         }}
-        disabled={state === "running"}
-        className={`px-5 py-2.5 rounded-xl text-[13px] font-medium transition-colors ${
-          state === "running"
-            ? "bg-[#f5f5f7] text-[#6e6e73] cursor-wait"
-            : state === "done"
-            ? "bg-[#f5f5f7] text-[#1d1d1f]"
-            : state === "error"
-            ? "bg-[#f5f5f7] text-red-500"
-            : "bg-[#1d1d1f] hover:bg-black text-white"
-        }`}
       >
         {state === "running" ? "生成中..." : state === "done" ? "完了" : state === "error" ? "エラー" : "生成する"}
-      </button>
+      </Button>
     </div>
   );
 }

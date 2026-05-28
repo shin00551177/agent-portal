@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Button } from "@/components/Button";
 
 type Keyword = { id: string; keyword: string; priority: string };
 
@@ -54,12 +55,7 @@ export function KeywordManager({ appId, keywords }: { appId: string; keywords: K
           <option value="high">優先度: 高</option>
           <option value="medium">優先度: 中</option>
         </select>
-        <button
-          onClick={addKeyword}
-          className="px-4 py-2 bg-[#1d1d1f] hover:bg-black rounded-lg text-[13px] text-white font-medium transition-colors"
-        >
-          追加
-        </button>
+        <Button onClick={addKeyword}>追加</Button>
       </div>
 
       {[

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/Button";
 
 type Account = {
   id: string;
@@ -53,12 +54,7 @@ export function AccountManager({
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="px-4 py-2 bg-[#1d1d1f] hover:bg-black text-white text-[13px] font-medium rounded-xl transition-colors"
-        >
-          + アカウント追加
-        </button>
+        <Button onClick={() => setShowForm((v) => !v)}>+ アカウント追加</Button>
       </div>
 
       {showForm && (
@@ -92,14 +88,10 @@ export function AccountManager({
             </div>
           </div>
           <div className="flex gap-2 justify-end">
-            <button onClick={() => setShowForm(false)}
-              className="px-4 py-2 text-[13px] text-[#6e6e73] hover:text-[#1d1d1f] transition-colors">
-              キャンセル
-            </button>
-            <button onClick={addAccount} disabled={saving || !form.username.trim()}
-              className="px-4 py-2 bg-[#1d1d1f] hover:bg-black disabled:opacity-40 text-white text-[13px] font-medium rounded-xl transition-colors">
+            <Button variant="secondary" onClick={() => setShowForm(false)}>キャンセル</Button>
+            <Button onClick={addAccount} disabled={saving || !form.username.trim()}>
               {saving ? "保存中..." : "保存"}
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -130,10 +122,7 @@ export function AccountManager({
                   </p>
                 </div>
               </div>
-              <button onClick={() => deleteAccount(account.id)}
-                className="text-[12px] text-[#6e6e73] hover:text-[#1d1d1f] px-3 py-1.5 rounded-xl hover:bg-[#f5f5f7] transition-all">
-                削除
-              </button>
+              <Button size="sm" variant="danger" onClick={() => deleteAccount(account.id)}>削除</Button>
             </div>
           ))
         )}

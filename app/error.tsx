@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { Button } from "@/components/Button";
 
 export default function Error({
   error,
@@ -24,12 +25,7 @@ export default function Error({
         {error.digest && (
           <p className="text-[13px] text-[#86868b] mb-10 font-mono">Error ID: {error.digest}</p>
         )}
-        <button
-          onClick={reset}
-          className="px-6 py-3 bg-[#1d1d1f] hover:bg-black text-white rounded-xl text-[15px] font-medium transition-colors"
-        >
-          再試行
-        </button>
+        <Button size="lg" onClick={reset}>再試行</Button>
       </div>
     </div>
   );

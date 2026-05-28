@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/Button";
 
 type EgoHit = {
   id: string; source: string; keyword: string; title: string; url: string;
@@ -85,10 +86,7 @@ export function EgoHitList({ appId, initialHits }: { appId: string; initialHits:
           ))}
         </div>
         {!showForm && (
-          <button onClick={() => setShowForm(true)}
-            className="px-4 py-2 text-[13px] font-medium bg-[#1d1d1f] hover:bg-black text-white rounded-xl transition-colors">
-            + 手動登録
-          </button>
+          <Button size="sm" onClick={() => setShowForm(true)}>+ 手動登録</Button>
         )}
       </div>
 
@@ -112,11 +110,10 @@ export function EgoHitList({ appId, initialHits }: { appId: string; initialHits:
             <input className="col-span-2 px-3 py-2 text-[13px] bg-[#f5f5f7] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0071e3]" placeholder="スニペット（任意）" value={form.snippet} onChange={(e) => setForm((f) => ({ ...f, snippet: e.target.value }))} />
           </div>
           <div className="flex gap-2 justify-end">
-            <button onClick={() => setShowForm(false)} className="px-4 py-1.5 text-[13px] text-[#6e6e73] hover:text-[#1d1d1f] transition-colors">キャンセル</button>
-            <button onClick={addHit} disabled={adding || !form.title.trim() || !form.url.trim()}
-              className="px-4 py-1.5 text-[13px] font-medium bg-[#1d1d1f] disabled:opacity-40 text-white rounded-xl transition-colors">
+            <Button size="sm" variant="secondary" onClick={() => setShowForm(false)}>キャンセル</Button>
+            <Button size="sm" onClick={addHit} disabled={adding || !form.title.trim() || !form.url.trim()}>
               {adding ? "追加中..." : "追加"}
-            </button>
+            </Button>
           </div>
         </div>
       )}
