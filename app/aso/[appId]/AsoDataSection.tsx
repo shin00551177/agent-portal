@@ -178,23 +178,27 @@ function ProposalCard({
       </div>
 
       {/* Action bar */}
-      <div className="px-5 py-3 border-t border-[#f0f0f0] bg-[#fafafa]">
+      <div className="px-5 py-4 border-t border-[#f0f0f0] bg-[#fafafa]">
         {!showOverride ? (
           <div className="flex items-center gap-3">
-            <Button size="sm" disabled={deciding} onClick={handleYes}>
-              承認（対応する）
-            </Button>
+            <button
+              disabled={deciding}
+              onClick={handleYes}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#1d1d1f] hover:bg-black text-white rounded-xl text-[14px] font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 shadow-sm"
+            >
+              🚀 よし、やろう！
+            </button>
             <button
               disabled={deciding}
               onClick={() => setShowOverride(true)}
-              className="text-[13px] text-[#6e6e73] hover:text-[#1d1d1f] transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-5 py-2.5 bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#6e6e73] hover:text-[#1d1d1f] rounded-xl text-[14px] font-medium transition-all disabled:opacity-50"
             >
-              違う…
+              🤔 ちょっと違う…
             </button>
           </div>
         ) : (
           <div className="space-y-2">
-            <p className="text-[12px] text-[#6e6e73]">どう違いますか？（省略可）</p>
+            <p className="text-[13px] text-[#6e6e73]">どう違いますか？（省略可）</p>
             <textarea
               value={overrideNote}
               onChange={(e) => setOverrideNote(e.target.value)}
@@ -203,18 +207,21 @@ function ProposalCard({
               rows={2}
             />
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="danger" disabled={deciding} onClick={handleOverride}>
+              <Button size="md" variant="danger" disabled={deciding} onClick={handleOverride}>
                 差し戻す
               </Button>
               <button
                 onClick={() => setShowOverride(false)}
-                className="text-[12px] text-[#6e6e73] hover:text-[#1d1d1f]"
+                className="text-[13px] text-[#6e6e73] hover:text-[#1d1d1f]"
               >
                 キャンセル
               </button>
             </div>
           </div>
         )}
+        <p className="mt-2.5 text-[11px] text-[#c7c7cc]">
+          ※ 承認はメモとして記録されます。App Store への自動反映は API キー設定後に有効になります。
+        </p>
       </div>
     </div>
   );
