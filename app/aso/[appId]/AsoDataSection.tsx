@@ -231,6 +231,104 @@ function ProposalCard({
   );
 }
 
+// ─── Ask Claude ──────────────────────────────────────────────────────────────
+
+const QUICK_QUESTIONS = [
+  "App Powerがこんなに低いのはなぜ？",
+  "今すぐできる改善アクションは？",
+  "どのキーワードを優先的に攻めるべき？",
+];
+
+function AskSection({ appId }: { appId: string }) {
+  const [question, setQuestion] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function ask(q: string) {
+    if (!q.trim()) return;
+    setLoading(true);
+    setAnswer(null);
+    setError(null);
+    setQuestion(q);
+    try {
+      const res = await fetch(`/api/aso/${appId}/ask`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: q }),
+        credentials: "include",
+      });
+      const json = await res.json();
+      if (res.ok) setAnswer(json.answer);
+      else setError(json.error ?? "エラーが発生しました");
+    } catch {
+      setError("通信エラーが発生しました");
+    }
+    setLoading(false);
+  }
+
+  return (
+    <div className="border border-[#d2d2d7] rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-[#f0f0f0] bg-[#fafafa]">
+        <p className="text-[14px] font-medium text-[#1d1d1f]">💬 AIに聞く</p>
+        <p className="text-[12px] text-[#6e6e73] mt-0.5">このデータについて何でも聞いてください</p>
+      </div>
+
+      {/* Quick questions */}
+      <div className="px-5 pt-4 flex flex-wrap gap-2">
+        {QUICK_QUESTIONS.map((q) => (
+          <button
+            key={q}
+            onClick={() => ask(q)}
+            disabled={loading}
+            className="text-[12px] px-3 py-1.5 bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#1d1d1f] rounded-full transition-colors disabled:opacity-50"
+          >
+            {q}
+          </button>
+        ))}
+      </div>
+
+      {/* Input */}
+      <div className="px-5 py-4 flex gap-3">
+        <input
+          type="text"
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && ask(question)}
+          placeholder="例: なぜライブ配信は44位なの？ / ライバルアプリと何が違う？"
+          className="flex-1 px-4 py-2.5 bg-[#f5f5f7] rounded-xl text-[13px] text-[#1d1d1f] placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+          disabled={loading}
+        />
+        <Button size="sm" onClick={() => ask(question)} disabled={loading || !question.trim()}>
+          {loading ? "..." : "聞く"}
+        </Button>
+      </div>
+
+      {/* Answer */}
+      {(loading || answer || error) && (
+        <div className="px-5 pb-5">
+          <div className="border-t border-[#f0f0f0] pt-4">
+            {loading && (
+              <div className="flex items-center gap-2 text-[13px] text-[#6e6e73]">
+                <span className="inline-block w-2 h-2 rounded-full bg-[#0071e3] animate-pulse" />
+                考えています...
+              </div>
+            )}
+            {answer && (
+              <div className="space-y-2">
+                <p className="text-[11px] text-[#86868b] font-medium">Q: {question}</p>
+                <p className="text-[14px] text-[#1d1d1f] leading-relaxed whitespace-pre-line">{answer}</p>
+              </div>
+            )}
+            {error && <p className="text-[13px] text-red-500">{error}</p>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rankingHistory, syncedAt, metrics, keywords, pendingProposals }: Props) {
@@ -414,6 +512,9 @@ export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rank
           </div>
         </div>
       )}
+
+      {/* ─── AIに聞く ───────────────────────────────────── */}
+      {!isRangeQuery && <AskSection appId={appId} />}
 
       {/* ─── 分析・提案 ─────────────────────────────────── */}
       <div>
