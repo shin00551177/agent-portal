@@ -1,0 +1,52 @@
+export const dynamic = "force-dynamic";
+
+import { notFound } from "next/navigation";
+import { db } from "@/lib/db";
+import { WorkflowTrigger } from "../WorkflowTrigger";
+import { GovernancePanel } from "@/components/GovernancePanel";
+
+export default async function AsoSettingsPage({
+  params,
+}: {
+  params: Promise<{ appId: string }>;
+}) {
+  const { appId } = await params;
+  const app = await db.asoApp.findUnique({ where: { id: appId } });
+  if (!app) notFound();
+
+  return (
+    <div className="space-y-16 max-w-2xl">
+      {/* Workflow toggles */}
+      <section>
+        <h2 className="text-[20px] font-semibold text-[#1d1d1f] tracking-tight mb-1">エージェント</h2>
+        <p className="text-[13px] text-[#6e6e73] mb-6">
+          各ワークフローの稼働・停止を切り替えます。
+        </p>
+        <WorkflowTrigger
+          appId={appId}
+          initialActive={app.active}
+          initialWorkflowStates={(app.workflowStates ?? {}) as Record<string, boolean>}
+        />
+      </section>
+
+      <div className="border-t border-[#f0f0f0]" />
+
+      {/* Governance */}
+      <section>
+        <h2 className="text-[20px] font-semibold text-[#1d1d1f] tracking-tight mb-1">ガバナンス設定</h2>
+        <p className="text-[13px] text-[#6e6e73] mb-6">
+          AI AGENT 行動規範 v0.1 — エスカレーション・停止条件・フォールバック動作
+        </p>
+        <GovernancePanel
+          appId={appId}
+          domain="aso"
+          initialConfig={{
+            escalationRules: (app.escalationRules ?? {}) as Record<string, unknown>,
+            haltConditions: (app.haltConditions ?? {}) as Record<string, unknown>,
+            fallbackBehavior: app.fallbackBehavior ?? "pause",
+          }}
+        />
+      </section>
+    </div>
+  );
+}

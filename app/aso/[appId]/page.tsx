@@ -3,11 +3,8 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { KeywordManager } from "./KeywordManager";
-import { WorkflowTrigger } from "./WorkflowTrigger";
-import { GovernancePanel } from "@/components/GovernancePanel";
-import Link from "next/link";
 
-export default async function AppDetailPage({
+export default async function AsoAppPage({
   params,
 }: {
   params: Promise<{ appId: string }>;
@@ -15,7 +12,9 @@ export default async function AppDetailPage({
   const { appId } = await params;
   const app = await db.asoApp.findUnique({
     where: { id: appId },
-    include: { keywords: { where: { active: true }, orderBy: [{ priority: "asc" }, { keyword: "asc" }] } },
+    include: {
+      keywords: { where: { active: true }, orderBy: [{ priority: "asc" }, { keyword: "asc" }] },
+    },
   });
   if (!app) notFound();
 
@@ -35,29 +34,6 @@ export default async function AppDetailPage({
 
   return (
     <div>
-      {/* Header */}
-      <div className="pb-16 border-b border-[#f0f0f0]">
-        <p className="text-[13px] text-[#6e6e73] mb-5">
-          <Link href="/aso" className="hover:text-[#1d1d1f] transition-colors">ASO管理</Link>
-          {" "}›{" "}
-          <span className="text-[#1d1d1f]">{app.name}</span>
-        </p>
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-[40px] font-semibold text-[#1d1d1f] tracking-tight leading-[1.05]">{app.name}</h1>
-            <p className="text-[15px] text-[#6e6e73] mt-2">
-              {[app.googlePlayId && `Android: ${app.googlePlayId}`, app.iosId && `iOS: ${app.iosId}`].filter(Boolean).join(" · ")}
-            </p>
-          </div>
-          <p className="text-[13px] text-[#1d1d1f] flex items-center gap-1.5 mt-2">
-            {app.active
-              ? <><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block" />稼働中</>
-              : <span className="text-[#6e6e73]">停止中</span>
-            }
-          </p>
-        </div>
-      </div>
-
       {/* Stats */}
       <div className="grid grid-cols-3 gap-0 divide-x divide-[#f0f0f0] py-12 border-b border-[#f0f0f0]">
         {[
@@ -72,16 +48,6 @@ export default async function AppDetailPage({
         ))}
       </div>
 
-      {/* Workflows */}
-      <section className="py-12 border-b border-[#f0f0f0]">
-        <h2 className="text-[24px] font-semibold text-[#1d1d1f] tracking-tight mb-8">エージェント</h2>
-        <WorkflowTrigger
-          appId={appId}
-          initialActive={app.active}
-          initialWorkflowStates={(app.workflowStates ?? {}) as Record<string, boolean>}
-        />
-      </section>
-
       {/* Keywords */}
       <section className="py-12 border-b border-[#f0f0f0]">
         <div className="flex items-baseline justify-between mb-8">
@@ -89,21 +55,6 @@ export default async function AppDetailPage({
           <p className="text-[13px] text-[#6e6e73]">優先度「高」はより頻繁に分析されます</p>
         </div>
         <KeywordManager appId={appId} keywords={app.keywords} />
-      </section>
-
-      {/* ガバナンス */}
-      <section className="py-12 border-b border-[#f0f0f0]">
-        <h2 className="text-[24px] font-semibold text-[#1d1d1f] tracking-tight mb-2">ガバナンス設定</h2>
-        <p className="text-[13px] text-[#6e6e73] mb-8">AI AGENT 行動規範 v0.1 準拠</p>
-        <GovernancePanel
-          appId={appId}
-          domain="aso"
-          initialConfig={{
-            escalationRules: (app.escalationRules ?? {}) as Record<string, unknown>,
-            haltConditions: (app.haltConditions ?? {}) as Record<string, unknown>,
-            fallbackBehavior: app.fallbackBehavior ?? "pause",
-          }}
-        />
       </section>
 
       {/* Recent Reports */}

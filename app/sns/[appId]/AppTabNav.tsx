@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
-  { href: "",          label: "コンテンツ生成" },
-  { href: "/drafts",   label: "下書き",   countKey: "pendingDrafts" as const },
-  { href: "/accounts", label: "アカウント" },
-  { href: "/ego",      label: "エゴサ",   countKey: "activeEgoHits" as const },
+  { href: "",           label: "コンテンツ生成" },
+  { href: "/drafts",    label: "下書き",   countKey: "pendingDrafts" as const },
+  { href: "/accounts",  label: "アカウント" },
+  { href: "/ego",       label: "エゴサ",   countKey: "activeEgoHits" as const },
+  { href: "/settings",  label: "設定" },
 ];
 
 export function AppTabNav({

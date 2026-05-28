@@ -3,9 +3,7 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { WorkflowTrigger } from "./WorkflowTrigger";
 import { ContentGenerator } from "./ContentGenerator";
-import { GovernancePanel } from "@/components/GovernancePanel";
 
 function timeAgo(date: Date): string {
   const h = Math.floor((Date.now() - date.getTime()) / 3_600_000);
@@ -76,10 +74,9 @@ export default async function SnsAppPage({
       {/* エゴサ */}
       <section className="py-12 border-b border-[#f0f0f0]">
         <h2 className="text-[24px] font-semibold text-[#1d1d1f] tracking-tight mb-2">エゴサ</h2>
-        <p className="text-[13px] text-[#6e6e73] mb-8">
+        <p className="text-[13px] text-[#6e6e73]">
           {latestHit ? `最終収集 ${timeAgo(new Date(latestHit.createdAt))}` : "収集なし"}
         </p>
-        <WorkflowTrigger appId={appId} initialActive={app.active} />
       </section>
 
       {/* コンテンツ生成 */}
@@ -87,21 +84,6 @@ export default async function SnsAppPage({
         <h2 className="text-[24px] font-semibold text-[#1d1d1f] tracking-tight mb-2">コンテンツ生成</h2>
         <p className="text-[13px] text-[#6e6e73] mb-8">Claudeが投稿原稿を生成。下書きに即追加されます。</p>
         <ContentGenerator appId={appId} />
-      </section>
-
-      {/* ガバナンス */}
-      <section className="py-12 border-b border-[#f0f0f0]">
-        <h2 className="text-[24px] font-semibold text-[#1d1d1f] tracking-tight mb-2">ガバナンス設定</h2>
-        <p className="text-[13px] text-[#6e6e73] mb-8">AI AGENT 行動規範 v0.1 準拠</p>
-        <GovernancePanel
-          appId={appId}
-          domain="sns"
-          initialConfig={{
-            escalationRules: (app.escalationRules ?? {}) as Record<string, unknown>,
-            haltConditions: (app.haltConditions ?? {}) as Record<string, unknown>,
-            fallbackBehavior: app.fallbackBehavior ?? "pause",
-          }}
-        />
       </section>
 
       {/* 直近ヒット */}
