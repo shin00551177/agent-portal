@@ -8,11 +8,13 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ appId: string }> },
 ) {
-  // セッション認証 or API キー認証
-  const portalKey = process.env.PORTAL_API_KEY;
-  const incomingKey = req.headers.get("x-api-key");
-  const authed = (portalKey && incomingKey === portalKey) || (await isAuthenticated());
-  if (!authed) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  // セッション認証（ブラウザ経由）または未認証のまま許可（内部 cron 用）
+  // TODO: cron スクリプト側で SYNC_SECRET を使う形に移行
+  const isLoggedIn = await isAuthenticated();
+  const syncSecret = process.env.SYNC_SECRET;
+  if (!isLoggedIn && syncSecret && req.headers.get("x-sync-secret") !== syncSecret) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const { appId } = await params;
 
