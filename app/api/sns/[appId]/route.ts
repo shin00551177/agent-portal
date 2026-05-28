@@ -12,7 +12,8 @@ export async function PATCH(
   if (typeof body.active === "boolean") data.active = body.active;
   if (typeof body.fallbackBehavior === "string") data.fallbackBehavior = body.fallbackBehavior;
   if (body.escalationRules !== undefined) data.escalationRules = body.escalationRules;
-  if (body.haltConditions !== undefined) data.haltConditions = body.haltConditions;
+  if (body.haltConditions  !== undefined) data.haltConditions  = body.haltConditions;
+  if (body.agentMeta       !== undefined) data.agentMeta       = body.agentMeta;
 
   const app = await db.snsApp.update({
     where: { id: appId },

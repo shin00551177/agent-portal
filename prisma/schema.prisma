@@ -20,6 +20,8 @@ model AsoApp {
   escalationRules  Json   @default("{}")
   haltConditions   Json   @default("{}")
   fallbackBehavior String @default("pause")
+  // Agent台帳 (運用ポリシー §5)
+  agentMeta        Json   @default("{}")
   keywords       AsoKeyword[]
   reports      AsoReport[]
   releases     AsoRelease[]
@@ -67,6 +69,8 @@ model SnsApp {
   escalationRules  Json   @default("{}")
   haltConditions   Json   @default("{}")
   fallbackBehavior String @default("pause")
+  // Agent台帳 (運用ポリシー §5)
+  agentMeta        Json   @default("{}")
   drafts    SnsDraft[]
   egoHits   EgoHit[]
   accounts  SnsAccount[]

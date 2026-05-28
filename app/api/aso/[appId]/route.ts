@@ -13,7 +13,8 @@ export async function PATCH(
   if (body.workflowStates !== undefined) data.workflowStates = body.workflowStates;
   if (typeof body.fallbackBehavior === "string") data.fallbackBehavior = body.fallbackBehavior;
   if (body.escalationRules !== undefined) data.escalationRules = body.escalationRules;
-  if (body.haltConditions !== undefined) data.haltConditions = body.haltConditions;
+  if (body.haltConditions  !== undefined) data.haltConditions  = body.haltConditions;
+  if (body.agentMeta       !== undefined) data.agentMeta       = body.agentMeta;
 
   const app = await db.asoApp.update({ where: { id: appId }, data });
   return NextResponse.json({ active: app.active, workflowStates: app.workflowStates });

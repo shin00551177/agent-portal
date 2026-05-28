@@ -36,8 +36,9 @@ export default async function SnsSettingsPage({
           domain="sns"
           initialConfig={{
             escalationRules: (app.escalationRules ?? {}) as Record<string, unknown>,
-            haltConditions: (app.haltConditions ?? {}) as Record<string, unknown>,
+            haltConditions:  (app.haltConditions  ?? {}) as Record<string, unknown>,
             fallbackBehavior: app.fallbackBehavior ?? "pause",
+            agentMeta:       (app.agentMeta       ?? {}) as Record<string, unknown>,
           }}
         />
       </section>
