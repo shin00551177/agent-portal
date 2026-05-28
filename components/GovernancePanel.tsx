@@ -1,39 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 // ─────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────
 
-type EscalationRules = {
-  threshold: number;   // #8: 閾値（数値）
-  condition: string;   // 条件の説明
-  unit: string;        // 単位テキスト
-};
-
-type HaltConditions = {
-  maxErrors: number;   // #12: 最大連続エラー数
-};
-
+type EscalationRules = { threshold: number; condition: string; unit: string };
+type HaltConditions  = { maxErrors: number };
 type AgentMeta = {
-  taskDescription: string;      // 対象業務
-  operatorName: string;         // 運用責任者
-  approvedAt: string;           // 承認日 (YYYY-MM-DD)
-  approverName: string;         // 承認者
-  monthlySavingsHours: number;  // 月間削減工数
+  taskDescription: string;
+  operatorName: string;
+  approvedAt: string;
+  approverName: string;
+  monthlySavingsHours: number;
 };
 
 type GovernanceConfig = {
   escalationRules: Partial<EscalationRules>;
-  haltConditions: Partial<HaltConditions>;
+  haltConditions:  Partial<HaltConditions>;
   fallbackBehavior: string;
   agentMeta: Partial<AgentMeta>;
 };
 
 type Props = {
-  appId: string;
-  domain: "sns" | "aso";
+  appId:   string;
+  appName: string;
+  domain:  "sns" | "aso";
   initialConfig: GovernanceConfig;
 };
 
@@ -48,7 +42,7 @@ const FALLBACK_OPTIONS = [
 ];
 
 const DOMAIN_DEFAULTS: Record<string, { condition: string; unit: string; threshold: number }> = {
-  sns: { condition: "ネガティブ言及率", unit: "% 以上でHoriへ通知", threshold: 30 },
+  sns: { condition: "ネガティブ言及率",   unit: "% 以上でHoriへ通知",       threshold: 30 },
   aso: { condition: "キーワード順位急落", unit: "位以上の下落でHoriへ通知", threshold: 10 },
 };
 
@@ -75,31 +69,29 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
 }
 
 const inputCls =
-  "px-3 py-1.5 bg-[#f5f5f7] rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3] w-24";
+  "px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3] w-24";
 
 // ─────────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────────
 
-export function GovernancePanel({ appId, domain, initialConfig }: Props) {
+export function GovernancePanel({ appId, appName, domain, initialConfig }: Props) {
+  const router = useRouter();
   const def = DOMAIN_DEFAULTS[domain];
 
-  // #8 escalation
+  // ── #8/#12/#13 form state (sent to review) ──
   const [escThreshold, setEscThreshold] = useState(
     initialConfig.escalationRules.threshold ?? def.threshold
   );
   const escCondition = initialConfig.escalationRules.condition ?? def.condition;
-  const escUnit = initialConfig.escalationRules.unit ?? def.unit;
+  const escUnit      = initialConfig.escalationRules.unit      ?? def.unit;
 
-  // #12 halt
   const [maxErrors, setMaxErrors] = useState(
     initialConfig.haltConditions.maxErrors ?? 5
   );
-
-  // #13 fallback
   const [fallback, setFallback] = useState(initialConfig.fallbackBehavior ?? "pause");
 
-  // §5 agent meta
+  // ── §5 agent meta form state (direct save) ──
   const meta = initialConfig.agentMeta;
   const [taskDesc,   setTaskDesc]   = useState(meta.taskDescription    ?? "");
   const [operator,   setOperator]   = useState(meta.operatorName        ?? "");
@@ -107,36 +99,78 @@ export function GovernancePanel({ appId, domain, initialConfig }: Props) {
   const [approver,   setApprover]   = useState(meta.approverName        ?? "");
   const [savingsHrs, setSavingsHrs] = useState(meta.monthlySavingsHours ?? 0);
 
-  const [saving, setSaving] = useState(false);
-  const [saved,  setSaved]  = useState(false);
+  // ── UI state ──
+  const [reviewState, setReviewState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [metaState,   setMetaState]   = useState<"idle" | "saving" | "saved">("idle");
 
-  async function save() {
-    setSaving(true);
+  // ── Send threshold changes to review ──
+  async function sendForReview() {
+    setReviewState("sending");
+    try {
+      const res = await fetch("/api/governance-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          domain,
+          appId,
+          appName,
+          current: {
+            escalationRules: {
+              threshold: initialConfig.escalationRules.threshold ?? def.threshold,
+              condition: escCondition,
+              unit: escUnit,
+            },
+            haltConditions:  { maxErrors: initialConfig.haltConditions.maxErrors ?? 5 },
+            fallbackBehavior: initialConfig.fallbackBehavior ?? "pause",
+          },
+          proposed: {
+            escalationRules: { threshold: escThreshold, condition: escCondition, unit: escUnit },
+            haltConditions:  { maxErrors },
+            fallbackBehavior: fallback,
+          },
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        if (err.error === "no changes detected") {
+          alert("変更がありません。値を変更してからレビューに送ってください。");
+          setReviewState("idle");
+          return;
+        }
+        throw new Error(err.error);
+      }
+      setReviewState("sent");
+      router.refresh();
+    } catch {
+      setReviewState("error");
+      setTimeout(() => setReviewState("idle"), 3000);
+    }
+  }
+
+  // ── Save agent meta directly ──
+  async function saveMeta() {
+    setMetaState("saving");
     await fetch(`/api/${domain}/${appId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        fallbackBehavior: fallback,
-        escalationRules: { threshold: escThreshold, condition: escCondition, unit: escUnit },
-        haltConditions:  { maxErrors },
         agentMeta: {
-          taskDescription:    taskDesc,
-          operatorName:       operator,
+          taskDescription:     taskDesc,
+          operatorName:        operator,
           approvedAt,
-          approverName:       approver,
+          approverName:        approver,
           monthlySavingsHours: savingsHrs,
         },
       }),
     });
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setMetaState("saved");
+    setTimeout(() => setMetaState("idle"), 2000);
   }
 
   return (
     <div className="space-y-10">
 
-      {/* ── #8 エスカレーション閾値 ─────────────────── */}
+      {/* ── #8 エスカレーション閾値 ──────────────── */}
       <div>
         <SectionHeader title="エスカレーション閾値" rule="#8" />
         <p className="text-[12px] text-[#6e6e73] mb-4">
@@ -148,9 +182,7 @@ export function GovernancePanel({ appId, domain, initialConfig }: Props) {
           </FieldRow>
           <FieldRow label="閾値">
             <input
-              type="number"
-              min={1}
-              max={100}
+              type="number" min={1} max={100}
               value={escThreshold}
               onChange={(e) => setEscThreshold(Number(e.target.value))}
               className={inputCls}
@@ -160,7 +192,7 @@ export function GovernancePanel({ appId, domain, initialConfig }: Props) {
         </div>
       </div>
 
-      {/* ── #12 停止条件 ───────────────────────────── */}
+      {/* ── #12 停止条件 ──────────────────────────── */}
       <div>
         <SectionHeader title="停止条件" rule="#12" />
         <p className="text-[12px] text-[#6e6e73] mb-4">
@@ -172,9 +204,7 @@ export function GovernancePanel({ appId, domain, initialConfig }: Props) {
           </FieldRow>
           <FieldRow label="最大回数">
             <input
-              type="number"
-              min={1}
-              max={50}
+              type="number" min={1} max={50}
               value={maxErrors}
               onChange={(e) => setMaxErrors(Number(e.target.value))}
               className={inputCls}
@@ -184,7 +214,7 @@ export function GovernancePanel({ appId, domain, initialConfig }: Props) {
         </div>
       </div>
 
-      {/* ── #13 フォールバック ──────────────────────── */}
+      {/* ── #13 フォールバック ───────────────────── */}
       <div>
         <SectionHeader title="オーナー不在時の動作" rule="#13" />
         <p className="text-[12px] text-[#6e6e73] mb-4">
@@ -208,74 +238,80 @@ export function GovernancePanel({ appId, domain, initialConfig }: Props) {
         </div>
       </div>
 
-      {/* ── §5 Agent台帳 ───────────────────────────── */}
-      <div>
+      {/* ── Review button (#8/#12/#13) ───────────── */}
+      <div className="bg-[#f5f5f7] rounded-2xl px-5 py-4 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-[13px] font-medium text-[#1d1d1f]">閾値設定をレビューに送る</p>
+          <p className="text-[12px] text-[#6e6e73] mt-0.5">
+            変更内容が「提案」として登録され、承認後に反映されます。
+          </p>
+        </div>
+        {reviewState === "sent" ? (
+          <a
+            href="/proposals"
+            className="shrink-0 px-5 py-2 bg-[#f0faf4] text-[#1d7a47] rounded-xl text-[13px] font-medium hover:bg-[#e0f5ea] transition-colors"
+          >
+            提案を確認 →
+          </a>
+        ) : (
+          <button
+            onClick={sendForReview}
+            disabled={reviewState === "sending"}
+            className="shrink-0 px-5 py-2 bg-[#1d1d1f] hover:bg-black text-white rounded-xl text-[13px] font-medium transition-colors disabled:opacity-50"
+          >
+            {reviewState === "sending" ? "送信中..." : reviewState === "error" ? "エラー" : "レビューに送る"}
+          </button>
+        )}
+      </div>
+
+      {/* ── §5 Agent台帳 ─────────────────────────── */}
+      <div className="pt-2 border-t border-[#f0f0f0]">
         <p className="text-[13px] font-medium text-[#1d1d1f] mb-1">
           Agent台帳{" "}
           <span className="text-[11px] font-normal text-[#86868b] ml-1">運用ポリシー §5</span>
         </p>
         <p className="text-[12px] text-[#6e6e73] mb-4">
-          全社Agent台帳に表示される情報です。承認済みAgentのみ報奨金対象となります。
+          台帳情報は承認不要で即時保存されます。
         </p>
         <div className="bg-[#f5f5f7] rounded-xl px-4 py-4 space-y-4">
           <FieldRow label="対象業務">
-            <input
-              type="text"
-              value={taskDesc}
-              onChange={(e) => setTaskDesc(e.target.value)}
+            <input type="text" value={taskDesc} onChange={(e) => setTaskDesc(e.target.value)}
               placeholder="例: SNSの言及を自動収集・通知"
-              className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
-            />
+              className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]" />
           </FieldRow>
           <FieldRow label="運用責任者">
-            <input
-              type="text"
-              value={operator}
-              onChange={(e) => setOperator(e.target.value)}
+            <input type="text" value={operator} onChange={(e) => setOperator(e.target.value)}
               placeholder="例: 堀 真之介"
-              className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
-            />
+              className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]" />
           </FieldRow>
           <FieldRow label="承認日">
-            <input
-              type="date"
-              value={approvedAt}
-              onChange={(e) => setApprovedAt(e.target.value)}
-              className={inputCls + " w-36"}
-            />
+            <input type="date" value={approvedAt} onChange={(e) => setApprovedAt(e.target.value)}
+              className={inputCls + " w-36"} />
           </FieldRow>
           <FieldRow label="承認者">
-            <input
-              type="text"
-              value={approver}
-              onChange={(e) => setApprover(e.target.value)}
+            <input type="text" value={approver} onChange={(e) => setApprover(e.target.value)}
               placeholder="例: George Miyauchi"
-              className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
-            />
+              className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]" />
           </FieldRow>
           <FieldRow label="月間削減工数">
-            <input
-              type="number"
-              min={0}
-              value={savingsHrs}
+            <input type="number" min={0} value={savingsHrs}
               onChange={(e) => setSavingsHrs(Number(e.target.value))}
-              className={inputCls}
-            />
+              className={inputCls} />
             <span className="text-[13px] text-[#6e6e73]">時間 / 月</span>
           </FieldRow>
         </div>
+
+        <div className="mt-4">
+          <button
+            onClick={saveMeta}
+            disabled={metaState === "saving"}
+            className="px-5 py-2 bg-[#1d1d1f] hover:bg-black text-white rounded-xl text-[13px] font-medium transition-colors disabled:opacity-50"
+          >
+            {metaState === "saving" ? "保存中..." : metaState === "saved" ? "保存しました ✓" : "台帳を保存"}
+          </button>
+        </div>
       </div>
 
-      {/* ── 保存ボタン ──────────────────────────────── */}
-      <div className="flex items-center gap-3 pt-2">
-        <button
-          onClick={save}
-          disabled={saving}
-          className="px-6 py-2.5 bg-[#1d1d1f] hover:bg-black text-white rounded-xl text-[13px] font-medium transition-colors disabled:opacity-50"
-        >
-          {saving ? "保存中..." : saved ? "保存しました ✓" : "保存"}
-        </button>
-      </div>
     </div>
   );
 }

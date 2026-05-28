@@ -39,6 +39,7 @@ export default async function AsoSettingsPage({
         </p>
         <GovernancePanel
           appId={appId}
+          appName={app.name}
           domain="aso"
           initialConfig={{
             escalationRules: (app.escalationRules ?? {}) as Record<string, unknown>,

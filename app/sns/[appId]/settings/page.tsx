@@ -33,6 +33,7 @@ export default async function SnsSettingsPage({
         </p>
         <GovernancePanel
           appId={appId}
+          appName={app.name}
           domain="sns"
           initialConfig={{
             escalationRules: (app.escalationRules ?? {}) as Record<string, unknown>,
