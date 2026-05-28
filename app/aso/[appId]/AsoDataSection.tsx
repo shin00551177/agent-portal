@@ -36,6 +36,7 @@ type Proposal = {
   summary: string;
   rationale: string; // JSON string of Analysis
   status: string;
+  result?: { waitingForVersion?: boolean; error?: string } | null;
 };
 
 type RankingHistory = Record<string, Record<string, number | null>>;
@@ -183,6 +184,17 @@ function ProposalCard({
 
       {/* Action bar */}
       <div className="px-5 py-4 border-t border-[#f0f0f0] bg-[#fafafa]">
+        {/* バージョン待ちバナー */}
+        {proposal.result?.waitingForVersion && (
+          <div className="mb-3 flex items-center gap-2 px-4 py-2.5 bg-[#fff7e6] rounded-xl">
+            <span className="text-[14px]">⏳</span>
+            <div className="flex-1">
+              <p className="text-[12px] font-medium text-[#a05c00]">バージョン待ち</p>
+              <p className="text-[11px] text-[#a05c00] mt-0.5">App Store Connect に編集可能なバージョンがありません。VN チームが新バージョンを作成後、再試行してください。</p>
+            </div>
+          </div>
+        )}
+
         {!showOverride ? (
           <div className="flex items-center gap-3">
             <button
@@ -190,7 +202,7 @@ function ProposalCard({
               onClick={handleYes}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#1d1d1f] hover:bg-black text-white rounded-xl text-[14px] font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 shadow-sm"
             >
-              🚀 よし、やろう！
+              {proposal.result?.waitingForVersion ? "🔄 再試行" : "🚀 よし、やろう！"}
             </button>
             <button
               disabled={deciding}

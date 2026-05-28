@@ -47,7 +47,7 @@ export default async function AsoAppPage({
 
   // 承認待ちの ASO 提案を取得
   const pendingProposals = await db.proposal.findMany({
-    where: { domain: "aso", targetId: appId, status: "pending" },
+    where: { domain: "aso", targetId: appId, status: { in: ["pending", "approved"] } },
     orderBy: { createdAt: "desc" },
     select: { id: true, title: true, summary: true, rationale: true, status: true },
   });

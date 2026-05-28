@@ -145,8 +145,8 @@ ${kwSummary}
             periodLabel,
           }),
           decisionType: "yesno",
-          actionType: "manual",
-          actionPayload: { field: p.field, proposed: p.proposed },
+          actionType: "update_aso_metadata",
+          actionPayload: { field: p.field, proposed: p.proposed, locale: "ja" },
           confidence: "medium",
         },
       })

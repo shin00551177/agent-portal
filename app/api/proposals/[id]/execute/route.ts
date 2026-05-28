@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { writeAuditLog } from "@/lib/audit";
+import { getEditableVersion, getLocalizationId, updateLocalization } from "@/lib/asc";
 
 // POST /api/proposals/[id]/execute  — 承認済み提案を実行する
 export async function POST(
@@ -36,9 +37,18 @@ export async function POST(
     return NextResponse.json(updated);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    // バージョン未作成による待機状態
+    const isWaiting = err instanceof Error && (err as { waitingForVersion?: boolean }).waitingForVersion;
     await db.proposal.update({
       where: { id },
-      data: { status: "failed", result: { error: message } as never },
+      data: {
+        status: isWaiting ? "approved" : "failed",  // waiting は approved に戻して再試行可能に
+        result: {
+          error: message,
+          waitingForVersion: isWaiting ?? false,
+          pendingPayload: isWaiting ? (err as { payload?: unknown }).payload : undefined,
+        } as never,
+      },
     });
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -65,6 +75,9 @@ async function _execute(proposal: {
 
     case "update_governance":
       return _execUpdateGovernance(payload);
+
+    case "update_aso_metadata":
+      return _execUpdateAsoMetadata(payload, proposal.targetId);
 
     case "github_workflow":
       return _execGithubWorkflow(payload);
@@ -96,6 +109,51 @@ async function _execAddKeywords(
   });
 
   return { created: created.count, keywords };
+}
+
+async function _execUpdateAsoMetadata(
+  payload: Record<string, unknown>,
+  appId: string | null,
+): Promise<Record<string, unknown>> {
+  if (!appId) throw new Error("update_aso_metadata: appId required");
+
+  // AsoApp から iOS ID を取得
+  const app = await db.asoApp.findUnique({ where: { id: appId } });
+  if (!app?.iosId) throw new Error("iosId not set for app: " + appId);
+
+  // 編集可能バージョンを探す
+  const editable = await getEditableVersion(app.iosId);
+  if (!editable) {
+    // バージョンがない → waiting_for_version として失敗
+    const error = Object.assign(new Error("no_editable_version"), {
+      waitingForVersion: true,
+      payload,
+    });
+    throw error;
+  }
+
+  const { field, proposed, locale = "ja" } = payload as {
+    field: string; proposed: string; locale?: string;
+  };
+
+  const locId = await getLocalizationId(editable.versionId, locale);
+  if (!locId) throw new Error(`Localization not found: ${locale}`);
+
+  const fields: Record<string, string> = {};
+  if (field === "keywords")    fields.keywords    = proposed;
+  if (field === "subtitle")    fields.subtitle    = proposed;
+  if (field === "description") fields.description = proposed;
+  if (field === "title")       fields.name        = proposed;
+
+  await updateLocalization(locId, fields);
+
+  return {
+    versionString: editable.versionString,
+    versionId: editable.versionId,
+    locale,
+    field,
+    applied: proposed,
+  };
 }
 
 async function _execUpdateGovernance(
