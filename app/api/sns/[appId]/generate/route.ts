@@ -26,14 +26,13 @@ export async function POST(
   { params }: { params: Promise<{ appId: string }> }
 ) {
   const { appId } = await params;
-  const { platform, genre, language, count } = await req.json();
+  const { platform, genre, language, count, preview } = await req.json();
 
   const num = Math.min(10, Math.max(1, parseInt(count ?? "3", 10)));
   const lang = language === "en" ? "英語" : "日本語";
   const platformTip = PLATFORM_TIPS[platform] ?? "SNS投稿文。";
   const genreCtx = GENRE_CONTEXT[genre] ?? "";
 
-    // Confidence assessment: high if platform+genre are well-defined, medium otherwise
   const confidenceLevel =
     PLATFORM_TIPS[platform] && GENRE_CONTEXT[genre] ? "high" : "medium";
 
@@ -76,6 +75,20 @@ AIキャラクターとのリアルタイム会話、アバター作成、ライ
 
     const items: { copy: string; hashtags: string[]; imagePrompt?: string; notes?: string }[] =
       JSON.parse(jsonMatch[0]);
+
+    // preview=true: return content without saving (owner confirms before persisting)
+    if (preview) {
+      return NextResponse.json({
+        items: items.map((item) => ({
+          platform,
+          copy: item.copy,
+          hashtags: item.hashtags ?? [],
+          imagePrompt: item.imagePrompt ?? null,
+          notes: item.notes ?? null,
+          confidence: confidenceLevel,
+        })),
+      });
+    }
 
     const drafts = await Promise.all(
       items.map((item) =>

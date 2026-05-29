@@ -68,6 +68,16 @@ export function EgoHitList({ appId, initialHits }: { appId: string; initialHits:
 
   return (
     <div className="space-y-6">
+      {/* §11 不確実性の明示 */}
+      <div className="flex items-start gap-2 bg-[#fff7e6] border border-[#f5d89a] rounded-xl px-4 py-3">
+        <span className="text-[#a05c00] mt-0.5 shrink-0">⚠</span>
+        <p className="text-[12px] text-[#a05c00] leading-relaxed">
+          感情・カテゴリ分類はルールベースによる自動判定です（確信度: 中）。誤分類の可能性があります。
+          疑わしい分類は手動で確認してください。
+          <span className="ml-1 text-[11px] opacity-70">行動規範 §11</span>
+        </p>
+      </div>
+
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex gap-1 bg-[#f5f5f7] rounded-xl p-1">
