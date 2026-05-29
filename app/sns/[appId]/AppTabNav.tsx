@@ -4,12 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
-  { href: "",           label: "コンテンツ生成" },
+  { href: "",           label: "生成" },
+  { href: "/analyze",   label: "分析" },
+  { href: "/scripts",   label: "台本" },
+  { href: "/briefs",    label: "指示書" },
+  { href: "/agent",     label: "AI" },
   { href: "/drafts",    label: "下書き",   countKey: "pendingDrafts" as const },
-  { href: "/refs",      label: "レファランス" },
+  { href: "/refs",      label: "参考動画" },
   { href: "/patterns",  label: "パターン" },
-  { href: "/accounts",  label: "アカウント" },
   { href: "/ego",       label: "エゴサ",   countKey: "activeEgoHits" as const },
+  { href: "/accounts",  label: "アカウント" },
   { href: "/settings",  label: null },
 ];
 

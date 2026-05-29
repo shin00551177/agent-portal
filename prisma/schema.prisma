@@ -86,6 +86,8 @@ model SnsApp {
   accounts  SnsAccount[]
   refVideos SnsRefVideo[]
   patterns  SnsPattern[]
+  scripts   SnsScript[]
+  briefs    SnsBrief[]
   createdAt DateTime     @default(now())
 }
 
@@ -126,6 +128,39 @@ model SnsRefVideo {
   createdAt   DateTime @default(now())
 
   @@index([appId, analyzed])
+}
+
+model SnsScript {
+  id              String   @id @default(cuid())
+  appId           String
+  app             SnsApp   @relation(fields: [appId], references: [id])
+  platform        String
+  targetAge       String?
+  title           String
+  hook            String?
+  scriptContent   String?
+  productionNotes String?
+  imagePrompts    String?
+  refVideoId      String?
+  status          String   @default("draft")
+  createdAt       DateTime @default(now())
+
+  @@index([appId])
+}
+
+model SnsBrief {
+  id               String   @id @default(cuid())
+  appId            String
+  app              SnsApp   @relation(fields: [appId], references: [id])
+  platform         String
+  targetAge        String?
+  scriptContent    String
+  captions         Json     @default("[]")
+  higgsfieldPrompt String?
+  status           String   @default("draft")
+  createdAt        DateTime @default(now())
+
+  @@index([appId])
 }
 
 model SnsPattern {
