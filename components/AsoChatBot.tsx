@@ -2,27 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 
-// ─── Cat SVG ────────────────────────────────────────────────────────────────
+// ─── Cat Icon (emoji style) ──────────────────────────────────────────────────
 
 function CatFace({ size = 36 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" fill="none">
-      <circle cx="50" cy="55" r="38" fill="#FF9F43"/>
-      <polygon points="18,28 8,4 36,22" fill="#FF9F43"/>
-      <polygon points="82,28 92,4 64,22" fill="#FF9F43"/>
-      <polygon points="20,26 13,10 32,23" fill="#FFD0A0"/>
-      <polygon points="80,26 87,10 68,23" fill="#FFD0A0"/>
-      <ellipse cx="36" cy="52" rx="7" ry="8" fill="#1d1d1f"/>
-      <ellipse cx="64" cy="52" rx="7" ry="8" fill="#1d1d1f"/>
-      <circle cx="38" cy="50" r="2.5" fill="white"/>
-      <circle cx="66" cy="50" r="2.5" fill="white"/>
-      <ellipse cx="50" cy="63" rx="4" ry="3" fill="#FF6B6B"/>
-      <path d="M 44 67 Q 50 72 56 67" stroke="#c0392b" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-      <line x1="10" y1="61" x2="40" y2="63" stroke="#1d1d1f" strokeWidth="1" opacity="0.4"/>
-      <line x1="10" y1="67" x2="40" y2="66" stroke="#1d1d1f" strokeWidth="1" opacity="0.4"/>
-      <line x1="90" y1="61" x2="60" y2="63" stroke="#1d1d1f" strokeWidth="1" opacity="0.4"/>
-      <line x1="90" y1="67" x2="60" y2="66" stroke="#1d1d1f" strokeWidth="1" opacity="0.4"/>
-    </svg>
+    <span style={{ fontSize: size * 0.75, lineHeight: 1 }} role="img" aria-label="cat">
+      🐱
+    </span>
   );
 }
 
