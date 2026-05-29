@@ -39,6 +39,58 @@ async function asc(path: string, options: RequestInit = {}) {
   return res.json();
 }
 
+// 現在公開中のスクリーンショットURLを取得
+export async function fetchAscScreenshots(
+  iosId: string,
+  locale = "ja",
+): Promise<{ screenshots: string[]; previewUrl: string | null }> {
+  try {
+    const token = await makeToken();
+    const h = { Authorization: `Bearer ${token}` };
+
+    // 最新 READY_FOR_SALE バージョンを取得
+    const verRes = await fetch(
+      `https://api.appstoreconnect.apple.com/v1/apps/${iosId}/appStoreVersions?filter[platform]=IOS&filter[appStoreState]=READY_FOR_SALE&limit=1`,
+      { headers: h, next: { revalidate: 3600 } }
+    );
+    if (!verRes.ok) return { screenshots: [], previewUrl: null };
+    const verData = await verRes.json();
+    const versionId = verData.data?.[0]?.id;
+    if (!versionId) return { screenshots: [], previewUrl: null };
+
+    // ローカライズ一覧
+    const locRes = await fetch(
+      `https://api.appstoreconnect.apple.com/v1/appStoreVersions/${versionId}/appStoreVersionLocalizations`,
+      { headers: h, next: { revalidate: 3600 } }
+    );
+    if (!locRes.ok) return { screenshots: [], previewUrl: null };
+    const locData = await locRes.json();
+    const loc = locData.data?.find((l: { attributes: { locale: string } }) => l.attributes.locale === locale)
+      ?? locData.data?.[0];
+    if (!loc) return { screenshots: [], previewUrl: null };
+
+    // スクリーンショット取得
+    const ssRes = await fetch(
+      `https://api.appstoreconnect.apple.com/v1/appStoreVersionLocalizations/${loc.id}/appScreenshots?limit=4`,
+      { headers: h, next: { revalidate: 3600 } }
+    );
+    if (!ssRes.ok) return { screenshots: [], previewUrl: null };
+    const ssData = await ssRes.json();
+
+    const screenshots: string[] = (ssData.data ?? [])
+      .slice(0, 4)
+      .map((s: { attributes: { imageAsset?: { templateUrl?: string } } }) => {
+        const tmpl = s.attributes.imageAsset?.templateUrl;
+        return tmpl ? tmpl.replace("{w}", "390").replace("{h}", "844").replace("{f}", "jpg").replace("{c}", "bb") : null;
+      })
+      .filter(Boolean);
+
+    return { screenshots, previewUrl: screenshots[0] ?? null };
+  } catch {
+    return { screenshots: [], previewUrl: null };
+  }
+}
+
 // 画像タイプ定義
 export const ASC_IMAGE_TYPES = {
   APP_IPHONE_65: { label: "iPhone 6.5\" スクリーンショット", slot: "APP_IPHONE_65" },

@@ -108,6 +108,34 @@ export async function uploadGPlayImage(
   }
 }
 
+// 現在公開中の画像を取得
+export async function fetchGPlayImages(
+  packageName: string,
+  language = "ja-JP",
+): Promise<{ featureGraphic: string | null; screenshots: string[] }> {
+  const token = await getAccessToken();
+  const editId = await createEdit(packageName);
+
+  try {
+    const [fgRes, ssRes] = await Promise.all([
+      fetch(`https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${packageName}/edits/${editId}/listings/${language}/images/featureGraphic`,
+        { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${packageName}/edits/${editId}/listings/${language}/images/phoneScreenshots`,
+        { headers: { Authorization: `Bearer ${token}` } }),
+    ]);
+
+    const fgData  = fgRes.ok  ? await fgRes.json()  : null;
+    const ssData  = ssRes.ok  ? await ssRes.json()  : null;
+
+    return {
+      featureGraphic: fgData?.images?.[0]?.url ?? null,
+      screenshots:    (ssData?.images ?? []).slice(0, 4).map((i: { url: string }) => i.url),
+    };
+  } finally {
+    await deleteEdit(packageName, editId);
+  }
+}
+
 export type PlayListing = {
   language: string;
   title: string;

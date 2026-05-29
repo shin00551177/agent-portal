@@ -7,6 +7,8 @@ import { Button } from "@/components/Button";
 import { SyncButton } from "./SyncButton";
 import { AsoDataSection } from "./AsoDataSection";
 import { StorePreview } from "./StorePreview";
+import { StoreImages } from "./StoreImages";
+import { ImageUploadSection } from "./ImageUploadSection";
 import { AsoChatBot } from "@/components/AsoChatBot";
 
 export default async function AsoAppPage({
@@ -102,13 +104,27 @@ export default async function AsoAppPage({
         )}
       </section>
 
-      {/* Store Preview */}
-      <section className="py-12 border-b border-[#f0f0f0]">
+      {/* Store Preview + Images */}
+      <section className="py-12 border-b border-[#f0f0f0] space-y-10">
         <StorePreview
           iosId={app.iosId}
           googlePlayId={app.googlePlayId}
           ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null}
         />
+        <StoreImages
+          appId={appId}
+          iosId={app.iosId}
+          googlePlayId={app.googlePlayId}
+        />
+        {/* Image upload inline */}
+        <div>
+          <p className="text-[15px] font-semibold text-[#1d1d1f] mb-4">画像を更新する</p>
+          <ImageUploadSection
+            appId={appId}
+            hasIos={!!app.iosId}
+            hasAndroid={!!app.googlePlayId}
+          />
+        </div>
       </section>
 
       {/* Keywords */}
