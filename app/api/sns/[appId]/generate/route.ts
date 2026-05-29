@@ -24,23 +24,14 @@ const GENRE_CONTEXT: Record<string, string> = {
 
 type RawItem = { copy: string; hashtags: string[]; imagePrompt?: string; notes?: string };
 
-async function applyImageGeneration(
-  draftId: string,
-  imagePrompt: string,
-  platform: string
-) {
+async function applyImageGeneration(draftId: string, imagePrompt: string, platform: string) {
   const result = await generateImage(imagePrompt, platform);
-  if ("url" in result) {
-    await db.snsDraft.update({
-      where: { id: draftId },
-      data: { imageUrl: result.url, imageStatus: "done" },
-    });
-  } else {
-    await db.snsDraft.update({
-      where: { id: draftId },
-      data: { imageStatus: "error" },
-    });
-  }
+  await db.snsDraft.update({
+    where: { id: draftId },
+    data: "url" in result
+      ? { imageUrl: result.url, imageStatus: "done" }
+      : { imageStatus: "error" },
+  });
 }
 
 export async function POST(
@@ -48,14 +39,47 @@ export async function POST(
   { params }: { params: Promise<{ appId: string }> }
 ) {
   const { appId } = await params;
-  const { platform, genre, language, count, preview } = await req.json();
+  const { platform, genre, language, count, preview, refVideoId } = await req.json();
 
   const num = Math.min(10, Math.max(1, parseInt(count ?? "3", 10)));
   const lang = language === "en" ? "英語" : "日本語";
   const platformTip = PLATFORM_TIPS[platform] ?? "SNS投稿文。";
   const genreCtx = GENRE_CONTEXT[genre] ?? "";
-  const confidenceLevel =
-    PLATFORM_TIPS[platform] && GENRE_CONTEXT[genre] ? "high" : "medium";
+  const confidenceLevel = PLATFORM_TIPS[platform] && GENRE_CONTEXT[genre] ? "high" : "medium";
+
+  // パターンDB取得
+  const patterns = await db.snsPattern.findMany({
+    where: { appId },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
+
+  // 参考動画（指定あり or 上位1件）
+  const refVideo = refVideoId
+    ? await db.snsRefVideo.findUnique({ where: { id: refVideoId } })
+    : await db.snsRefVideo.findFirst({
+        where: { appId, analyzed: true },
+        orderBy: { views: "desc" },
+      });
+
+  // パターンコンテキスト
+  const patternsSection = patterns.length > 0
+    ? `\n## 活用する成功パターン\n${patterns
+        .map((p) => `- [${p.patternType}] ${p.title}: ${p.description}`)
+        .join("\n")}`
+    : "";
+
+  // 参考動画コンテキスト
+  const refSection = refVideo
+    ? `\n## 参考動画（バズ実績あり）
+- プラットフォーム: ${refVideo.platform}
+- 再生数: ${refVideo.views?.toLocaleString() ?? "不明"}
+- フック手法: ${refVideo.hook ?? "不明"}
+- 構成: ${refVideo.structure ?? "不明"}
+- バズった理由: ${refVideo.whyBuzz ?? "不明"}
+- Twomi応用アイデア: ${refVideo.twomiIdea ?? "不明"}
+- Twomiスクリプト参考: ${refVideo.twomiScript ?? "なし"}`
+    : "";
 
   const prompt = `あなたはTwomiのSNSコンテンツ担当です。
 
@@ -63,6 +87,7 @@ export async function POST(
 Twomiは「AIアバターと自由に会話・ビデオ通話できるアプリ」です。
 AIキャラクターとのリアルタイム会話、アバター作成、ライブ配信機能を持ちます。
 ターゲット: 10〜30代のSNSユーザー。
+${patternsSection}${refSection}
 
 【生成条件】
 - プラットフォーム: ${platform}（${platformTip}）
@@ -70,14 +95,15 @@ AIキャラクターとのリアルタイム会話、アバター作成、ライ
 - 言語: ${lang}
 - 件数: ${num}件
 
-以下のJSON配列形式で${num}件の投稿案を生成してください。imagePromptは必ず記載すること。コードブロックや説明文は不要、JSONのみ返してください。
+上記の成功パターンと参考動画の知見を必ず反映させ、${num}件の投稿案を生成してください。
+imagePromptは必ず記載すること。コードブロックや説明文は不要、JSONのみ返してください。
 
 [
   {
     "copy": "投稿本文",
     "hashtags": ["タグ1", "タグ2"],
-    "imagePrompt": "DALL-E用の英語画像説明。シーン・雰囲気・構図を具体的に。例: A young person smiling while video chatting with an AI avatar on a smartphone, warm lighting, modern room",
-    "notes": "投稿時の補足メモ（任意）"
+    "imagePrompt": "DALL-E用の英語画像説明。シーン・雰囲気・構図を具体的に。",
+    "notes": "どの成功パターンを応用したか（任意）"
   }
 ]`;
 
@@ -96,7 +122,6 @@ AIキャラクターとのリアルタイム会話、アバター作成、ライ
 
     const items: RawItem[] = JSON.parse(jsonMatch[0]);
 
-    // preview=true: return content without saving (owner confirms before persisting)
     if (preview) {
       return NextResponse.json({
         items: items.map((item) => ({
@@ -106,11 +131,12 @@ AIキャラクターとのリアルタイム会話、アバター作成、ライ
           imagePrompt: item.imagePrompt ?? null,
           notes: item.notes ?? null,
           confidence: confidenceLevel,
+          patternsUsed: patterns.length,
+          refVideoUsed: !!refVideo,
         })),
       });
     }
 
-    // Save drafts, then generate images in parallel
     const drafts = await Promise.all(
       items.map((item) =>
         db.snsDraft.create({
@@ -130,19 +156,20 @@ AIキャラクターとのリアルタイム会話、アバター作成、ライ
       )
     );
 
-    // Generate images in parallel (non-blocking for response, but awaited here for simplicity)
     await Promise.all(
       drafts
         .filter((d) => d.imagePrompt)
         .map((d) => applyImageGeneration(d.id, d.imagePrompt!, platform))
     );
 
-    // Return drafts with updated image state
     const updatedDrafts = await db.snsDraft.findMany({
       where: { id: { in: drafts.map((d) => d.id) } },
     });
 
-    return NextResponse.json({ drafts: updatedDrafts });
+    return NextResponse.json({
+      drafts: updatedDrafts,
+      meta: { patternsUsed: patterns.length, refVideoUsed: !!refVideo },
+    });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: msg }, { status: 500 });

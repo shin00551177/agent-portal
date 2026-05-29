@@ -22,6 +22,8 @@ model AsoApp {
   fallbackBehavior String @default("pause")
   // Agent台帳 (運用ポリシー §5)
   agentMeta        Json   @default("{}")
+  // 連続エラーカウンター (#12 停止条件)
+  consecutiveErrors Int   @default(0)
   keywords       AsoKeyword[]
   reports      AsoReport[]
   releases     AsoRelease[]
@@ -82,7 +84,63 @@ model SnsApp {
   drafts    SnsDraft[]
   egoHits   EgoHit[]
   accounts  SnsAccount[]
+  refVideos SnsRefVideo[]
+  patterns  SnsPattern[]
   createdAt DateTime     @default(now())
+}
+
+model SnsRefVideo {
+  id          String   @id @default(cuid())
+  appId       String
+  app         SnsApp   @relation(fields: [appId], references: [id])
+  url         String
+  platform    String
+  account     String?
+  title       String?
+  views       Int?
+  likes       Int?
+  comments    Int?
+  shares      Int?
+  duration    Int?
+  postedDate  String?
+  hashtags    String?
+  bgm         String?
+  thumbnail   String?
+  // AI分析結果
+  analyzed    Boolean  @default(false)
+  targetAge   String?
+  category    String?
+  creatorType String?
+  visualType  String?
+  tempo       String?
+  hook        String?
+  structure   String?
+  ctaContent  String?
+  ctaTiming   String?
+  whyBuzz     String?
+  credibility String?
+  peakMoment  String?
+  twomiIdea   String?
+  twomiScript String?
+  aiComment   String?
+  createdAt   DateTime @default(now())
+
+  @@index([appId, analyzed])
+}
+
+model SnsPattern {
+  id           String   @id @default(cuid())
+  appId        String
+  app          SnsApp   @relation(fields: [appId], references: [id])
+  title        String
+  platform     String?
+  targetAge    String?
+  patternType  String
+  description  String
+  exampleHooks Json     @default("[]")
+  createdAt    DateTime @default(now())
+
+  @@index([appId])
 }
 
 model SnsAccount {
