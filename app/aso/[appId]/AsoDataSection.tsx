@@ -406,6 +406,7 @@ function AskSection({ appId }: { appId: string }) {
 export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rankingHistory, syncedAt, metrics, keywords, pendingProposals }: Props) {
   const router = useRouter();
   const [analyzing, setAnalyzing] = useState<"idle" | "running" | "done" | "error">("idle");
+  const [slackState, setSlackState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [localProposals, setLocalProposals] = useState(pendingProposals);
 
   // 集計期間ラベル
@@ -415,6 +416,18 @@ export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rank
     const days = Math.round((new Date(periodTo).getTime() - new Date(periodFrom).getTime()) / 86400000);
     return `${periodFrom} 〜 ${periodTo}（${days}日間）`;
   })();
+
+  async function sendToSlack() {
+    setSlackState("sending");
+    try {
+      const res = await fetch(`/api/aso/${appId}/report`, { method: "POST", credentials: "include" });
+      setSlackState(res.ok ? "sent" : "error");
+      setTimeout(() => setSlackState("idle"), 3000);
+    } catch {
+      setSlackState("error");
+      setTimeout(() => setSlackState("idle"), 3000);
+    }
+  }
 
   async function analyze() {
     setAnalyzing("running");
@@ -455,6 +468,26 @@ export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rank
 
   return (
     <div className="space-y-10">
+
+      {/* ─── Slack 送信ボタン ───────────────────────────── */}
+      {!isRangeQuery && metrics && (
+        <div className="flex justify-end">
+          <button
+            onClick={sendToSlack}
+            disabled={slackState === "sending"}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[13px] font-medium transition-all ${
+              slackState === "sent"  ? "bg-[#f0faf4] text-[#1d7a47]"
+              : slackState === "error" ? "bg-[#fff1f0] text-[#c0392b]"
+              : "bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#6e6e73] hover:text-[#1d1d1f]"
+            } disabled:opacity-50`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+            </svg>
+            {slackState === "sending" ? "送信中..." : slackState === "sent" ? "送信済み ✓" : slackState === "error" ? "エラー" : "Slack に送る"}
+          </button>
+        </div>
+      )}
 
       {/* ─── 集計期間 ───────────────────────────────────── */}
       {periodLabel && (
