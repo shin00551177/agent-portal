@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { db } from "@/lib/db";
 import { generateImage } from "@/lib/imageGen";
+import { getAppContext } from "@/lib/snsAppContext";
 
 const client = new Anthropic();
 
@@ -81,12 +82,13 @@ export async function POST(
 - Twomiスクリプト参考: ${refVideo.twomiScript ?? "なし"}`
     : "";
 
-  const prompt = `あなたはTwomiのSNSコンテンツ担当です。
+  const appCtx = getAppContext(appId);
 
-【Twomiについて】
-Twomiは「AIアバターと自由に会話・ビデオ通話できるアプリ」です。
-AIキャラクターとのリアルタイム会話、アバター作成、ライブ配信機能を持ちます。
-ターゲット: 10〜30代のSNSユーザー。
+  const prompt = `あなたは${appCtx.name}のSNSコンテンツ担当です。
+
+【${appCtx.name}について】
+${appCtx.description}
+ターゲット: ${appCtx.target}
 ${patternsSection}${refSection}
 
 【生成条件】

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { db } from "@/lib/db";
+import { getAppContext } from "@/lib/snsAppContext";
 
 const client = new Anthropic();
 
@@ -63,7 +64,10 @@ export async function POST(
     ? `\n## 参考動画\n- フック: ${refVideo.hook ?? "不明"}\n- 構成: ${refVideo.structure ?? "不明"}\n- バズった理由: ${refVideo.whyBuzz ?? "不明"}\n- Twomi応用アイデア: ${refVideo.twomiIdea ?? "不明"}`
     : "";
 
-  const prompt = `あなたはTwomi（AIアバターと会話・ビデオ通話できるアプリ）のSNSコンテンツ専門家です。
+  const appCtx = getAppContext(appId);
+
+  const prompt = `あなたは${appCtx.name}のSNSコンテンツ専門家です。
+【${appCtx.name}について】${appCtx.description} ターゲット: ${appCtx.target}
 以下の成功パターンと参考動画をもとに、${platform ?? "TikTok"}向けの動画台本を生成してください。
 
 ## 成功パターン

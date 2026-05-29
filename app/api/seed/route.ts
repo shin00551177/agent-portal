@@ -7,6 +7,7 @@ const SNS_APPS = [
   { id: "soulriza",      name: "SOULRiZA",     active: false, platforms: ["youtube","tiktok","instagram","x"] },
   { id: "king-together", name: "KING Together", active: false, platforms: ["youtube","tiktok","instagram","x"] },
   { id: "education",     name: "Education",    active: false, platforms: ["youtube","instagram","x"] },
+  { id: "pachinavi",     name: "パチナビ",     active: true,  platforms: ["youtube","tiktok","x"] },
 ];
 
 export async function POST(req: NextRequest) {

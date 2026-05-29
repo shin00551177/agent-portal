@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { db } from "@/lib/db";
+import { getAppContext } from "@/lib/snsAppContext";
 
 const client = new Anthropic();
 
@@ -22,8 +23,10 @@ export async function POST(
     ? `\n## 蓄積済み成功パターン\n${patterns.map((p) => `- [${p.patternType}] ${p.title}`).join("\n")}`
     : "";
 
+  const appCtx = getAppContext(appId);
+
   const prompt = `あなたはSNSバズコンテンツの分析・制作専門家です。
-Twomi（AIアバターと会話・ビデオ通話できるアプリ）のコンテンツ制作に活かすため、以下のバズ動画の文字起こし・説明文を分析してください。
+${appCtx.name}（${appCtx.description}）のコンテンツ制作に活かすため、以下のバズ動画の文字起こし・説明文を分析してください。
 ${patternContext}
 
 ターゲット年齢層: ${targetAge ?? "指定なし"}

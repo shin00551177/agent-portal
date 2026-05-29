@@ -92,6 +92,12 @@ const SNS_APPS = [
     active: false,
     platforms: ["youtube", "instagram", "x"],
   },
+  {
+    id: "pachinavi",
+    name: "パチナビ",
+    active: true,
+    platforms: ["youtube", "tiktok", "x"],
+  },
 ];
 
 async function main() {

@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { db } from "@/lib/db";
+import { getAppContext } from "@/lib/snsAppContext";
 
 const client = new Anthropic();
 
@@ -40,8 +41,11 @@ export async function POST(
       ).join("\n")}`
     : "";
 
-  const systemPrompt = `あなたはTwomi（AIアバターと自由に会話・ビデオ通話できるアプリ）専属のSNSコンテンツAIです。
-10〜30代のSNSユーザーへのリーチを最大化するコンテンツ制作を支援します。
+  const appCtx = getAppContext(appId);
+
+  const systemPrompt = `あなたは${appCtx.name}専属のSNSコンテンツAIです。
+${appCtx.description}
+ターゲット「${appCtx.target}」へのリーチを最大化するコンテンツ制作を支援します。
 
 ## できること
 - TikTok / Instagram / YouTube Shorts の台本・シナリオ生成
