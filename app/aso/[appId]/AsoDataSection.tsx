@@ -78,11 +78,11 @@ function TrendBadge({ rank, prevRank }: { rank: number | null; prevRank: number 
 function MiniBar({ value, max, color }: { value: number | null; max: number; color: string }) {
   const pct = value != null ? Math.min(100, (value / max) * 100) : 0;
   return (
-    <div className="flex items-center gap-2 w-28">
-      <div className="flex-1 h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden">
+    <div className="w-full">
+      <span className="text-[12px] font-medium text-[#1d1d1f]">{value ?? "—"}</span>
+      <div className="mt-1 h-1.5 w-full bg-[#f0f0f0] rounded-full overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-[11px] text-[#6e6e73] w-6 text-right">{value ?? "?"}</span>
     </div>
   );
 }
@@ -553,13 +553,13 @@ export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rank
             <p className="text-[15px] font-semibold text-[#1d1d1f]">キーワード順位</p>
             <KeywordStrategySummary keywords={sortedKws} />
           </div>
-          <div className="grid grid-cols-[2fr_80px_40px_130px_130px_90px] gap-3 pb-2 border-b border-[#f0f0f0] text-[11px] text-[#86868b] uppercase tracking-wide">
+          <div className="grid grid-cols-[2fr_80px_36px_110px_110px_96px] gap-4 pb-2 border-b border-[#f0f0f0] text-[11px] text-[#86868b] uppercase tracking-wide">
             <span>キーワード</span><span>順位</span><span>変動</span>
             <span>検索ボリューム</span><span>競合密度</span><span>推奨戦略</span>
           </div>
           <div className="divide-y divide-[#f0f0f0]">
             {sortedKws.map((kw) => (
-              <div key={kw.keyword} className="grid grid-cols-[2fr_80px_40px_130px_130px_90px] gap-3 py-3.5 items-center">
+              <div key={kw.keyword} className="grid grid-cols-[2fr_80px_36px_110px_110px_96px] gap-4 py-3.5 items-center">
                 <span className="text-[14px] font-medium text-[#1d1d1f]">{kw.keyword}</span>
                 <RankBadge rank={kw.rank} />
                 <TrendBadge rank={kw.rank} prevRank={kw.prevRank} />
