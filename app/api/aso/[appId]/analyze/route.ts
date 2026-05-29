@@ -161,5 +161,10 @@ ${kwSummary}
     req,
   });
 
+  // 分析完了後に自動で Slack DM 送信（fire-and-forget）
+  // 送信先: SLACK_ASO_CHANNEL（現在は Hori DM、正式リリース時にチャンネルへ変更）
+  const baseUrl = req.nextUrl.origin;
+  fetch(`${baseUrl}/api/aso/${appId}/report`, { method: "POST" }).catch(() => {});
+
   return NextResponse.json({ proposalIds: created.map((p) => p.id) });
 }
