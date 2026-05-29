@@ -55,24 +55,32 @@ type Props = {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-function RankBadge({ rank }: { rank: number | null }) {
-  if (!rank || rank >= 500)
-    return <span className="px-2.5 py-1 rounded-lg text-[12px] font-semibold bg-[#f5f5f7] text-[#86868b]">圏外</span>;
-  if (rank <= 10)
-    return <span className="px-2.5 py-1 rounded-lg text-[12px] font-semibold bg-[#f0faf4] text-[#1d7a47]">{rank}位</span>;
-  if (rank <= 50)
-    return <span className="px-2.5 py-1 rounded-lg text-[12px] font-semibold bg-[#fff7e6] text-[#a05c00]">{rank}位</span>;
-  return <span className="px-2.5 py-1 rounded-lg text-[12px] font-semibold bg-[#f5f5f7] text-[#6e6e73]">{rank}位</span>;
-}
+function RankCell({ rank, prevRank }: { rank: number | null; prevRank: number | null }) {
+  const r = rank ?? 501;
+  const p = prevRank != null ? (prevRank >= 500 ? 500 : prevRank) : null;
+  const curr = r >= 500 ? 500 : r;
+  const diff = p != null ? curr - p : null;
 
-function TrendBadge({ rank, prevRank }: { rank: number | null; prevRank: number | null }) {
-  if (rank == null || prevRank == null) return null;
-  const r = rank >= 500 ? 500 : rank;
-  const p = prevRank >= 500 ? 500 : prevRank;
-  const diff = r - p;
-  if (diff === 0) return <span className="text-[12px] text-[#86868b]">→</span>;
-  if (diff < 0) return <span className="text-[12px] text-[#1d7a47] font-medium">↑{Math.abs(diff)}</span>;
-  return <span className="text-[12px] text-red-500 font-medium">↓{diff}</span>;
+  // 前回比（順位が下がるほど数字が増える = ↑がよい）
+  const trendEl = diff == null ? null
+    : diff === 0 ? <span className="text-[10px] text-[#86868b]">前回と同じ</span>
+    : diff < 0   ? <span className="text-[10px] text-[#1d7a47] font-medium">↑{Math.abs(diff)}位上昇</span>
+    :               <span className="text-[10px] text-red-500 font-medium">↓{diff}位下落</span>;
+
+  const badge = r >= 500
+    ? <span className="px-2 py-0.5 rounded-md text-[12px] font-semibold bg-[#f5f5f7] text-[#86868b]">圏外</span>
+    : r <= 10
+    ? <span className="px-2 py-0.5 rounded-md text-[12px] font-semibold bg-[#f0faf4] text-[#1d7a47]">{r}位</span>
+    : r <= 50
+    ? <span className="px-2 py-0.5 rounded-md text-[12px] font-semibold bg-[#fff7e6] text-[#a05c00]">{r}位</span>
+    : <span className="px-2 py-0.5 rounded-md text-[12px] font-semibold bg-[#f5f5f7] text-[#6e6e73]">{r}位</span>;
+
+  return (
+    <div className="flex items-center gap-1.5">
+      {badge}
+      {trendEl}
+    </div>
+  );
 }
 
 function MiniBar({ value, max, color }: { value: number | null; max: number; color: string }) {
@@ -553,16 +561,18 @@ export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rank
             <p className="text-[15px] font-semibold text-[#1d1d1f]">キーワード順位</p>
             <KeywordStrategySummary keywords={sortedKws} />
           </div>
-          <div className="grid grid-cols-[2fr_80px_36px_110px_110px_96px] gap-4 pb-2 border-b border-[#f0f0f0] text-[11px] text-[#86868b] uppercase tracking-wide">
-            <span>キーワード</span><span>順位</span><span>変動</span>
-            <span>検索ボリューム</span><span>競合密度</span><span>推奨戦略</span>
+          <div className="grid grid-cols-[2fr_120px_1fr_1fr_100px] gap-4 pb-2 border-b border-[#f0f0f0] text-[11px] text-[#86868b] uppercase tracking-wide">
+            <span>キーワード</span>
+            <span>順位（前回比）</span>
+            <span>検索ボリューム</span>
+            <span>競合密度</span>
+            <span>推奨戦略</span>
           </div>
           <div className="divide-y divide-[#f0f0f0]">
             {sortedKws.map((kw) => (
-              <div key={kw.keyword} className="grid grid-cols-[2fr_80px_36px_110px_110px_96px] gap-4 py-3.5 items-center">
+              <div key={kw.keyword} className="grid grid-cols-[2fr_120px_1fr_1fr_100px] gap-4 py-3.5 items-center">
                 <span className="text-[14px] font-medium text-[#1d1d1f]">{kw.keyword}</span>
-                <RankBadge rank={kw.rank} />
-                <TrendBadge rank={kw.rank} prevRank={kw.prevRank} />
+                <RankCell rank={kw.rank} prevRank={kw.prevRank} />
                 <MiniBar value={kw.volume} max={100} color="bg-[#0071e3]" />
                 <MiniBar value={kw.difficulty} max={100}
                   color={kw.difficulty != null && kw.difficulty > 70 ? "bg-red-400" : kw.difficulty != null && kw.difficulty > 50 ? "bg-yellow-400" : "bg-emerald-400"} />
