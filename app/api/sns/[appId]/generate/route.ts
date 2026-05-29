@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { db } from "@/lib/db";
+import { generateImage } from "@/lib/imageGen";
 
 const client = new Anthropic();
 
@@ -21,6 +22,27 @@ const GENRE_CONTEXT: Record<string, string> = {
   人生相談: "人生・悩み相談テーマのアカウント。寄り添う優しいトーン。",
 };
 
+type RawItem = { copy: string; hashtags: string[]; imagePrompt?: string; notes?: string };
+
+async function applyImageGeneration(
+  draftId: string,
+  imagePrompt: string,
+  platform: string
+) {
+  const result = await generateImage(imagePrompt, platform);
+  if ("url" in result) {
+    await db.snsDraft.update({
+      where: { id: draftId },
+      data: { imageUrl: result.url, imageStatus: "done" },
+    });
+  } else {
+    await db.snsDraft.update({
+      where: { id: draftId },
+      data: { imageStatus: "error" },
+    });
+  }
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ appId: string }> }
@@ -32,11 +54,10 @@ export async function POST(
   const lang = language === "en" ? "英語" : "日本語";
   const platformTip = PLATFORM_TIPS[platform] ?? "SNS投稿文。";
   const genreCtx = GENRE_CONTEXT[genre] ?? "";
-
   const confidenceLevel =
     PLATFORM_TIPS[platform] && GENRE_CONTEXT[genre] ? "high" : "medium";
 
-const prompt = `あなたはTwomiのSNSコンテンツ担当です。
+  const prompt = `あなたはTwomiのSNSコンテンツ担当です。
 
 【Twomiについて】
 Twomiは「AIアバターと自由に会話・ビデオ通話できるアプリ」です。
@@ -49,13 +70,13 @@ AIキャラクターとのリアルタイム会話、アバター作成、ライ
 - 言語: ${lang}
 - 件数: ${num}件
 
-以下のJSON配列形式で${num}件の投稿案を生成してください。コードブロックや説明文は不要、JSONのみ返してください。
+以下のJSON配列形式で${num}件の投稿案を生成してください。imagePromptは必ず記載すること。コードブロックや説明文は不要、JSONのみ返してください。
 
 [
   {
     "copy": "投稿本文",
     "hashtags": ["タグ1", "タグ2"],
-    "imagePrompt": "画像・サムネイルのイメージ説明（任意）",
+    "imagePrompt": "DALL-E用の英語画像説明。シーン・雰囲気・構図を具体的に。例: A young person smiling while video chatting with an AI avatar on a smartphone, warm lighting, modern room",
     "notes": "投稿時の補足メモ（任意）"
   }
 ]`;
@@ -73,8 +94,7 @@ AIキャラクターとのリアルタイム会話、アバター作成、ライ
       return NextResponse.json({ error: "JSON parse failed", raw: text }, { status: 500 });
     }
 
-    const items: { copy: string; hashtags: string[]; imagePrompt?: string; notes?: string }[] =
-      JSON.parse(jsonMatch[0]);
+    const items: RawItem[] = JSON.parse(jsonMatch[0]);
 
     // preview=true: return content without saving (owner confirms before persisting)
     if (preview) {
@@ -90,6 +110,7 @@ AIキャラクターとのリアルタイム会話、アバター作成、ライ
       });
     }
 
+    // Save drafts, then generate images in parallel
     const drafts = await Promise.all(
       items.map((item) =>
         db.snsDraft.create({
@@ -99,6 +120,7 @@ AIキャラクターとのリアルタイム会話、アバター作成、ライ
             copy: item.copy,
             hashtags: item.hashtags ?? [],
             imagePrompt: item.imagePrompt ?? null,
+            imageStatus: item.imagePrompt ? "generating" : null,
             notes: item.notes ?? null,
             status: "pending",
             confidence: confidenceLevel,
@@ -108,7 +130,19 @@ AIキャラクターとのリアルタイム会話、アバター作成、ライ
       )
     );
 
-    return NextResponse.json({ drafts });
+    // Generate images in parallel (non-blocking for response, but awaited here for simplicity)
+    await Promise.all(
+      drafts
+        .filter((d) => d.imagePrompt)
+        .map((d) => applyImageGeneration(d.id, d.imagePrompt!, platform))
+    );
+
+    // Return drafts with updated image state
+    const updatedDrafts = await db.snsDraft.findMany({
+      where: { id: { in: drafts.map((d) => d.id) } },
+    });
+
+    return NextResponse.json({ drafts: updatedDrafts });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: msg }, { status: 500 });

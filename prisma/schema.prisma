@@ -103,9 +103,11 @@ model SnsDraft {
   platform    String
   copy        String
   hashtags    Json
-  imagePrompt String?
-  notes       String?
-  status      String   @default("pending")
+  imagePrompt  String?
+  imageUrl     String?
+  imageStatus  String?   // null=no_prompt | "generating" | "done" | "error"
+  notes        String?
+  status       String   @default("pending")
   // Governance (行動規範 #11)
   confidence    String   @default("medium")
   dataFreshness DateTime?

@@ -9,6 +9,8 @@ type Draft = {
   copy: string;
   hashtags: unknown;
   imagePrompt: string | null;
+  imageUrl: string | null;
+  imageStatus: string | null;
   confidence: string;
   createdAt: Date;
 };
@@ -97,9 +99,26 @@ export function PendingReviewPanel({
                     {tags.map((t) => `#${t}`).join(" ")}
                   </p>
                 )}
-                {draft.imagePrompt && (
-                  <p className="text-[11px] text-[#6e6e73] bg-[#f5f5f7] px-3 py-1.5 rounded-xl">
-                    画像: {draft.imagePrompt}
+                {/* 画像 */}
+                {draft.imageStatus === "generating" && (
+                  <div className="flex items-center gap-2 text-[11px] text-[#6e6e73]">
+                    <span className="w-3 h-3 border-2 border-[#c7c7cc] border-t-[#0071e3] rounded-full animate-spin" />
+                    画像生成中...
+                  </div>
+                )}
+                {draft.imageStatus === "done" && draft.imageUrl && (
+                  <div className="rounded-xl overflow-hidden border border-[#f0f0f0]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={draft.imageUrl}
+                      alt="生成画像"
+                      className="w-full max-h-48 object-cover"
+                    />
+                  </div>
+                )}
+                {draft.imageStatus === "error" && (
+                  <p className="text-[11px] text-red-400 bg-red-50 px-3 py-1.5 rounded-xl">
+                    画像生成失敗 — プロンプト: {draft.imagePrompt}
                   </p>
                 )}
               </div>
