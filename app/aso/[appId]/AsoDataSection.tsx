@@ -111,35 +111,32 @@ function OpportunityTag({ kw }: { kw: KwData }) {
 function AppPowerGauge({ value }: { value: number | null }) {
   const v = value ?? 0;
   const pct = Math.min(v / 10, 1);
-  const r = 28, cx = 36, cy = 36;
-  const circumference = Math.PI * r; // 半円
+  // 左右に余白を持たせた座標系（viewBox "-8 0 88 52"）
+  const r = 30, cx = 44, cy = 40;
+  const circumference = Math.PI * r;
   const dash = circumference * pct;
   const color = v >= 5 ? "#34c759" : v >= 2 ? "#ff9f0a" : "#ff3b30";
   const label = v >= 5 ? "良好" : v >= 2 ? "改善余地あり" : "要改善";
 
-  // 半円ゲージ（下半分）
   return (
     <div className="flex flex-col items-center">
-      <svg width="72" height="44" viewBox="0 0 72 44">
-        {/* 背景トラック */}
+      <svg width="80" height="52" viewBox="-4 0 96 52" overflow="visible">
         <path
-          d={`M 8 36 A ${r} ${r} 0 0 1 64 36`}
+          d={`M 14 40 A ${r} ${r} 0 0 1 74 40`}
           fill="none" stroke="#f0f0f0" strokeWidth="7" strokeLinecap="round"
         />
-        {/* 値 */}
         <path
-          d={`M 8 36 A ${r} ${r} 0 0 1 64 36`}
+          d={`M 14 40 A ${r} ${r} 0 0 1 74 40`}
           fill="none" stroke={color} strokeWidth="7" strokeLinecap="round"
           strokeDasharray={`${dash} ${circumference}`}
         />
-        {/* 中心テキスト */}
-        <text x={cx} y={cy - 2} textAnchor="middle" fontSize="13" fontWeight="600"
+        <text x={cx} y={cy - 4} textAnchor="middle" fontSize="14" fontWeight="600"
           fill={value == null ? "#c7c7cc" : "#1d1d1f"}>
           {value ?? "—"}
         </text>
-        <text x={cx} y={cy + 10} textAnchor="middle" fontSize="8" fill="#86868b">/10</text>
+        <text x={cx} y={cy + 9} textAnchor="middle" fontSize="8" fill="#86868b">/10</text>
       </svg>
-      <p className={`text-[10px] font-medium mt-0.5 ${v >= 5 ? "text-[#1d7a47]" : v >= 2 ? "text-[#a05c00]" : "text-red-500"}`}>
+      <p className={`text-[10px] font-medium -mt-1 ${v >= 5 ? "text-[#1d7a47]" : v >= 2 ? "text-[#a05c00]" : "text-red-500"}`}>
         {value != null ? label : "—"}
       </p>
     </div>
