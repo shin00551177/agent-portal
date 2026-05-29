@@ -49,3 +49,12 @@ body {
   background: var(--color-link);
   color: #fff;
 }
+
+/* SNS Content Lab — red gradient (mirrors content-lab design) */
+.cl-gradient {
+  background: linear-gradient(
+    66.02deg,
+    rgba(210, 19, 19, 0.92) 11.46%,
+    rgba(120, 11, 11, 0.92) 80.68%
+  );
+}
