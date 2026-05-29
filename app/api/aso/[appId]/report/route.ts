@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
+import { sendSlack } from "@/lib/slack-alert";
 
 // POST /api/aso/[appId]/report  — Slack にレポートを送信
 
@@ -9,8 +10,11 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ appId: string }> },
 ) {
+  const syncSecret = process.env.SYNC_SECRET;
   const authed = await isAuthenticated();
-  if (!authed) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!authed && syncSecret && req.headers.get("x-sync-secret") !== syncSecret) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
 
   const { appId } = await params;
   const app = await db.asoApp.findUnique({ where: { id: appId } });
@@ -128,19 +132,3 @@ export async function POST(
   return NextResponse.json({ sent, message });
 }
 
-async function sendSlack(text: string): Promise<boolean> {
-  const token   = process.env.SLACK_BOT_TOKEN;
-  const channel = process.env.SLACK_ASO_CHANNEL ?? "C099MB6KC21";
-  if (!token) return false;
-  try {
-    const res = await fetch("https://slack.com/api/chat.postMessage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ channel, text }),
-    });
-    const json = await res.json();
-    return json.ok === true;
-  } catch {
-    return false;
-  }
-}

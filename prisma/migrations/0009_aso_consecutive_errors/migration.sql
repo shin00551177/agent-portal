@@ -1,0 +1,1 @@
+ALTER TABLE "AsoApp" ADD COLUMN "consecutiveErrors" INTEGER NOT NULL DEFAULT 0;

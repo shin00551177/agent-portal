@@ -36,16 +36,18 @@ export function ProposalCard({ proposal }: { proposal: Proposal }) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [rejectMode, setRejectMode] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   const options = (proposal.options as Option[] | null) ?? [];
 
-  async function decide(decision: string) {
+  async function decide(decision: string, rejectionReason?: string) {
     setLoading(true);
     try {
       const res = await fetch(`/api/proposals/${proposal.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision }),
+        body: JSON.stringify({ decision, rejectionReason }),
       });
       if (!res.ok) throw new Error(await res.text());
 
@@ -65,6 +67,8 @@ export function ProposalCard({ proposal }: { proposal: Proposal }) {
       alert(e instanceof Error ? e.message : "エラーが発生しました");
     } finally {
       setLoading(false);
+      setRejectMode(false);
+      setRejectReason("");
     }
   }
 
@@ -105,23 +109,46 @@ export function ProposalCard({ proposal }: { proposal: Proposal }) {
       )}
 
       {/* Decision bar */}
-      <div className="px-6 py-4 border-t border-[#f0f0f0] bg-[#fafafa] flex items-center gap-3 flex-wrap">
-        {proposal.decisionType === "yesno" ? (
-          <>
-            <Button disabled={loading} onClick={() => decide("yes")}>承認して実行</Button>
-            <Button disabled={loading} variant="secondary" onClick={() => decide("no")}>却下</Button>
-          </>
-        ) : (
-          <>
-            {options.map((opt) => (
-              <Button key={opt.id} disabled={loading} onClick={() => decide(opt.id)} title={opt.description}>
-                {opt.label}
+      <div className="px-6 py-4 border-t border-[#f0f0f0] bg-[#fafafa]">
+        {rejectMode ? (
+          <div className="space-y-3">
+            <p className="text-[13px] text-[#6e6e73]">却下理由を入力してください（省略可）</p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="例: 競合キーワードが多すぎて効果が薄い"
+              rows={2}
+              className="w-full px-3 py-2 border border-[#d2d2d7] rounded-xl text-[13px] text-[#1d1d1f] resize-none focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+            />
+            <div className="flex gap-2">
+              <Button disabled={loading} onClick={() => decide("no", rejectReason)}>
+                {loading ? "処理中…" : "却下する"}
               </Button>
-            ))}
-            <Button disabled={loading} variant="secondary" onClick={() => decide("no")}>却下</Button>
-          </>
+              <Button disabled={loading} variant="secondary" onClick={() => { setRejectMode(false); setRejectReason(""); }}>
+                キャンセル
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 flex-wrap">
+            {proposal.decisionType === "yesno" ? (
+              <>
+                <Button disabled={loading} onClick={() => decide("yes")}>承認して実行</Button>
+                <Button disabled={loading} variant="secondary" onClick={() => setRejectMode(true)}>却下</Button>
+              </>
+            ) : (
+              <>
+                {options.map((opt) => (
+                  <Button key={opt.id} disabled={loading} onClick={() => decide(opt.id)} title={opt.description}>
+                    {opt.label}
+                  </Button>
+                ))}
+                <Button disabled={loading} variant="secondary" onClick={() => setRejectMode(true)}>却下</Button>
+              </>
+            )}
+            {loading && <span className="text-[13px] text-[#6e6e73]">処理中…</span>}
+          </div>
         )}
-        {loading && <span className="text-[13px] text-[#6e6e73]">処理中…</span>}
       </div>
     </div>
   );

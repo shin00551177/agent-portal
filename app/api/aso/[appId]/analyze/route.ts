@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
+import { sendSlackError } from "@/lib/slack-alert";
 
 const client = new Anthropic();
 
@@ -40,6 +41,7 @@ export async function POST(
   const app = await db.asoApp.findUnique({ where: { id: appId } });
   if (!app) return NextResponse.json({ error: "not found" }, { status: 404 });
 
+  try {
   const report = await db.asoReport.findFirst({
     where: { appId },
     orderBy: { date: "desc" },
@@ -65,7 +67,28 @@ export async function POST(
     })
     .join("\n");
 
+  // 過去30日の却下済み提案を取得（学習ループ #7）
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const rejectedProposals = await db.proposal.findMany({
+    where: { domain: "aso", targetId: appId, status: "rejected", decidedAt: { gte: since } },
+    orderBy: { decidedAt: "desc" },
+    take: 10,
+    select: { title: true, summary: true, rejectionReason: true },
+  });
+
+  const rejectedSection = rejectedProposals.length > 0
+    ? `\n## 過去に却下された提案（同じ提案を繰り返さないこと）\n${rejectedProposals
+        .map((p) => `  - 「${p.title}」: ${p.summary}${p.rejectionReason ? `\n    却下理由: ${p.rejectionReason}` : ""}`)
+        .join("\n")}\n`
+    : "";
+
   const prompt = `あなたはApp Store最適化（ASO）の専門家です。以下の ${app.name} のASO データを分析し、売上向上に直結する改善提案を3件生成してください。
+
+## エージェント行動規範（AI AGENT 行動規範 v0.1 より）
+- 提案は必ず「結果→原因分析→ネクストアクション」の3点セットで構成する
+- 人間（オーナー）の承認なしに直接変更を実行しない。提案形式のみとする
+- 確信度 medium 以上の根拠がある提案のみ生成する（推測だけによる提案は不可）
+- 過去に却下された提案と同じ内容・同じフィールドへの変更を繰り返さない
 
 ## 集計期間: ${periodLabel}
 
@@ -77,7 +100,7 @@ export async function POST(
 
 ## キーワード順位
 ${kwSummary}
-
+${rejectedSection}
 各提案は以下の3点セットで構成してください：
 1. **結果**（現状の数値・事実のみ。判断・意見を含まない）
 2. **原因分析**（なぜその結果になっているか。データに基づく推論）
@@ -161,10 +184,23 @@ ${kwSummary}
     req,
   });
 
-  // 分析完了後に自動で Slack DM 送信（fire-and-forget）
-  // 送信先: SLACK_ASO_CHANNEL（現在は Hori DM、正式リリース時にチャンネルへ変更）
+  // 分析完了後に自動で Slack レポート送信（fire-and-forget）
   const baseUrl = req.nextUrl.origin;
-  fetch(`${baseUrl}/api/aso/${appId}/report`, { method: "POST" }).catch(() => {});
+  const syncSecret = process.env.SYNC_SECRET;
+  const reportHeaders: Record<string, string> = {};
+  if (syncSecret) reportHeaders["x-sync-secret"] = syncSecret;
+  fetch(`${baseUrl}/api/aso/${appId}/report`, { method: "POST", headers: reportHeaders })
+    .then(async (r) => {
+      if (!r.ok) {
+        const body = await r.text().catch(() => r.statusText);
+        await sendSlackError({ step: "report", appId, appName: app.name, error: `HTTP ${r.status}: ${body}` });
+      }
+    })
+    .catch((err) => sendSlackError({ step: "report", appId, appName: app.name, error: err }));
 
   return NextResponse.json({ proposalIds: created.map((p) => p.id) });
+  } catch (err) {
+    await sendSlackError({ step: "analyze", appId, appName: app?.name, error: err });
+    throw err;
+  }
 }

@@ -229,6 +229,7 @@ model Proposal {
   status       String       @default("pending") // "pending" | "approved" | "rejected" | "executing" | "done" | "failed"
   decision     String?      // "yes" | "no" | option.id
   decidedAt    DateTime?
+  rejectionReason String?   // 差し戻し理由（#7 学習ループ）
 
   // 実行
   actionType   String       // "add_keywords" | "update_setting" | "github_workflow" | "manual"

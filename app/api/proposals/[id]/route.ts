@@ -9,7 +9,7 @@ export async function PATCH(
 ) {
   const { id } = await params;
   const body = await req.json();
-  const { decision } = body; // "yes" | "no" | option.id
+  const { decision, rejectionReason } = body as { decision: string; rejectionReason?: string };
 
   if (!decision) {
     return NextResponse.json({ error: "decision required" }, { status: 400 });
@@ -27,7 +27,14 @@ export async function PATCH(
 
   const updated = await db.proposal.update({
     where: { id },
-    data: { decision, status, decidedAt: new Date() },
+    data: {
+      decision,
+      status,
+      decidedAt: new Date(),
+      ...(decision === "no" && rejectionReason?.trim()
+        ? { rejectionReason: rejectionReason.trim() }
+        : {}),
+    },
   });
 
   await writeAuditLog({
