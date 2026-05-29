@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/Button";
 
 export default function Error({
@@ -10,9 +11,16 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const router = useRouter();
+
   useEffect(() => {
     console.error(error);
   }, [error]);
+
+  function handleRetry() {
+    router.refresh(); // サーバーコンポーネントを再フェッチ
+    reset();          // エラーバウンダリをクリア
+  }
 
   return (
     <div className="min-h-screen bg-white flex items-start">
@@ -25,7 +33,7 @@ export default function Error({
         {error.digest && (
           <p className="text-[13px] text-[#86868b] mb-10 font-mono">Error ID: {error.digest}</p>
         )}
-        <Button size="lg" onClick={reset}>再試行</Button>
+        <Button size="lg" onClick={handleRetry}>再試行</Button>
       </div>
     </div>
   );
