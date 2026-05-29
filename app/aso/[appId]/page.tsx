@@ -6,6 +6,7 @@ import { KeywordManager } from "./KeywordManager";
 import { Button } from "@/components/Button";
 import { SyncButton } from "./SyncButton";
 import { AsoDataSection } from "./AsoDataSection";
+import { StorePreview } from "./StorePreview";
 
 export default async function AsoAppPage({
   params,
@@ -98,6 +99,15 @@ export default async function AsoAppPage({
             <p className="text-[13px] text-[#86868b]">「データ更新」ボタンを押してデータを取得してください</p>
           </div>
         )}
+      </section>
+
+      {/* Store Preview */}
+      <section className="py-12 border-b border-[#f0f0f0]">
+        <StorePreview
+          iosId={app.iosId}
+          googlePlayId={app.googlePlayId}
+          ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null}
+        />
       </section>
 
       {/* Keywords */}

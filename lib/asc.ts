@@ -2,7 +2,7 @@
 
 const BASE = "https://api.appstoreconnect.apple.com";
 
-async function makeToken(): Promise<string> {
+export async function makeToken(): Promise<string> {
   const keyId     = process.env.APPLE_IAP_KEY_ID;
   const issuerId  = process.env.APPLE_IAP_ISSUER_ID;
   const keyB64    = process.env.APPLE_IAP_PRIVATE_KEY_B64;

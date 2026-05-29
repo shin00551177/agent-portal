@@ -100,20 +100,75 @@ function OpportunityTag({ kw }: { kw: KwData }) {
   return <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#6e6e73]">様子見</span>;
 }
 
-function AppPowerBar({ value }: { value: number | null }) {
-  const pct = value != null ? (value / 10) * 100 : 0;
-  const color = value == null ? "bg-[#d2d2d7]" : value >= 5 ? "bg-emerald-500" : value >= 2 ? "bg-yellow-400" : "bg-red-400";
+function AppPowerGauge({ value }: { value: number | null }) {
+  const v = value ?? 0;
+  const pct = Math.min(v / 10, 1);
+  const r = 28, cx = 36, cy = 36;
+  const circumference = Math.PI * r; // 半円
+  const dash = circumference * pct;
+  const color = v >= 5 ? "#34c759" : v >= 2 ? "#ff9f0a" : "#ff3b30";
+  const label = v >= 5 ? "良好" : v >= 2 ? "改善余地あり" : "要改善";
+
+  // 半円ゲージ（下半分）
   return (
-    <div>
-      <div className="flex items-baseline gap-1">
-        <span className={`text-[28px] font-semibold leading-none tracking-tight ${value != null && value < 2 ? "text-red-500" : "text-[#1d1d1f]"}`}>
+    <div className="flex flex-col items-center">
+      <svg width="72" height="44" viewBox="0 0 72 44">
+        {/* 背景トラック */}
+        <path
+          d={`M 8 36 A ${r} ${r} 0 0 1 64 36`}
+          fill="none" stroke="#f0f0f0" strokeWidth="7" strokeLinecap="round"
+        />
+        {/* 値 */}
+        <path
+          d={`M 8 36 A ${r} ${r} 0 0 1 64 36`}
+          fill="none" stroke={color} strokeWidth="7" strokeLinecap="round"
+          strokeDasharray={`${dash} ${circumference}`}
+        />
+        {/* 中心テキスト */}
+        <text x={cx} y={cy - 2} textAnchor="middle" fontSize="13" fontWeight="600"
+          fill={value == null ? "#c7c7cc" : "#1d1d1f"}>
           {value ?? "—"}
+        </text>
+        <text x={cx} y={cy + 10} textAnchor="middle" fontSize="8" fill="#86868b">/10</text>
+      </svg>
+      <p className={`text-[10px] font-medium mt-0.5 ${v >= 5 ? "text-[#1d7a47]" : v >= 2 ? "text-[#a05c00]" : "text-red-500"}`}>
+        {value != null ? label : "—"}
+      </p>
+    </div>
+  );
+}
+
+function KeywordStrategySummary({ keywords }: { keywords: KwData[] }) {
+  const counts = keywords.reduce((acc, kw) => {
+    const rank = kw.rank ?? 501;
+    const vol = kw.volume ?? 0;
+    const diff = kw.difficulty ?? 100;
+    const key = rank <= 10 ? "守る"
+      : rank <= 50 ? "伸ばす"
+      : rank >= 500 && vol >= 20 && diff <= 65 ? "ねらう"
+      : diff > 70 ? "激戦区"
+      : "様子見";
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const ITEMS = [
+    { key: "ねらう",  color: "bg-[#fff1f0] text-[#c0392b]", icon: "🎯" },
+    { key: "伸ばす",  color: "bg-[#fff7e6] text-[#a05c00]", icon: "↑"  },
+    { key: "守る",   color: "bg-[#f0faf4] text-[#1d7a47]", icon: "✓"  },
+    { key: "激戦区", color: "bg-[#f5f5f7] text-[#86868b]", icon: "⚡" },
+    { key: "様子見", color: "bg-[#f5f5f7] text-[#6e6e73]", icon: "−"  },
+  ].filter(({ key }) => counts[key]);
+
+  if (ITEMS.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {ITEMS.map(({ key, color, icon }) => (
+        <span key={key} className={`inline-flex items-center gap-1 text-[12px] font-medium px-3 py-1 rounded-full ${color}`}>
+          {icon} {key} <span className="font-bold">{counts[key]}</span>
         </span>
-        {value != null && <span className="text-[14px] text-[#6e6e73]">/10</span>}
-      </div>
-      <div className="mt-2 h-1.5 w-20 bg-[#f0f0f0] rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
-      </div>
+      ))}
     </div>
   );
 }
@@ -431,14 +486,9 @@ export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rank
             </p>
             <p className="text-[12px] text-[#6e6e73] mt-2">評価 ({metrics.ratingsTotal ?? "?"}件)</p>
           </div>
-          <div className="px-6 py-5 rounded-r-2xl">
-            <AppPowerBar value={metrics.appPower} />
-            <p className="text-[12px] text-[#6e6e73] mt-1">
-              App Power
-              {metrics.appPower != null && metrics.appPower < 2 && (
-                <span className="ml-1 text-red-500">⚠️ 要改善</span>
-              )}
-            </p>
+          <div className="px-6 py-3 rounded-r-2xl flex flex-col items-center justify-center">
+            <AppPowerGauge value={metrics.appPower} />
+            <p className="text-[11px] text-[#6e6e73] mt-1">App Power</p>
           </div>
         </div>
       )}
@@ -499,7 +549,10 @@ export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rank
       {/* ─── Keyword Rankings ───────────────────────────── */}
       {!isRangeQuery && sortedKws.length > 0 && (
         <div>
-          <p className="text-[15px] font-semibold text-[#1d1d1f] mb-4">キーワード順位</p>
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[15px] font-semibold text-[#1d1d1f]">キーワード順位</p>
+            <KeywordStrategySummary keywords={sortedKws} />
+          </div>
           <div className="grid grid-cols-[2fr_80px_40px_130px_130px_90px] gap-3 pb-2 border-b border-[#f0f0f0] text-[11px] text-[#86868b] uppercase tracking-wide">
             <span>キーワード</span><span>順位</span><span>変動</span>
             <span>検索ボリューム</span><span>競合密度</span><span>推奨戦略</span>
