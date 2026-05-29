@@ -281,7 +281,7 @@ export function GovernancePanel({ appId, appName, domain, initialConfig }: Props
           </FieldRow>
           <FieldRow label="運用責任者">
             <input type="text" value={operator} onChange={(e) => setOperator(e.target.value)}
-              placeholder="例: 堀 真之介"
+              placeholder="例: 山田 太郎"
               className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]" />
           </FieldRow>
           <FieldRow label="承認日">
@@ -290,7 +290,7 @@ export function GovernancePanel({ appId, appName, domain, initialConfig }: Props
           </FieldRow>
           <FieldRow label="承認者">
             <input type="text" value={approver} onChange={(e) => setApprover(e.target.value)}
-              placeholder="例: George Miyauchi"
+              placeholder="例: 鈴木 一郎"
               className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]" />
           </FieldRow>
           <FieldRow label="月間削減工数">
