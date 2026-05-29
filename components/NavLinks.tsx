@@ -21,8 +21,10 @@ export function NavLinks() {
         <Link
           key={href}
           href={href}
-          className={`text-[13px] transition-colors duration-150 ${
-            active(href) ? "text-[#1d1d1f] font-medium" : "text-[#6e6e73] hover:text-[#1d1d1f]"
+          className={`text-[13px] transition-colors duration-150 relative pb-0.5 ${
+            active(href)
+              ? "text-[#2E2E2E] font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[#F4AA1C]"
+              : "text-[#969696] hover:text-[#2E2E2E]"
           }`}
         >
           {label}

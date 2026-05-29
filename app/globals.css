@@ -1,56 +1,67 @@
+/* AIA Design System — fonts & tokens (must come before tailwindcss) */
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+@import "./aia/colors_and_type.css";
+@import "./aia/components.css";
+
 @import "tailwindcss";
 
-/* ─── Design Tokens (Frontend Base Spec) ─────────────────────────────────── */
+/* ─── Design Tokens (AI AVATAR Design System) ────────────────────────────── */
 @theme {
-  /* Primary */
-  --color-primary:         #1d1d1f;
-  --color-primary-hover:   #000000;
+  /* Primary — AIA ink (#2E2E2E ≈ previous #1d1d1f) */
+  --color-primary:         #2E2E2E;
+  --color-primary-hover:   #181818;
   --color-primary-fg:      #ffffff;
 
   /* Secondary */
-  --color-secondary:       #f5f5f7;
-  --color-secondary-hover: #e8e8ed;
-  --color-secondary-fg:    #6e6e73;
+  --color-secondary:       #F5F5F5;
+  --color-secondary-hover: #EBEBEB;
+  --color-secondary-fg:    #969696;
 
   /* Danger */
-  --color-danger:          #ff3b30;
-  --color-danger-bg:       #fff1f0;
-  --color-danger-fg:       #c0392b;
+  --color-danger:          #E93E21;
+  --color-danger-bg:       rgba(233,62,33,0.05);
+  --color-danger-fg:       #E93E21;
 
   /* Success */
-  --color-success:         #34c759;
-  --color-success-bg:      #f0faf4;
+  --color-success:         #28A745;
+  --color-success-bg:      rgba(40,167,69,0.12);
   --color-success-fg:      #1d7a47;
 
   /* Warning */
-  --color-warning-bg:      #fff7e6;
-  --color-warning-fg:      #a05c00;
+  --color-warning-bg:      rgba(244,170,28,0.16);
+  --color-warning-fg:      #9A6B00;
 
   /* Neutral */
-  --color-text-primary:    #1d1d1f;
-  --color-text-secondary:  #6e6e73;
-  --color-text-tertiary:   #86868b;
-  --color-text-disabled:   #c7c7cc;
-  --color-border:          #f0f0f0;
-  --color-border-strong:   #d2d2d7;
-  --color-link:            #0071e3;
-  --color-surface:         #f5f5f7;
-  --color-surface-hover:   #ebebeb;
+  --color-text-primary:    #2E2E2E;
+  --color-text-secondary:  #969696;
+  --color-text-tertiary:   #B4B4B4;
+  --color-text-disabled:   #D1D1D1;
+  --color-border:          #F0F0F0;
+  --color-border-strong:   #E6E3E3;
+  --color-link:            #F4AA1C;   /* brand gold — replaces Apple blue */
+  --color-surface:         #F5F5F5;
+  --color-surface-hover:   #EBEBEB;
 }
 
 body {
   background: #fff;
-  color: var(--color-text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, var(--font-geist), "Helvetica Neue", Arial, sans-serif;
+  color: var(--ink, #2E2E2E);
+  font-family: "Noto Sans JP", "Onest", -apple-system, "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background: var(--color-link);
+  background: var(--brand-gold, #F4AA1C);
   color: #fff;
 }
 
-/* SNS Content Lab — red gradient (mirrors content-lab design) */
+/* Focus ring — gold */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring, 0 0 0 3px rgba(244,170,28,0.35));
+}
+
+/* SNS Content Lab — red gradient */
 .cl-gradient {
   background: linear-gradient(
     66.02deg,
