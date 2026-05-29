@@ -585,9 +585,6 @@ export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rank
         </div>
       )}
 
-      {/* ─── AIに聞く ───────────────────────────────────── */}
-      {!isRangeQuery && <AskSection appId={appId} />}
-
       {/* ─── 分析・提案 ─────────────────────────────────── */}
       <div>
         <div className="flex items-center justify-between mb-5">

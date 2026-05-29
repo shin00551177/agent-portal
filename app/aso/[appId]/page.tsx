@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { SyncButton } from "./SyncButton";
 import { AsoDataSection } from "./AsoDataSection";
 import { StorePreview } from "./StorePreview";
+import { AsoChatBot } from "@/components/AsoChatBot";
 
 export default async function AsoAppPage({
   params,
@@ -164,6 +165,7 @@ export default async function AsoAppPage({
           </div>
         )}
       </section>
+      <AsoChatBot appId={appId} />
     </div>
   );
 }
