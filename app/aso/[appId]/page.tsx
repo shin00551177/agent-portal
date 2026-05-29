@@ -8,6 +8,7 @@ import { SyncButton } from "./SyncButton";
 import { AsoDataSection } from "./AsoDataSection";
 import { StorePreview } from "./StorePreview";
 import { StoreImages } from "./StoreImages";
+import { StoreAnalytics } from "./StoreAnalytics";
 import { ImageUploadSection } from "./ImageUploadSection";
 import { AsoChatBot } from "@/components/AsoChatBot";
 
@@ -102,6 +103,11 @@ export default async function AsoAppPage({
             <p className="text-[13px] text-[#86868b]">「データ更新」ボタンを押してデータを取得してください</p>
           </div>
         )}
+      </section>
+
+      {/* App Store Analytics */}
+      <section className="py-12 border-b border-[#f0f0f0]">
+        <StoreAnalytics iosId={app.iosId} />
       </section>
 
       {/* Store Preview + Images */}

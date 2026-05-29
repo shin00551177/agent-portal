@@ -39,6 +39,171 @@ async function asc(path: string, options: RequestInit = {}) {
   return res.json();
 }
 
+// ─── App Store Analytics ──────────────────────────────────────────────────────
+
+export type StoreEngagementRow = {
+  date: string;
+  event: string;       // "Page view" | "App Unit" (download)
+  pageType: string;    // "Product page" | "Store sheet"
+  sourceType: string;  // "App Store search" | "Web referrer" | "App referrer" | ...
+  counts: number;
+  uniqueCounts: number;
+};
+
+export type StoreEngagementSummary = {
+  periodFrom: string;
+  periodTo: string;
+  pageViews: number;
+  downloads: number;
+  cvr: number | null;           // downloads / pageViews
+  sourceBreakdown: { source: string; views: number; pct: number }[];
+  dailyPageViews: { date: string; views: number; downloads: number }[];
+};
+
+async function downloadSegment(url: string): Promise<StoreEngagementRow[]> {
+  const res = await fetch(url);
+  if (!res.ok) return [];
+  const buffer = await res.arrayBuffer();
+  let text: string;
+  try {
+    const { gunzipSync } = await import("zlib");
+    text = gunzipSync(Buffer.from(buffer)).toString("utf-8");
+  } catch {
+    text = Buffer.from(buffer).toString("utf-8");
+  }
+  const lines = text.trim().split("\n");
+  if (lines.length < 2) return [];
+  // header: Date App_Name App_Apple_Identifier Event Page_Type Source_Type Engagement_Type Device Platform_Version Territory Counts Unique_Counts
+  const rows: StoreEngagementRow[] = [];
+  for (const line of lines.slice(1)) {
+    const cols = line.split("\t");
+    if (cols.length < 12) continue;
+    rows.push({
+      date:         cols[0],
+      event:        cols[3],
+      pageType:     cols[4],
+      sourceType:   cols[5],
+      counts:       parseInt(cols[10] ?? "0", 10) || 0,
+      uniqueCounts: parseInt(cols[11] ?? "0", 10) || 0,
+    });
+  }
+  return rows;
+}
+
+export async function fetchStoreEngagementAnalytics(
+  iosId: string,
+  days = 30,
+): Promise<StoreEngagementSummary | null> {
+  try {
+    const token = await makeToken();
+    const h = { Authorization: `Bearer ${token}` };
+
+    // 1. ONGOING リクエストIDを取得
+    const reqRes = await fetch(
+      `https://api.appstoreconnect.apple.com/v1/apps/${iosId}/analyticsReportRequests?limit=1`,
+      { headers: h }
+    );
+    if (!reqRes.ok) return null;
+    const reqData = await reqRes.json();
+    const requestId = reqData.data?.[0]?.id;
+    if (!requestId) return null;
+
+    // 2. Discovery & Engagement レポートを探す
+    const repsRes = await fetch(
+      `https://api.appstoreconnect.apple.com/v1/analyticsReportRequests/${requestId}/reports?limit=200`,
+      { headers: h }
+    );
+    if (!repsRes.ok) return null;
+    const repsData = await repsRes.json();
+    const engagementReport = repsData.data?.find(
+      (r: { attributes: { name: string; category: string } }) =>
+        r.attributes.category === "APP_STORE_ENGAGEMENT" &&
+        r.attributes.name.includes("Discovery and Engagement Standard")
+    );
+    if (!engagementReport) return null;
+
+    // 3. 直近の instances を取得（最大 days 日分）
+    const instsRes = await fetch(
+      `https://api.appstoreconnect.apple.com/v1/analyticsReports/${engagementReport.id}/instances?limit=${days}`,
+      { headers: h }
+    );
+    if (!instsRes.ok) return null;
+    const instsData = await instsRes.json();
+    const instances: { id: string; attributes: { processingDate: string } }[] =
+      instsData.data ?? [];
+    if (instances.length === 0) return null;
+
+    // 4. 全インスタンスのセグメントをダウンロード
+    const allRows: StoreEngagementRow[] = [];
+    await Promise.all(instances.map(async (inst) => {
+      const segRes = await fetch(
+        `https://api.appstoreconnect.apple.com/v1/analyticsReportInstances/${inst.id}/segments`,
+        { headers: h }
+      );
+      if (!segRes.ok) return;
+      const segData = await segRes.json();
+      const segUrl = segData.data?.[0]?.attributes?.url;
+      if (!segUrl) return;
+      const rows = await downloadSegment(segUrl);
+      allRows.push(...rows);
+    }));
+
+    // 5. 集計
+    const productPageViews = allRows.filter(
+      (r) => r.event === "Page view" && r.pageType === "Product page"
+    );
+    const downloads = allRows.filter(
+      (r) => r.event === "App Unit" || r.event === "Download"
+    );
+
+    const totalViews    = productPageViews.reduce((s, r) => s + r.counts, 0);
+    const totalDownload = downloads.reduce((s, r) => s + r.counts, 0);
+
+    // 流入元内訳
+    const sourceMap: Record<string, number> = {};
+    for (const r of productPageViews) {
+      const src = r.sourceType || "Unknown";
+      sourceMap[src] = (sourceMap[src] ?? 0) + r.counts;
+    }
+    const sourceBreakdown = Object.entries(sourceMap)
+      .sort((a, b) => b[1] - a[1])
+      .map(([source, views]) => ({
+        source,
+        views,
+        pct: totalViews > 0 ? Math.round((views / totalViews) * 100) : 0,
+      }));
+
+    // 日次トレンド
+    const dailyMap: Record<string, { views: number; downloads: number }> = {};
+    for (const r of productPageViews) {
+      if (!dailyMap[r.date]) dailyMap[r.date] = { views: 0, downloads: 0 };
+      dailyMap[r.date].views += r.counts;
+    }
+    for (const r of downloads) {
+      if (!dailyMap[r.date]) dailyMap[r.date] = { views: 0, downloads: 0 };
+      dailyMap[r.date].downloads += r.counts;
+    }
+    const dailyPageViews = Object.entries(dailyMap)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, v]) => ({ date, ...v }));
+
+    const dates = dailyPageViews.map((d) => d.date);
+
+    return {
+      periodFrom:     dates[0]  ?? "",
+      periodTo:       dates[dates.length - 1] ?? "",
+      pageViews:      totalViews,
+      downloads:      totalDownload,
+      cvr:            totalViews > 0 ? totalDownload / totalViews : null,
+      sourceBreakdown,
+      dailyPageViews,
+    };
+  } catch (e) {
+    console.error("[StoreAnalytics]", e);
+    return null;
+  }
+}
+
 // 現在公開中のスクリーンショットURLを取得
 export async function fetchAscScreenshots(
   iosId: string,
