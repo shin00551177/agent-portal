@@ -278,7 +278,7 @@ ${rejectedSection}
   }
 
   console.log("[analyze] created proposals:", created.length, "for", appId);
-  return NextResponse.json({ proposalIds: created.map((p) => p.id) });
+  return NextResponse.json({ proposalIds: created.map((p) => p.id), v: "9ae843b" });
   } catch (err) {
     // noReport=true（cron経由）の場合はSlack通知しない
     if (!reqBody.noReport) {
