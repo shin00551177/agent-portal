@@ -203,23 +203,11 @@ ${rejectedSection}
     });
 
     try {
-      return JSON.parse(jsonStr);
-    } catch {
-      // フォールバック: 個別オブジェクトを1つずつ抽出
-      const items: ProposalInput[] = [];
-      let depth = 0, inStr = false, start2 = -1;
-      for (let i = 0; i < jsonStr.length; i++) {
-        const c = jsonStr[i];
-        if (c === '"' && jsonStr[i - 1] !== '\\') inStr = !inStr;
-        if (!inStr) {
-          if (c === '{') { if (depth === 0) start2 = i; depth++; }
-          if (c === '}') { depth--; if (depth === 0 && start2 !== -1) {
-            try { items.push(JSON.parse(jsonStr.slice(start2, i + 1))); } catch { /* skip */ }
-            start2 = -1;
-          }}
-        }
-      }
-      return items;
+      const parsed = JSON.parse(jsonStr);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.error("[extractProposals] parse error:", (e as Error).message, "jsonStr length:", jsonStr.length);
+      return [];
     }
   }
 
@@ -289,6 +277,7 @@ ${rejectedSection}
       .catch((err) => sendSlackError({ step: "report", appId, appName: app.name, error: err }));
   }
 
+  console.log("[analyze] created proposals:", created.length, "for", appId);
   return NextResponse.json({ proposalIds: created.map((p) => p.id) });
   } catch (err) {
     // noReport=true（cron経由）の場合はSlack通知しない
