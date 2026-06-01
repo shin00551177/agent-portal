@@ -102,13 +102,13 @@ export default async function DashboardPage() {
       <section className="py-10 border-b border-[#f0f0f0]">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <span className="w-7 h-7 rounded-lg bg-[#0071e3] flex items-center justify-center text-white text-[12px] font-bold">A</span>
+            <span className="w-7 h-7 rounded-lg bg-[#079147] flex items-center justify-center text-white text-[12px] font-bold">A</span>
             <p className="text-[17px] font-semibold text-[#1d1d1f]">ASO エージェント</p>
             <span className="text-[11px] text-[#86868b] bg-[#f5f5f7] px-2 py-0.5 rounded-full">
               {asoActive}/{asoApps.length} 稼働中
             </span>
           </div>
-          <Link href="/aso" className="text-[13px] text-[#0071e3] hover:underline">すべて →</Link>
+          <Link href="/aso" className="text-[13px] text-[#079147] hover:underline">すべて →</Link>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -132,17 +132,17 @@ export default async function DashboardPage() {
               <Link key={app.id} href={`/aso/${app.id}`}
                 className={`relative rounded-2xl p-5 border transition-all group overflow-hidden ${
                   app.active
-                    ? "border-[#e8e8ed] bg-white hover:border-[#0071e3]/30 hover:shadow-md"
+                    ? "border-[#e8e8ed] bg-white hover:border-[#079147]/30 hover:shadow-md"
                     : "border-[#f0f0f0] bg-[#fafafa] opacity-70 hover:opacity-100"
                 }`}>
                 {/* Active indicator stripe */}
                 {app.active && (
-                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#0071e3] to-[#34c759] rounded-t-2xl" />
+                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#079147] to-[#34c759] rounded-t-2xl" />
                 )}
 
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="text-[14px] font-semibold text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors leading-tight">
+                    <p className="text-[14px] font-semibold text-[#1d1d1f] group-hover:text-[#079147] transition-colors leading-tight">
                       {app.name}
                     </p>
                     <p className={`text-[11px] font-medium mt-0.5 flex items-center gap-1 ${app.active ? "text-[#1d7a47]" : "text-[#86868b]"}`}>
@@ -201,7 +201,7 @@ export default async function DashboardPage() {
               {snsActive}/{snsApps.length} 稼働中
             </span>
           </div>
-          <Link href="/sns" className="text-[13px] text-[#0071e3] hover:underline">すべて →</Link>
+          <Link href="/sns" className="text-[13px] text-[#079147] hover:underline">すべて →</Link>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -230,7 +230,7 @@ export default async function DashboardPage() {
                     </p>
                   </div>
                   {pendingDrafts > 0 && (
-                    <span className="text-[11px] font-bold text-white bg-[#0071e3] rounded-full w-6 h-6 flex items-center justify-center">
+                    <span className="text-[11px] font-bold text-white bg-[#079147] rounded-full w-6 h-6 flex items-center justify-center">
                       {pendingDrafts}
                     </span>
                   )}
@@ -239,7 +239,7 @@ export default async function DashboardPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] text-[#86868b]">下書き承認待ち</span>
-                    <span className={`text-[12px] font-semibold ${pendingDrafts > 0 ? "text-[#0071e3]" : "text-[#c7c7cc]"}`}>
+                    <span className={`text-[12px] font-semibold ${pendingDrafts > 0 ? "text-[#079147]" : "text-[#c7c7cc]"}`}>
                       {pendingDrafts}件
                     </span>
                   </div>
@@ -266,7 +266,7 @@ export default async function DashboardPage() {
       <section className="py-10">
         <div className="flex items-center justify-between mb-5">
           <p className="text-[17px] font-semibold text-[#1d1d1f]">提案</p>
-          <Link href="/proposals" className="text-[13px] text-[#0071e3] hover:underline">提案ページへ →</Link>
+          <Link href="/proposals" className="text-[13px] text-[#079147] hover:underline">提案ページへ →</Link>
         </div>
 
         {reviewProposals.length === 0 && waitingProposals.length === 0 ? (
@@ -286,14 +286,14 @@ export default async function DashboardPage() {
                       className="flex items-center justify-between px-5 py-4 hover:bg-[#fafafa] transition-colors group">
                       <div className="flex items-center gap-3 min-w-0">
                         <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          p.domain === "aso" ? "bg-[#e8f0fe] text-[#0071e3]"
+                          p.domain === "aso" ? "bg-[#e8f0fe] text-[#079147]"
                           : p.domain === "sns" ? "bg-[#f0eeff] text-[#5856d6]"
                           : "bg-[#f5f5f7] text-[#6e6e73]"
                         }`}>
                           {DOMAIN_LABEL[p.domain] ?? p.domain}
                         </span>
                         <div className="min-w-0">
-                          <p className="text-[14px] font-medium text-[#1d1d1f] truncate group-hover:text-[#0071e3] transition-colors">
+                          <p className="text-[14px] font-medium text-[#1d1d1f] truncate group-hover:text-[#079147] transition-colors">
                             {p.title}
                           </p>
                           <p className="text-[11px] text-[#86868b] mt-0.5">
@@ -318,7 +318,7 @@ export default async function DashboardPage() {
                     <Link key={p.id} href={`/aso/${p.targetId ?? ""}`}
                       className="flex items-center justify-between px-5 py-4 hover:bg-[#fafafa] transition-colors">
                       <div className="flex items-center gap-3 min-w-0">
-                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#e8f0fe] text-[#0071e3]">
+                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#e8f0fe] text-[#079147]">
                           {DOMAIN_LABEL[p.domain] ?? p.domain}
                         </span>
                         <div className="min-w-0">

@@ -221,7 +221,7 @@ export default function LearningsPage() {
                   <div className="flex items-center gap-2">
                     {editingId === l.id ? (
                       <>
-                        <button onClick={() => save(l.id)} className="text-[11px] text-[#0071e3] hover:underline">保存</button>
+                        <button onClick={() => save(l.id)} className="text-[11px] text-[#079147] hover:underline">保存</button>
                         <button onClick={() => setEditingId(null)} className="text-[11px] text-[#86868b] hover:underline">キャンセル</button>
                       </>
                     ) : (

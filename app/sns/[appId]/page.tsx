@@ -141,7 +141,7 @@ export default async function DashboardPage({
             <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest">
               直近14日のトレンドワード（エゴサから自動抽出）
             </p>
-            <Link href={`/sns/${appId}/ego`} className="text-[12px] text-[#0071e3] hover:underline">
+            <Link href={`/sns/${appId}/ego`} className="text-[12px] text-[#079147] hover:underline">
               エゴサ詳細 →
             </Link>
           </div>
@@ -164,7 +164,7 @@ export default async function DashboardPage({
         <section>
           <div className="flex items-center justify-between mb-3">
             <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest">投稿頻度レコメンド</p>
-            <Link href={`/sns/${appId}/frequency`} className="text-[12px] text-[#0071e3] hover:underline">
+            <Link href={`/sns/${appId}/frequency`} className="text-[12px] text-[#079147] hover:underline">
               詳細・調整 →
             </Link>
           </div>

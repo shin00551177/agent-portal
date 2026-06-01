@@ -245,13 +245,13 @@ function AddReleaseButton({ appId }: { appId: string }) {
         type="date"
         name="releaseDate"
         required
-        className="px-3 py-1.5 bg-[#f5f5f7] rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+        className="px-3 py-1.5 bg-[#f5f5f7] rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#079147]"
       />
       <input
         type="text"
         name="notes"
         placeholder="メモ（任意）"
-        className="px-3 py-1.5 bg-[#f5f5f7] rounded-lg text-[13px] text-[#1d1d1f] placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3] w-36"
+        className="px-3 py-1.5 bg-[#f5f5f7] rounded-lg text-[13px] text-[#1d1d1f] placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#079147] w-36"
       />
       <Button type="submit" size="sm">追加</Button>
     </form>

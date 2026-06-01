@@ -23,8 +23,8 @@ export function NavLinks() {
           href={href}
           className={`text-[13px] transition-colors duration-150 relative pb-0.5 ${
             active(href)
-              ? "text-[#2E2E2E] font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[#F4AA1C]"
-              : "text-[#969696] hover:text-[#2E2E2E]"
+              ? "text-white font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full after:bg-[#079147]"
+              : "text-white/40 hover:text-white"
           }`}
         >
           {label}

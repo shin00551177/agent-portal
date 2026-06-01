@@ -6,7 +6,7 @@ function Sparkline({
   data,
   width = 200,
   height = 48,
-  color = "#0071e3",
+  color = "#079147",
 }: {
   data: number[];
   width?: number;
@@ -40,7 +40,7 @@ function Sparkline({
 // ─── Source Bar ──────────────────────────────────────────────────────────────
 
 const SOURCE_LABELS: Record<string, { label: string; color: string }> = {
-  "App Store search":  { label: "検索",          color: "#0071e3" },
+  "App Store search":  { label: "検索",          color: "#079147" },
   "App Store browse":  { label: "ブラウズ",      color: "#34c759" },
   "Web referrer":      { label: "Web流入",        color: "#ff9f0a" },
   "App referrer":      { label: "アプリ経由",    color: "#5856d6" },
@@ -73,7 +73,7 @@ function AnalyticsContent({ data }: { data: StoreEngagementSummary }) {
           <p className="text-[28px] font-semibold text-[#1d1d1f] leading-none">
             {data.pageViews.toLocaleString()}
           </p>
-          <Sparkline data={sparkViews} color="#0071e3" />
+          <Sparkline data={sparkViews} color="#079147" />
         </div>
 
         {/* Downloads */}

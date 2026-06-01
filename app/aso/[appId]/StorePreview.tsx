@@ -102,7 +102,7 @@ function IosCard({ listing }: { listing: Listing }) {
         {/* Promotional text */}
         {listing.promotionalText && (
           <div className="mb-2 px-2 py-1.5 bg-[#f0f8ff] rounded-lg">
-            <p className="text-[10px] text-[#0071e3] font-semibold uppercase tracking-wide mb-0.5">プロモーションテキスト</p>
+            <p className="text-[10px] text-[#079147] font-semibold uppercase tracking-wide mb-0.5">プロモーションテキスト</p>
             <p className="text-[11px] text-[#1d1d1f] leading-relaxed">{listing.promotionalText}</p>
           </div>
         )}

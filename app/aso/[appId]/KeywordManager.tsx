@@ -45,12 +45,12 @@ export function KeywordManager({ appId, keywords }: { appId: string; keywords: K
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addKeyword()}
           placeholder="例: AI アバター 無料"
-          className="flex-1 px-3 py-2 bg-[#f5f5f7] rounded-lg text-[13px] text-[#1d1d1f] placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+          className="flex-1 px-3 py-2 bg-[#f5f5f7] rounded-lg text-[13px] text-[#1d1d1f] placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#079147]"
         />
         <select
           value={priority}
           onChange={(e) => setPriority(e.target.value as "high" | "medium")}
-          className="px-3 py-2 bg-[#f5f5f7] rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+          className="px-3 py-2 bg-[#f5f5f7] rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#079147]"
         >
           <option value="high">優先度: 高</option>
           <option value="medium">優先度: 中</option>

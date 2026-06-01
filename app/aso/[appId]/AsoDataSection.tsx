@@ -268,7 +268,7 @@ function ProposalCard({
           </div>
         ) : (
           <details className="mt-3">
-            <summary className="text-[12px] text-[#0071e3] cursor-pointer hover:underline">詳細を見る</summary>
+            <summary className="text-[12px] text-[#079147] cursor-pointer hover:underline">詳細を見る</summary>
             <p className="text-[13px] text-[#1d1d1f] mt-2 leading-relaxed whitespace-pre-line">{proposal.rationale}</p>
           </details>
         )}
@@ -311,7 +311,7 @@ function ProposalCard({
               value={overrideNote}
               onChange={(e) => setOverrideNote(e.target.value)}
               placeholder="例: 先週のリリースでキーワード変更済み / 競合の影響で一時的な下落"
-              className="w-full px-3 py-2 text-[13px] bg-[#f5f5f7] rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+              className="w-full px-3 py-2 text-[13px] bg-[#f5f5f7] rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-[#079147]"
               rows={2}
             />
             <div className="flex items-center gap-2">
@@ -401,7 +401,7 @@ function AskSection({ appId }: { appId: string }) {
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && ask(question)}
           placeholder="例: なぜライブ配信は44位なの？ / ライバルアプリと何が違う？"
-          className="flex-1 px-4 py-2.5 bg-[#f5f5f7] rounded-xl text-[13px] text-[#1d1d1f] placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+          className="flex-1 px-4 py-2.5 bg-[#f5f5f7] rounded-xl text-[13px] text-[#1d1d1f] placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#079147]"
           disabled={loading}
         />
         <Button size="sm" onClick={() => ask(question)} disabled={loading || !question.trim()}>
@@ -415,7 +415,7 @@ function AskSection({ appId }: { appId: string }) {
           <div className="border-t border-[#f0f0f0] pt-4">
             {loading && (
               <div className="flex items-center gap-2 text-[13px] text-[#6e6e73]">
-                <span className="inline-block w-2 h-2 rounded-full bg-[#0071e3] animate-pulse" />
+                <span className="inline-block w-2 h-2 rounded-full bg-[#079147] animate-pulse" />
                 考えています...
               </div>
             )}
@@ -635,7 +635,7 @@ export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rank
               <div key={kw.keyword} className="grid grid-cols-[2fr_120px_1fr_1fr_100px] gap-4 py-3.5 items-center">
                 <span className="text-[14px] font-medium text-[#1d1d1f]">{kw.keyword}</span>
                 <RankCell rank={kw.rank} prevRank={kw.prevRank} />
-                <MiniBar value={kw.volume} max={100} color="bg-[#0071e3]" />
+                <MiniBar value={kw.volume} max={100} color="bg-[#079147]" />
                 <MiniBar value={kw.difficulty} max={100}
                   color={kw.difficulty != null && kw.difficulty > 70 ? "bg-red-400" : kw.difficulty != null && kw.difficulty > 50 ? "bg-yellow-400" : "bg-emerald-400"} />
                 <OpportunityTag kw={kw} />
@@ -643,7 +643,7 @@ export function AsoDataSection({ appId, periodFrom, periodTo, isRangeQuery, rank
             ))}
           </div>
           <div className="mt-3 flex items-center gap-6 text-[11px] text-[#86868b]">
-            <span><span className="inline-block w-2 h-2 rounded-full bg-[#0071e3] mr-1" />検索ボリューム（数値が大きいほど検索数多い）</span>
+            <span><span className="inline-block w-2 h-2 rounded-full bg-[#079147] mr-1" />検索ボリューム（数値が大きいほど検索数多い）</span>
             <span><span className="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1" />競合密度 低（競合が弱く入りやすい）</span>
             <span><span className="inline-block w-2 h-2 rounded-full bg-red-400 mr-1" />競合密度 高（強豪が占拠している）</span>
           </div>

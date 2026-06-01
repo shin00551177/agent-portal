@@ -71,7 +71,7 @@ export default async function ProposalsPage({
         <div className="flex items-baseline gap-3 mb-7">
           <h2 className="text-[20px] font-semibold text-[#1d1d1f]">承認待ち</h2>
           {pending.length > 0 && (
-            <span className="text-[15px] text-[#0071e3]">{pending.length}件</span>
+            <span className="text-[15px] text-[#079147]">{pending.length}件</span>
           )}
         </div>
         {pending.length === 0 ? (
@@ -121,7 +121,7 @@ function DecisionBadge({ status }: { status: string }) {
   if (status === "rejected")
     return <span className="text-[13px] text-[#6e6e73] whitespace-nowrap">却下</span>;
   if (status === "approved")
-    return <span className="text-[13px] text-[#0071e3] whitespace-nowrap">承認済み</span>;
+    return <span className="text-[13px] text-[#079147] whitespace-nowrap">承認済み</span>;
   if (status === "failed")
     return <span className="text-[13px] text-red-500 whitespace-nowrap">失敗</span>;
   return null;

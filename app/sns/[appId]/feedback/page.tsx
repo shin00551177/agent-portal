@@ -167,7 +167,7 @@ export default function FeedbackPage() {
                 <p className="text-[13px] text-[#1d1d1f] leading-relaxed">{fb.content}</p>
                 {fb.url && (
                   <a href={fb.url} target="_blank" rel="noopener noreferrer"
-                    className="text-[11px] text-[#0071e3] hover:underline">
+                    className="text-[11px] text-[#079147] hover:underline">
                     元のURL →
                   </a>
                 )}

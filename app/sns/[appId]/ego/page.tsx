@@ -162,7 +162,7 @@ export default function EgoPage() {
                 <a key={h.id} href={h.url} target="_blank" rel="noopener noreferrer"
                   className="flex items-start justify-between py-3 gap-4 group">
                   <div className="min-w-0 space-y-1">
-                    <p className="text-[13px] font-medium text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors truncate">
+                    <p className="text-[13px] font-medium text-[#1d1d1f] group-hover:text-[#079147] transition-colors truncate">
                       {h.title}
                     </p>
                     <div className="flex gap-3 text-[11px] text-[#86868b]">

@@ -33,7 +33,7 @@ function CopyBtn({ text }: { text: string }) {
   return (
     <button
       onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-      className="text-[11px] text-[#0071e3] hover:underline"
+      className="text-[11px] text-[#079147] hover:underline"
     >{copied ? "コピー済" : "コピー"}</button>
   );
 }

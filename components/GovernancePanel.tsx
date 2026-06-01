@@ -69,7 +69,7 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
 }
 
 const inputCls =
-  "px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3] w-24";
+  "px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#079147] w-24";
 
 // ─────────────────────────────────────────────
 // Main component
@@ -277,12 +277,12 @@ export function GovernancePanel({ appId, appName, domain, initialConfig }: Props
           <FieldRow label="対象業務">
             <input type="text" value={taskDesc} onChange={(e) => setTaskDesc(e.target.value)}
               placeholder="例: SNSの言及を自動収集・通知"
-              className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]" />
+              className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#079147]" />
           </FieldRow>
           <FieldRow label="運用責任者">
             <input type="text" value={operator} onChange={(e) => setOperator(e.target.value)}
               placeholder="例: 山田 太郎"
-              className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]" />
+              className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#079147]" />
           </FieldRow>
           <FieldRow label="承認日">
             <input type="date" value={approvedAt} onChange={(e) => setApprovedAt(e.target.value)}
@@ -291,7 +291,7 @@ export function GovernancePanel({ appId, appName, domain, initialConfig }: Props
           <FieldRow label="承認者">
             <input type="text" value={approver} onChange={(e) => setApprover(e.target.value)}
               placeholder="例: 鈴木 一郎"
-              className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]" />
+              className="flex-1 px-3 py-1.5 bg-white rounded-lg text-[13px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#079147]" />
           </FieldRow>
           <FieldRow label="月間削減工数">
             <input type="number" min={0} value={savingsHrs}

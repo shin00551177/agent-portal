@@ -129,7 +129,7 @@ export default async function SettingsPage() {
                   </p>
                   <Link
                     href={agent.href}
-                    className="text-[12px] text-[#0071e3] hover:underline shrink-0"
+                    className="text-[12px] text-[#079147] hover:underline shrink-0"
                   >
                     編集
                   </Link>
@@ -171,7 +171,7 @@ export default async function SettingsPage() {
                     <p className="text-[14px] font-medium text-[#1d1d1f]">{label}</p>
                     <p className="text-[12px] text-[#6e6e73] mt-0.5">{desc}</p>
                   </div>
-                  <span className="text-[13px] text-[#0071e3] group-hover:underline">開く →</span>
+                  <span className="text-[13px] text-[#079147] group-hover:underline">開く →</span>
                 </a>
               ))}
             </div>

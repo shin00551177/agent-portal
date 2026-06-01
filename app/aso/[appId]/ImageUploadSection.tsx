@@ -146,7 +146,7 @@ export function ImageUploadSection({
       {/* File drop zone */}
       <div
         onClick={() => inputRef.current?.click()}
-        className="border-2 border-dashed border-[#d2d2d7] rounded-2xl p-8 text-center cursor-pointer hover:border-[#0071e3] hover:bg-[#f5f9ff] transition-all"
+        className="border-2 border-dashed border-[#d2d2d7] rounded-2xl p-8 text-center cursor-pointer hover:border-[#079147] hover:bg-[#f5f9ff] transition-all"
       >
         {preview ? (
           <img src={preview} alt="preview" className="max-h-48 mx-auto rounded-xl object-contain" />

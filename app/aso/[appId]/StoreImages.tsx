@@ -51,7 +51,7 @@ export async function StoreImages({ appId, iosId, googlePlayId }: Props) {
         <p className="text-[15px] font-semibold text-[#1d1d1f]">現在のストア画像</p>
         <Link
           href={`/aso/${appId}/settings`}
-          className="text-[12px] text-[#0071e3] hover:underline flex items-center gap-1"
+          className="text-[12px] text-[#079147] hover:underline flex items-center gap-1"
         >
           画像を更新 →
         </Link>

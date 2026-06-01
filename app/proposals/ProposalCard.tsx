@@ -118,7 +118,7 @@ export function ProposalCard({ proposal }: { proposal: Proposal }) {
               onChange={(e) => setRejectReason(e.target.value)}
               placeholder="例: 競合キーワードが多すぎて効果が薄い"
               rows={2}
-              className="w-full px-3 py-2 border border-[#d2d2d7] rounded-xl text-[13px] text-[#1d1d1f] resize-none focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+              className="w-full px-3 py-2 border border-[#d2d2d7] rounded-xl text-[13px] text-[#1d1d1f] resize-none focus:outline-none focus:ring-2 focus:ring-[#079147]"
             />
             <div className="flex gap-2">
               <Button disabled={loading} onClick={() => decide("no", rejectReason)}>

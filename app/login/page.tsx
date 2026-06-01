@@ -19,7 +19,7 @@ export default function LoginPage() {
             name="password"
             placeholder="パスワード"
             required
-            className="w-full px-4 py-3 bg-[#f5f5f7] rounded-xl text-[15px] text-[#1d1d1f] placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+            className="w-full px-4 py-3 bg-[#f5f5f7] rounded-xl text-[15px] text-[#1d1d1f] placeholder-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#079147]"
           />
           {error && (
             <p className="text-[13px] text-[#6e6e73] text-center">{error}</p>
@@ -27,7 +27,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full py-3 bg-[#0071e3] hover:bg-[#0077ed] disabled:opacity-50 text-white text-[15px] font-medium rounded-xl transition-colors"
+            className="w-full py-3 bg-[#079147] hover:bg-[#0077ed] disabled:opacity-50 text-white text-[15px] font-medium rounded-xl transition-colors"
           >
             {pending ? "認証中..." : "ログイン"}
           </button>

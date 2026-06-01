@@ -45,7 +45,7 @@ export function SyncButton({ appId }: { appId: string }) {
       {/* 期間指定クエリ */}
       <button
         onClick={() => setShowRange((v) => !v)}
-        className="text-[12px] text-[#0071e3] hover:underline"
+        className="text-[12px] text-[#079147] hover:underline"
         disabled={state === "syncing"}
       >
         {showRange ? "▲ 閉じる" : "期間指定 ›"}
@@ -57,7 +57,7 @@ export function SyncButton({ appId }: { appId: string }) {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="bg-white border border-[#d2d2d7] rounded-lg px-2 py-1 text-[12px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+            className="bg-white border border-[#d2d2d7] rounded-lg px-2 py-1 text-[12px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#079147]"
           />
           <span className="text-[12px] text-[#6e6e73]">〜</span>
           <input
@@ -65,7 +65,7 @@ export function SyncButton({ appId }: { appId: string }) {
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             max={new Date().toISOString().slice(0, 10)}
-            className="bg-white border border-[#d2d2d7] rounded-lg px-2 py-1 text-[12px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+            className="bg-white border border-[#d2d2d7] rounded-lg px-2 py-1 text-[12px] text-[#1d1d1f] focus:outline-none focus:ring-2 focus:ring-[#079147]"
           />
           <Button
             size="sm"
