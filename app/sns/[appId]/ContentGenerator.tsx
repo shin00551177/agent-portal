@@ -43,6 +43,7 @@ type DraftPreview = {
   confidence: string;
   imageUrl?: string | null;
   imageLoading?: boolean;
+  imageError?: string | null;
 };
 
 type Stage = "idle" | "generating" | "previewing" | "saving" | "saved" | "error";
@@ -97,18 +98,22 @@ export function ContentGenerator({ appId }: { appId: string }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ imagePrompt: item.imagePrompt, platform: item.platform }),
         })
-          .then((r) => r.json())
-          .then((data) => {
+          .then(async (r) => {
+            const data = await r.json();
             setPreviews((prev) => {
               const next = [...prev];
-              next[i] = { ...next[i], imageUrl: data.url ?? null, imageLoading: false };
+              if (r.ok && data.url) {
+                next[i] = { ...next[i], imageUrl: data.url, imageLoading: false, imageError: null };
+              } else {
+                next[i] = { ...next[i], imageLoading: false, imageError: data.error ?? `エラー (${r.status})` };
+              }
               return next;
             });
           })
-          .catch(() => {
+          .catch((e: Error) => {
             setPreviews((prev) => {
               const next = [...prev];
-              next[i] = { ...next[i], imageLoading: false };
+              next[i] = { ...next[i], imageLoading: false, imageError: e.message };
               return next;
             });
           });
@@ -326,7 +331,12 @@ export function ContentGenerator({ appId }: { appId: string }) {
                           className="w-full rounded-xl object-cover max-h-64"
                         />
                       )}
-                      {!draft.imageUrl && !draft.imageLoading && draft.imagePrompt && (
+                      {draft.imageError && (
+                        <p className="text-[11px] text-red-500 bg-red-50 px-3 py-1.5 rounded-xl">
+                          画像生成エラー: {draft.imageError}
+                        </p>
+                      )}
+                      {!draft.imageUrl && !draft.imageLoading && !draft.imageError && draft.imagePrompt && (
                         <p className="text-[11px] text-[#6e6e73] bg-[#f5f5f7] px-3 py-1.5 rounded-xl">
                           画像プロンプト: {draft.imagePrompt}
                         </p>
