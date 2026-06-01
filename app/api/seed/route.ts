@@ -17,7 +17,7 @@ export async function POST(_req: NextRequest) {
     await db.snsApp.upsert({
       where: { id: app.id },
       create: app,
-      update: { name: app.name, platforms: app.platforms },
+      update: { name: app.name, platforms: app.platforms, active: app.active },
     });
     results.push(`✓ ${app.name}`);
   }
