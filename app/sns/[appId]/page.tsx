@@ -3,233 +3,213 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { PendingReviewPanel } from "./PendingReviewPanel";
-import { ManualGenerateSection } from "./ManualGenerateSection";
+import { getAppContext } from "@/lib/snsAppContext";
 
-const SOURCE_LABEL: Record<string, string> = {
-  appstore: "App Store", playstore: "Play Store",
-  youtube: "YouTube", x: "X", instagram: "Instagram",
-  tiktok: "TikTok", rss: "RSS",
-};
-
-function timeAgo(date: Date): string {
-  const h = Math.floor((Date.now() - date.getTime()) / 3_600_000);
-  if (h < 1)  return "1時間以内";
-  if (h < 24) return `${h}時間前`;
-  const d = Math.floor(h / 24);
-  return d === 1 ? "昨日" : `${d}日前`;
+function statusDot(color: string) {
+  return <span className={`inline-block w-2 h-2 rounded-full ${color}`} />;
 }
 
-// ── PDCA phase card ────────────────────────────────────
-type PhaseStatus = "active" | "needs_review" | "pending_api" | "todo" | "stopped";
-
-function PhaseCard({
-  step, label, status, summary, detail, href,
-}: {
-  step: string; label: string; status: PhaseStatus;
-  summary: string; detail: string; href?: string;
-}) {
-  const dot: Record<PhaseStatus, string> = {
-    active:       "bg-emerald-500",
-    needs_review: "bg-amber-400 animate-pulse",
-    pending_api:  "bg-[#c7c7cc]",
-    stopped:      "bg-red-400",
-    todo:         "bg-[#c7c7cc]",
-  };
-  const border: Record<PhaseStatus, string> = {
-    active:       "border-[#f0f0f0]",
-    needs_review: "border-amber-300 bg-[#fffbf0]",
-    pending_api:  "border-[#f0f0f0]",
-    stopped:      "border-red-200",
-    todo:         "border-[#f0f0f0] opacity-50",
-  };
-
-  const inner = (
-    <div className={`rounded-2xl border p-4 space-y-3 h-full ${border[status]}`}>
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-semibold text-[#86868b] uppercase tracking-wide">{step}</span>
-        <span className={`w-2 h-2 rounded-full ${dot[status]}`} />
-      </div>
-      <div>
-        <p className="text-[13px] font-semibold text-[#1d1d1f]">{label}</p>
-        <p className="text-[20px] font-semibold text-[#1d1d1f] mt-1 leading-tight">{summary}</p>
-        <p className="text-[11px] text-[#6e6e73] mt-1 leading-snug">{detail}</p>
-      </div>
-    </div>
-  );
-
-  if (href) {
-    return (
-      <Link href={href} className="block group hover:scale-[1.01] transition-transform duration-150">
-        {inner}
-      </Link>
-    );
-  }
-  return <div>{inner}</div>;
-}
-
-// ── Page ───────────────────────────────────────────────
-export default async function SnsAppPage({
+export default async function DashboardPage({
   params,
 }: {
   params: Promise<{ appId: string }>;
 }) {
   const { appId } = await params;
-  const since7d = new Date(Date.now() - 7 * 86_400_000);
-
-  const [app, recentHits, pendingDrafts, approvedCount, latestDraft] = await Promise.all([
-    db.snsApp.findUnique({ where: { id: appId } }),
-    db.egoHit.findMany({
-      where: { appId, createdAt: { gte: since7d } },
-      orderBy: { score: "desc" },
-      take: 100,
-    }),
-    db.snsDraft.findMany({
-      where: { appId, status: "pending" },
-      orderBy: { createdAt: "desc" },
-    }),
-    db.snsDraft.count({ where: { appId, status: "approved" } }),
-    db.snsDraft.findFirst({
-      where: { appId },
-      orderBy: { createdAt: "desc" },
-      select: { createdAt: true },
-    }),
-  ]);
+  const app = await db.snsApp.findUnique({ where: { id: appId } });
   if (!app) notFound();
 
-  const negative = recentHits.filter((h) => h.sentiment === "negative").length;
-  const positive = recentHits.filter((h) => h.sentiment === "positive").length;
+  const appCtx = getAppContext(appId);
+  const since7d  = new Date(Date.now() - 7  * 86_400_000);
+  const since14d = new Date(Date.now() - 14 * 86_400_000);
+
+  const [
+    pendingHypotheses,
+    approvedHypotheses,
+    briefedHypotheses,
+    unprocessedFeedback,
+    recentHits,
+    frequencyRecs,
+    lastEgoHit,
+  ] = await Promise.all([
+    db.snsHypothesis.findMany({ where: { appId, status: "pending" }, orderBy: { createdAt: "desc" } }),
+    db.snsHypothesis.count({ where: { appId, status: "approved" } }),
+    db.snsHypothesis.count({ where: { appId, status: "briefed" } }),
+    db.snsProductFeedback.count({ where: { appId, processed: false } }),
+    db.egoHit.findMany({ where: { appId, createdAt: { gte: since14d } }, orderBy: { score: "desc" }, take: 100 }),
+    db.snsFrequencyRecommendation.findMany({ where: { appId } }),
+    db.egoHit.findFirst({ where: { appId }, orderBy: { createdAt: "desc" }, select: { createdAt: true } }),
+  ]);
+
+  const neg7d = recentHits.filter((h) => new Date(h.createdAt) >= since7d && h.sentiment === "negative").length;
+  const pos7d = recentHits.filter((h) => new Date(h.createdAt) >= since7d && h.sentiment === "positive").length;
+  const buzz7d = recentHits.filter((h) => new Date(h.createdAt) >= since7d && h.category === "buzz").length;
+
+  // 簡易トレンド抽出（EgoHitのタイトルから頻出フレーズをカウント）
+  const wordCount: Record<string, number> = {};
+  recentHits.forEach((h) => {
+    h.title.split(/[\s　、。！？・「」『』【】（）]/u)
+      .filter((w) => w.length >= 2 && w.length <= 10)
+      .forEach((w) => { wordCount[w] = (wordCount[w] ?? 0) + 1; });
+  });
+  const trends = Object.entries(wordCount)
+    .filter(([, c]) => c >= 2)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 6)
+    .map(([word, count]) => ({ word, count }));
+
+  // 「今やること」
+  const todoItems: { urgency: "red" | "amber"; label: string; href: string; count: number }[] = [];
+  if (pendingHypotheses.length > 0) {
+    todoItems.push({ urgency: "red", label: `承認待ちの仮説`, href: `/sns/${appId}/hypotheses`, count: pendingHypotheses.length });
+  }
+  if (unprocessedFeedback > 0) {
+    todoItems.push({ urgency: "amber", label: `未処理のユーザーFB`, href: `/sns/${appId}/feedback`, count: unprocessedFeedback });
+  }
+  if (frequencyRecs.some((r) => !r.acceptedAt)) {
+    todoItems.push({ urgency: "amber", label: `投稿頻度レコメンドを確認`, href: `/sns/${appId}/frequency`, count: frequencyRecs.filter((r) => !r.acceptedAt).length });
+  }
+
+  const egoAgo = lastEgoHit
+    ? (() => {
+        const h = Math.floor((Date.now() - new Date(lastEgoHit.createdAt).getTime()) / 3_600_000);
+        return h < 1 ? "1時間以内" : h < 24 ? `${h}時間前` : `${Math.floor(h / 24)}日前`;
+      })()
+    : "未実行";
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8 max-w-3xl">
+      {/* App header */}
+      <div>
+        <p className="text-[11px] text-[#86868b] uppercase tracking-widest mb-1">{appCtx.name} — SNS Agent</p>
+        <h1 className="text-[28px] font-semibold text-[#1d1d1f] tracking-tight">ダッシュボード</h1>
+      </div>
 
-      {/* ── PDCA フェーズ ──────────────────────────── */}
+      {/* 今やること */}
       <section>
-        <p className="text-[11px] text-[#86868b] uppercase tracking-widest mb-4">
-          自動化ループ — George 4-Step PDCA
-        </p>
+        <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest mb-3">今やること</p>
+        {todoItems.length === 0 ? (
+          <div className="rounded-2xl border border-[#f0f0f0] px-5 py-4 text-[14px] text-[#6e6e73]">
+            {statusDot("bg-emerald-500")} <span className="ml-2">対応が必要なタスクはありません</span>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {todoItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center justify-between rounded-2xl border border-[#f0f0f0] px-5 py-4 hover:bg-[#f9f9f9] transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  {statusDot(item.urgency === "red" ? "bg-red-500 animate-pulse" : "bg-amber-400 animate-pulse")}
+                  <span className="text-[14px] font-medium text-[#1d1d1f]">{item.label}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className={`text-[13px] font-semibold px-2 py-0.5 rounded-full ${
+                    item.urgency === "red" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"
+                  }`}>{item.count}件</span>
+                  <span className="text-[#c7c7cc] group-hover:translate-x-0.5 transition-transform">›</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* PDCAサイクル現状 */}
+      <section>
+        <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest mb-3">PDCAサイクル現状</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <PhaseCard
-            step="Step 1"
-            label="レポート"
-            status={app.active ? "active" : "stopped"}
-            summary={`${recentHits.length}件`}
-            detail={`7日間 ／ ネガ ${negative} · ポジ ${positive}`}
-            href={`/sns/${appId}/ego`}
-          />
-          <PhaseCard
-            step="Step 2"
-            label="改善策考案"
-            status={pendingDrafts.length > 0 ? "needs_review" : "active"}
-            summary={
-              pendingDrafts.length > 0
-                ? `${pendingDrafts.length}件 承認待ち`
-                : "提案なし"
-            }
-            detail={
-              latestDraft
-                ? `最終生成: ${timeAgo(new Date(latestDraft.createdAt))}`
-                : "次回: 明日 08:00"
-            }
-            href={`/sns/${appId}/drafts`}
-          />
-          <PhaseCard
-            step="Step 3"
-            label="改善実施"
-            status="pending_api"
-            summary={`${approvedCount}件`}
-            detail="承認済み ／ Meta・TikTok API 接続待ち"
-          />
-          <PhaseCard
-            step="Step 4"
-            label="測定"
-            status="todo"
-            summary="準備中"
-            detail="投稿パフォーマンス集計"
-          />
+          {[
+            { label: "エゴサ", value: egoAgo, sub: `直近7日 ${neg7d}ネガ / ${pos7d}ポジ`, color: "text-[#1d1d1f]" },
+            { label: "仮説", value: `${pendingHypotheses.length}件待機中`, sub: `承認済 ${approvedHypotheses}件`, color: pendingHypotheses.length > 0 ? "text-amber-500" : "text-[#1d1d1f]" },
+            { label: "Content-lab送信", value: `${briefedHypotheses}件`, sub: "ブリーフ送信済み", color: "text-[#1d1d1f]" },
+            { label: "バズ検知", value: `${buzz7d}件`, sub: "直近7日", color: buzz7d > 0 ? "text-emerald-600" : "text-[#1d1d1f]" },
+          ].map(({ label, value, sub, color }) => (
+            <div key={label} className="rounded-2xl border border-[#f0f0f0] p-4">
+              <p className="text-[10px] text-[#86868b] uppercase tracking-wide mb-2">{label}</p>
+              <p className={`text-[18px] font-semibold leading-tight ${color}`}>{value}</p>
+              <p className="text-[11px] text-[#86868b] mt-1">{sub}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* ── 承認待ちの投稿提案 ─────────────────────── */}
-      {pendingDrafts.length > 0 ? (
+      {/* トレンド */}
+      {trends.length > 0 && (
         <section>
-          <div className="flex items-baseline justify-between mb-6">
-            <div>
-              <h2 className="text-[22px] font-semibold text-[#1d1d1f] tracking-tight">
-                承認待ちの投稿提案
-              </h2>
-              <p className="text-[13px] text-[#6e6e73] mt-1">
-                Agentが生成しました。承認・却下を選んでください（行動規範 原則6）
-              </p>
-            </div>
-            <Link
-              href={`/sns/${appId}/drafts`}
-              className="text-[13px] text-[#0071e3] hover:underline"
-            >
-              全ての下書き →
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest">
+              直近14日のトレンドワード（エゴサから自動抽出）
+            </p>
+            <Link href={`/sns/${appId}/ego`} className="text-[12px] text-[#0071e3] hover:underline">
+              エゴサ詳細 →
             </Link>
           </div>
-          <PendingReviewPanel appId={appId} initialDrafts={pendingDrafts} />
-        </section>
-      ) : (
-        <section className="py-8 rounded-2xl border border-dashed border-[#d2d2d7] text-center">
-          <p className="text-[15px] font-medium text-[#1d1d1f]">承認待ちの提案はありません</p>
-          <p className="text-[13px] text-[#6e6e73] mt-1">
-            次回自動生成は毎朝 08:00。手動で追加生成することもできます。
-          </p>
-        </section>
-      )}
-
-      {/* ── 直近の言及 ────────────────────────────── */}
-      {recentHits.length > 0 && (
-        <section>
-          <div className="flex items-baseline justify-between mb-6">
-            <h2 className="text-[22px] font-semibold text-[#1d1d1f] tracking-tight">
-              直近の言及
-            </h2>
-            <Link
-              href={`/sns/${appId}/ego`}
-              className="text-[13px] text-[#0071e3] hover:underline"
-            >
-              全て見る →
-            </Link>
-          </div>
-          <div className="divide-y divide-[#f0f0f0]">
-            {recentHits.slice(0, 5).map((h) => (
-              <a
-                key={h.id}
-                href={h.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-start justify-between py-4 gap-6 group"
+          <div className="flex flex-wrap gap-2">
+            {trends.map(({ word, count }) => (
+              <span
+                key={word}
+                className="text-[12px] px-3 py-1.5 rounded-full bg-[#f5f5f7] text-[#1d1d1f] font-medium"
               >
-                <div className="min-w-0">
-                  <p className="text-[14px] font-medium text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors truncate">
-                    {h.title}
-                  </p>
-                  {h.snippet && (
-                    <p className="text-[12px] text-[#6e6e73] mt-0.5 line-clamp-1">{h.snippet}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <span className="text-[12px] text-[#86868b] bg-[#f5f5f7] px-2 py-0.5 rounded-full">
-                    {SOURCE_LABEL[h.source] ?? h.source}
-                  </span>
-                  {h.sentiment === "negative" && (
-                    <span className="text-[12px] text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
-                      ネガティブ
-                    </span>
-                  )}
-                </div>
-              </a>
+                {word}
+                <span className="ml-1.5 text-[10px] text-[#86868b]">{count}</span>
+              </span>
             ))}
           </div>
         </section>
       )}
 
-      {/* ── 手動追加生成（折りたたみ） ─────────────── */}
-      <ManualGenerateSection appId={appId} />
+      {/* 投稿頻度レコメンド */}
+      {frequencyRecs.length > 0 && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest">投稿頻度レコメンド</p>
+            <Link href={`/sns/${appId}/frequency`} className="text-[12px] text-[#0071e3] hover:underline">
+              詳細・調整 →
+            </Link>
+          </div>
+          <div className="rounded-2xl border border-[#f0f0f0] divide-y divide-[#f0f0f0]">
+            {frequencyRecs.map((r) => {
+              const effective = r.adjustedFrequency ?? r.recommendedFrequency;
+              const changed = r.currentFrequency !== null && r.currentFrequency !== effective;
+              return (
+                <div key={r.id} className="flex items-center justify-between px-5 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[13px] font-medium text-[#1d1d1f] capitalize">{r.platform}</span>
+                    {!r.acceptedAt && (
+                      <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full font-medium">要確認</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-[13px]">
+                    {r.currentFrequency !== null && (
+                      <span className="text-[#86868b]">現在 週{r.currentFrequency}回</span>
+                    )}
+                    <span className="text-[#c7c7cc]">→</span>
+                    <span className={`font-semibold ${changed ? "text-emerald-600" : "text-[#1d1d1f]"}`}>
+                      週{effective}回
+                    </span>
+                    {changed && <span className="text-[10px] text-emerald-600">AI推奨</span>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
+      {/* 仮説がない場合のCTA */}
+      {pendingHypotheses.length === 0 && frequencyRecs.length === 0 && (
+        <section className="py-10 rounded-2xl border border-dashed border-[#d2d2d7] text-center space-y-3">
+          <p className="text-[15px] font-medium text-[#1d1d1f]">まず仮説を生成しましょう</p>
+          <p className="text-[13px] text-[#6e6e73]">エゴサデータをもとにAIがバズ仮説を自動生成します</p>
+          <Link
+            href={`/sns/${appId}/hypotheses`}
+            className="inline-block mt-2 px-5 py-2.5 rounded-xl bg-[#1d1d1f] text-white text-[13px] font-medium"
+          >
+            仮説を生成する
+          </Link>
+        </section>
+      )}
     </div>
   );
 }

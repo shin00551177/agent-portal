@@ -81,13 +81,16 @@ model SnsApp {
   fallbackBehavior String @default("pause")
   // Agent台帳 (運用ポリシー §5)
   agentMeta        Json   @default("{}")
-  drafts    SnsDraft[]
-  egoHits   EgoHit[]
-  accounts  SnsAccount[]
-  refVideos SnsRefVideo[]
-  patterns  SnsPattern[]
-  scripts   SnsScript[]
-  briefs    SnsBrief[]
+  drafts       SnsDraft[]
+  egoHits      EgoHit[]
+  accounts     SnsAccount[]
+  refVideos    SnsRefVideo[]
+  patterns     SnsPattern[]
+  scripts      SnsScript[]
+  briefs       SnsBrief[]
+  hypotheses   SnsHypothesis[]
+  productFeedbacks SnsProductFeedback[]
+  frequencyRecs    SnsFrequencyRecommendation[]
   createdAt DateTime     @default(now())
 }
 
@@ -226,6 +229,64 @@ model EgoHit {
   feedbackType String?   // "bug" | "feature_request" | "praise" | "comparison"
   engagement   Json?     // { views, likes, reposts, comments }
   createdAt    DateTime  @default(now())
+}
+
+// --------------------------------------------------------------------------
+// SNS PDCA — 仮説 / ユーザーFB / 投稿頻度レコメンド
+// --------------------------------------------------------------------------
+
+model SnsHypothesis {
+  id             String    @id @default(cuid())
+  appId          String
+  app            SnsApp    @relation(fields: [appId], references: [id])
+  platform       String
+  hypothesis     String    // バズる仮説（1〜2文）
+  reasoning      String    // 根拠（エゴサデータ・過去分析）
+  targetAudience String?
+  format         String?   // 動画/画像/テキスト + トーン
+  contentBrief   String?   // Content-lab向けブリーフ
+  status         String    @default("pending") // pending|approved|rejected|briefed|posted|measured
+  rejectionNote  String?
+  metrics        Json?     // 投稿後の成果データ
+  briefSentAt    DateTime?
+  postedAt       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([appId, status])
+}
+
+model SnsProductFeedback {
+  id         String   @id @default(cuid())
+  appId      String
+  app        SnsApp   @relation(fields: [appId], references: [id])
+  source     String   // appstore|playstore|x|instagram|etc
+  type       String   // bug|feature_request|praise|comparison|general
+  content    String
+  url        String?
+  author     String?
+  importance String   @default("medium") // high|medium|low
+  processed  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([appId, processed])
+}
+
+model SnsFrequencyRecommendation {
+  id                   String    @id @default(cuid())
+  appId                String
+  app                  SnsApp    @relation(fields: [appId], references: [id])
+  platform             String
+  currentFrequency     Int?      // 現在の週投稿数
+  recommendedFrequency Int       // AIレコメンド
+  reasoning            String
+  acceptedAt           DateTime?
+  adjustedFrequency    Int?      // 人間の調整値
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@unique([appId, platform])
+  @@index([appId])
 }
 
 // --------------------------------------------------------------------------

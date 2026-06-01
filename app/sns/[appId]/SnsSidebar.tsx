@@ -3,50 +3,36 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Zap, Video, TrendingUp, FileText, ClipboardList,
-  Send, Search, Sparkles, MessageSquare, Users, Settings,
+  LayoutDashboard, Lightbulb, Search, MessageSquare,
+  Clock, Users, Settings,
 } from "lucide-react";
 
-type NavItem = { href: string; label: string; icon: React.ElementType };
+type NavItem = { href: string; label: string; icon: React.ElementType; badge?: number };
 type NavGroup = { label: string; items: NavItem[] };
 
-function makeGroups(appId: string): NavGroup[] {
+function makeGroups(appId: string, counts: { pending: number; unprocessedFb: number }): NavGroup[] {
   const base = `/sns/${appId}`;
   return [
     {
-      label: "リサーチ",
+      label: "メイン",
       items: [
-        { href: `${base}/refs`,     label: "参考動画",   icon: Video },
-        { href: `${base}/patterns`, label: "パターン",   icon: TrendingUp },
-        { href: `${base}/ego`,      label: "エゴサ",     icon: Search },
+        { href: base, label: "ダッシュボード", icon: LayoutDashboard },
       ],
     },
     {
-      label: "制作",
+      label: "PDCA",
       items: [
-        { href: `${base}/analyze`,  label: "バズ動画分析", icon: Zap },
-        { href: `${base}/scripts`,  label: "台本生成",     icon: FileText },
-        { href: `${base}/briefs`,   label: "制作指示書",   icon: ClipboardList },
-      ],
-    },
-    {
-      label: "投稿管理",
-      items: [
-        { href: base,               label: "コンテンツ生成", icon: Sparkles },
-        { href: `${base}/drafts`,   label: "下書き",         icon: Send },
-      ],
-    },
-    {
-      label: "AI",
-      items: [
-        { href: `${base}/agent`,    label: "AIアシスタント", icon: MessageSquare },
+        { href: `${base}/hypotheses`, label: "仮説管理", icon: Lightbulb, badge: counts.pending },
+        { href: `${base}/ego`,        label: "エゴサ",   icon: Search },
+        { href: `${base}/feedback`,   label: "ユーザーFB", icon: MessageSquare, badge: counts.unprocessedFb },
+        { href: `${base}/frequency`,  label: "投稿頻度",  icon: Clock },
       ],
     },
     {
       label: "設定",
       items: [
-        { href: `${base}/accounts`, label: "アカウント",     icon: Users },
-        { href: `${base}/settings`, label: "設定",           icon: Settings },
+        { href: `${base}/accounts`, label: "アカウント", icon: Users },
+        { href: `${base}/settings`, label: "設定",       icon: Settings },
       ],
     },
   ];
@@ -55,21 +41,16 @@ function makeGroups(appId: string): NavGroup[] {
 export function SnsSidebar({
   appId,
   appName,
-  pendingDrafts,
-  activeEgoHits,
+  pendingHypotheses,
+  unprocessedFeedback,
 }: {
   appId: string;
   appName: string;
-  pendingDrafts: number;
-  activeEgoHits: number;
+  pendingHypotheses: number;
+  unprocessedFeedback: number;
 }) {
   const pathname = usePathname();
-  const groups = makeGroups(appId);
-
-  const badges: Record<string, number> = {
-    [`/sns/${appId}/drafts`]: pendingDrafts,
-    [`/sns/${appId}/ego`]:    activeEgoHits,
-  };
+  const groups = makeGroups(appId, { pending: pendingHypotheses, unprocessedFb: unprocessedFeedback });
 
   function isActive(href: string) {
     if (href === `/sns/${appId}`) return pathname === `/sns/${appId}`;
@@ -77,7 +58,7 @@ export function SnsSidebar({
   }
 
   return (
-    <aside className="w-52 flex-shrink-0 flex flex-col rounded-2xl overflow-hidden bg-white border border-[#e8e8ed] self-start sticky top-4">
+    <aside className="w-48 flex-shrink-0 flex flex-col rounded-2xl overflow-hidden bg-white border border-[#e8e8ed] self-start sticky top-4">
       {/* App header */}
       <div className="px-4 py-4 border-b border-[#f0f0f0]">
         <Link href={`/sns/${appId}`} className="flex items-center gap-2.5 group">
@@ -98,9 +79,8 @@ export function SnsSidebar({
             <p className="px-2 mb-1 text-[9px] font-semibold uppercase tracking-widest text-[#c7c7cc]">
               {group.label}
             </p>
-            {group.items.map(({ href, label, icon: Icon }) => {
+            {group.items.map(({ href, label, icon: Icon, badge }) => {
               const active = isActive(href);
-              const badge = badges[href];
               return (
                 <Link
                   key={href}

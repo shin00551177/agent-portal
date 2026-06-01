@@ -12,13 +12,11 @@ export default async function AppLayout({
   params: Promise<{ appId: string }>;
 }) {
   const { appId } = await params;
-  const app = await db.snsApp.findUnique({
-    where: { id: appId },
-    include: {
-      drafts:   { where: { status: "pending" } },
-      egoHits:  { where: { dismissed: false } },
-    },
-  });
+  const [app, pendingHypotheses, unprocessedFeedback] = await Promise.all([
+    db.snsApp.findUnique({ where: { id: appId } }),
+    db.snsHypothesis.count({ where: { appId, status: "pending" } }),
+    db.snsProductFeedback.count({ where: { appId, processed: false } }),
+  ]);
   if (!app) notFound();
 
   return (
@@ -26,8 +24,8 @@ export default async function AppLayout({
       <SnsSidebar
         appId={appId}
         appName={app.name}
-        pendingDrafts={app.drafts.length}
-        activeEgoHits={app.egoHits.length}
+        pendingHypotheses={pendingHypotheses}
+        unprocessedFeedback={unprocessedFeedback}
       />
       <div className="flex-1 min-w-0 py-1">
         {children}
