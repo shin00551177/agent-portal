@@ -14,13 +14,20 @@ import { AsoChatBot } from "@/components/AsoChatBot";
 import { StoreHealthDashboard } from "./StoreHealthDashboard";
 import { ReviewsSection } from "./ReviewsSection";
 import { PreviewVideosSection } from "./PreviewVideosSection";
+import { StoreSwitcher } from "./StoreSwitcher";
+import { Suspense } from "react";
 
 export default async function AsoAppPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ appId: string }>;
+  searchParams: Promise<{ store?: string }>;
 }) {
   const { appId } = await params;
+  const { store: storeParam } = await searchParams;
+  const store: "ios" | "android" = storeParam === "android" ? "android" : "ios";
+
   const app = await db.asoApp.findUnique({
     where: { id: appId },
     include: {
@@ -122,50 +129,73 @@ export default async function AsoAppPage({
         )}
       </section>
 
-      {/* App Store Analytics */}
-      <section className="py-12 border-b border-[#f0f0f0]">
-        <StoreAnalytics iosId={app.iosId} />
-      </section>
+      {/* ストア別タブ */}
+      <section className="py-8 border-b border-[#f0f0f0]">
+        <div className="flex items-center gap-4 mb-8">
+          <Suspense>
+            <StoreSwitcher
+              hasIos={!!app.iosId}
+              hasAndroid={!!app.googlePlayId}
+              current={store}
+            />
+          </Suspense>
+          <p className="text-[12px] text-[#bfbfbf]">
+            {store === "ios" ? "App Store（iOS）" : "Google Play（Android）"} のデータを表示中
+          </p>
+        </div>
 
-      {/* Store Preview + Images */}
-      <section className="py-12 border-b border-[#f0f0f0] space-y-10">
-        <StorePreview
-          iosId={app.iosId}
-          googlePlayId={app.googlePlayId}
-          ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null}
-        />
-        <StoreImages
-          appId={appId}
-          iosId={app.iosId}
-          googlePlayId={app.googlePlayId}
-        />
-        {/* Image upload inline */}
-        <div>
-          <p className="text-[15px] font-semibold text-[#1d1d1f] mb-4">画像を更新する</p>
-          <ImageUploadSection
-            appId={appId}
-            hasIos={!!app.iosId}
-            hasAndroid={!!app.googlePlayId}
+        <div className="space-y-10">
+          {/* Store Preview */}
+          <StorePreview
+            iosId={app.iosId}
+            googlePlayId={app.googlePlayId}
+            ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null}
+            store={store}
           />
-        </div>
-      </section>
 
-      {/* Preview Videos */}
-      <section className="py-12 border-b border-[#f0f0f0]">
-        <div className="mb-6">
-          <h2 className="text-[24px] font-semibold text-[#1d1d1f] tracking-tight">App Preview動画</h2>
-          <p className="text-[13px] text-[#6e6e73] mt-1">スクリーンショットより高CVRを実現するプレビュー動画</p>
-        </div>
-        <PreviewVideosSection appId={appId} iosId={app.iosId ?? null} />
-      </section>
+          {/* iOS専用: Analytics */}
+          {store === "ios" && (
+            <section>
+              <StoreAnalytics iosId={app.iosId} />
+            </section>
+          )}
 
-      {/* Reviews */}
-      <section className="py-12 border-b border-[#f0f0f0]">
-        <div className="mb-6">
-          <h2 className="text-[24px] font-semibold text-[#1d1d1f] tracking-tight">レビュー管理</h2>
-          <p className="text-[13px] text-[#6e6e73] mt-1">iOS・Android のレビューを確認し、AI返信案を生成できます</p>
+          {/* ストア画像 */}
+          <StoreImages
+            appId={appId}
+            iosId={app.iosId}
+            googlePlayId={app.googlePlayId}
+            store={store}
+          />
+
+          {/* 画像アップロード */}
+          <div>
+            <p className="text-[15px] font-semibold text-[#1d1d1f] mb-4">画像を更新する</p>
+            <ImageUploadSection
+              appId={appId}
+              hasIos={store === "ios" && !!app.iosId}
+              hasAndroid={store === "android" && !!app.googlePlayId}
+            />
+          </div>
+
+          {/* iOS専用: Preview動画 */}
+          {store === "ios" && app.iosId && (
+            <div>
+              <h2 className="text-[20px] font-semibold text-[#1d1d1f] tracking-tight mb-4">App Preview動画</h2>
+              <p className="text-[13px] text-[#6e6e73] mb-6">スクリーンショットより高CVRを実現するプレビュー動画</p>
+              <PreviewVideosSection appId={appId} iosId={app.iosId} />
+            </div>
+          )}
+
+          {/* レビュー */}
+          <div>
+            <h2 className="text-[20px] font-semibold text-[#1d1d1f] tracking-tight mb-2">レビュー管理</h2>
+            <p className="text-[13px] text-[#6e6e73] mb-6">
+              {store === "ios" ? "App Store" : "Google Play"} のレビューを確認し、AI返信案を生成できます
+            </p>
+            <ReviewsSection appId={appId} platform={store === "ios" ? "ios" : "android"} />
+          </div>
         </div>
-        <ReviewsSection appId={appId} />
       </section>
 
       {/* Keywords */}

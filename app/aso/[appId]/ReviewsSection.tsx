@@ -154,12 +154,12 @@ function ReviewCard({
   );
 }
 
-export function ReviewsSection({ appId }: { appId: string }) {
+export function ReviewsSection({ appId, platform: initialPlatform }: { appId: string; platform?: "ios" | "android" }) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [filter, setFilter] = useState<"all" | "1" | "2" | "3" | "4" | "5">("all");
-  const [platform, setPlatform] = useState<"all" | "ios" | "android">("all");
+  const [platform, setPlatform] = useState<"all" | "ios" | "android">(initialPlatform ?? "all");
 
   async function fetchReviews(refresh = false) {
     setLoading(true);

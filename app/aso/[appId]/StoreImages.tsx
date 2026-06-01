@@ -6,6 +6,7 @@ type Props = {
   appId: string;
   iosId: string | null;
   googlePlayId: string | null;
+  store?: "ios" | "android";
 };
 
 function ImageCard({ src, label }: { src: string; label?: string }) {
@@ -35,10 +36,10 @@ function EmptySlot() {
   );
 }
 
-export async function StoreImages({ appId, iosId, googlePlayId }: Props) {
+export async function StoreImages({ appId, iosId, googlePlayId, store }: Props) {
   const [iosData, androidData] = await Promise.all([
-    iosId ? fetchAscScreenshots(iosId, "ja").catch(() => null) : null,
-    googlePlayId ? fetchGPlayImages(googlePlayId, "ja-JP").catch(() => null) : null,
+    iosId && store !== "android" ? fetchAscScreenshots(iosId, "ja").catch(() => null) : null,
+    googlePlayId && store !== "ios" ? fetchGPlayImages(googlePlayId, "ja-JP").catch(() => null) : null,
   ]);
 
   const hasAny =

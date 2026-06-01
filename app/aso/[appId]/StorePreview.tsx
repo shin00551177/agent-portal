@@ -180,14 +180,16 @@ export async function StorePreview({
   iosId,
   googlePlayId,
   ratingsAvg,
+  store,
 }: {
   iosId: string | null;
   googlePlayId: string | null;
   ratingsAvg: number | null;
+  store?: "ios" | "android";
 }) {
   const [iosListing, androidListing] = await Promise.all([
-    iosId ? fetchIosListing(iosId) : null,
-    googlePlayId ? fetchAndroidListing(googlePlayId) : null,
+    iosId && store !== "android" ? fetchIosListing(iosId) : null,
+    googlePlayId && store !== "ios" ? fetchAndroidListing(googlePlayId) : null,
   ]);
 
   if (!iosListing && !androidListing) return null;
