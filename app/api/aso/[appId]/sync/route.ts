@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { writeAuditLog } from "@/lib/audit";
-import { fetchKeywordRankings, fetchKeywordMetrics, fetchAppMetrics, fetchKeywordRankingHistory } from "@/lib/apptweak";
+import { fetchKeywordRankings, fetchKeywordMetrics, fetchAppMetrics, fetchAndroidAppMetrics, fetchKeywordRankingHistory } from "@/lib/apptweak";
 import { isAuthenticated } from "@/lib/auth";
 import { sendSlackError, sendSlackHalt } from "@/lib/slack-alert";
 import { fetchIosFullListing, fetchAscScreenshots, fetchAppIconUrl } from "@/lib/asc";
@@ -47,12 +47,15 @@ export async function POST(
   const prevData = (prevReport?.data ?? {}) as Record<string, unknown>;
 
   // Apptweak + ストアメタデータを並行取得
-  const [rankings, metrics, kwMetrics, rankingHistory, iosListing, androidListings, iosScreenshots, androidImages, iosIconUrl, androidWhatsNew] = await Promise.all([
+  const [rankings, metrics, androidMetrics, kwMetrics, rankingHistory, iosListing, androidListings, iosScreenshots, androidImages, iosIconUrl, androidWhatsNew] = await Promise.all([
     keywords.length > 0 && !isRangeQuery
       ? fetchKeywordRankings(app.iosId, keywords, app.country, app.language)
       : Promise.resolve({}),
     !isRangeQuery
       ? fetchAppMetrics(app.iosId, app.country)
+      : Promise.resolve(null),
+    !isRangeQuery && app.googlePlayId
+      ? fetchAndroidAppMetrics(app.googlePlayId, app.country).catch(() => null)
       : Promise.resolve(null),
     keywords.length > 0
       ? fetchKeywordMetrics(keywords, app.country, app.language)
@@ -131,7 +134,8 @@ export async function POST(
       prevRank: (prevData.keywords as { keyword: string; rank: number | null }[] | undefined)
         ?.find((p) => p.keyword === kw)?.rank ?? null,
     })),
-    appMetrics: metrics,
+    appMetrics: metrics,           // iOS
+    androidAppMetrics: androidMetrics ?? null,  // Android
     prevAppMetrics: prevData.appMetrics ?? null,
     storeSnapshot,
     syncedAt: new Date().toISOString(),

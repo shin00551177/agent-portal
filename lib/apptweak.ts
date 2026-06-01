@@ -163,3 +163,21 @@ export async function fetchAppMetrics(iosId: string, country = "jp") {
     appPower: app["app-power"]?.value ?? null,
   };
 }
+
+export async function fetchAndroidAppMetrics(packageName: string, country = "jp") {
+  const data = await get("/apps/metrics/current.json", {
+    apps: packageName,
+    metrics: "downloads,revenues,ratings,app-power",
+    device: "android",
+    country,
+  });
+  const app = data.result?.[packageName] ?? {};
+  return {
+    downloads: app.downloads?.value ?? null,
+    revenues: app.revenues?.value ?? null,
+    revenueCurrency: app.revenues?.currency ?? "USD",
+    ratingsAvg: app.ratings?.value ?? null,
+    ratingsTotal: app.ratings?.breakdown?.total ?? null,
+    appPower: app["app-power"]?.value ?? null,
+  };
+}

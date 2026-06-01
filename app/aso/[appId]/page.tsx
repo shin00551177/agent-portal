@@ -50,8 +50,10 @@ export default async function AsoAppPage({
 
   const highCount = app.keywords.filter((k) => k.priority === "high").length;
   const latestReport = recentReports[0];
+  type StoreMetrics = { downloads: number | null; revenues: number | null; revenueCurrency: string; ratingsAvg: number | null; ratingsTotal: number | null; appPower: number | null };
   const latestData = (latestReport?.data ?? {}) as {
-    appMetrics?: { downloads: number | null; revenues: number | null; revenueCurrency: string; ratingsAvg: number | null; ratingsTotal: number | null; appPower: number | null };
+    appMetrics?: StoreMetrics;         // iOS
+    androidAppMetrics?: StoreMetrics;  // Android
     keywords?: { keyword: string; rank: number | null; prevRank: number | null; volume: number | null; difficulty: number | null }[];
     periodFrom?: string;
     periodTo?: string;
@@ -59,6 +61,11 @@ export default async function AsoAppPage({
     rankingHistory?: Record<string, Record<string, number | null>> | null;
     syncedAt?: string;
   };
+
+  // 現在のストアに対応するメトリクスを選択
+  const currentMetrics = store === "android"
+    ? (latestData.androidAppMetrics ?? null)
+    : (latestData.appMetrics ?? null);
 
   // 承認待ちの ASO 提案を取得（ストア別 + 共通）
   const pendingProposals = await db.proposal.findMany({
@@ -93,7 +100,7 @@ export default async function AsoAppPage({
           appId={appId}
           iosId={app.iosId ?? null}
           googlePlayId={app.googlePlayId ?? null}
-          ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null}
+          ratingsAvg={currentMetrics?.ratingsAvg ?? null}
         />
       </section>
 
@@ -125,7 +132,7 @@ export default async function AsoAppPage({
           <SyncButton appId={appId} />
         </div>
 
-        {latestData.appMetrics ? (
+        {currentMetrics ? (
           <AsoDataSection
             appId={appId}
             periodFrom={latestData.periodFrom ?? latestReport?.date ?? null}
@@ -133,7 +140,7 @@ export default async function AsoAppPage({
             isRangeQuery={latestData.isRangeQuery ?? false}
             rankingHistory={latestData.rankingHistory ?? null}
             syncedAt={latestData.syncedAt ?? null}
-            metrics={latestData.appMetrics ?? null}
+            metrics={currentMetrics ?? null}
             keywords={latestData.keywords ?? []}
             pendingProposals={pendingProposals}
           />
@@ -148,7 +155,7 @@ export default async function AsoAppPage({
       {/* ストア別コンテンツ */}
       <section className="py-8 border-b border-[#f0f0f0]">
         <div className="space-y-10">
-          <StorePreview iosId={app.iosId} googlePlayId={app.googlePlayId} ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null} store={store} />
+          <StorePreview iosId={app.iosId} googlePlayId={app.googlePlayId} ratingsAvg={currentMetrics?.ratingsAvg ?? null} store={store} />
           {store === "ios" && <StoreAnalytics iosId={app.iosId} />}
           <StoreImages appId={appId} iosId={app.iosId} googlePlayId={app.googlePlayId} store={store} />
           <div>
