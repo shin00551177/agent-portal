@@ -209,8 +209,8 @@ ${rejectedSection}
 
   const proposals = extractProposals(text);
   if (proposals.length === 0) {
-    console.error("[analyze] parse failed, raw length:", text.length);
-    return NextResponse.json({ error: "parse failed", proposalIds: [] });
+    console.error("[analyze] parse failed, raw length:", text.length, "first 200:", text.slice(0, 200));
+    return NextResponse.json({ error: "parse failed", proposalIds: [], rawPreview: text.slice(0, 500) });
   }
 
   // 既存の pending 提案を古いものとして reject（重複防止）
