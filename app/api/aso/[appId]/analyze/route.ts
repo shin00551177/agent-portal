@@ -93,14 +93,14 @@ export async function POST(
       title: iosListing.title,
       subtitle: iosListing.subtitle,
       keywords: iosListing.keywords,
-      description: iosListing.description.slice(0, 300),
+      description: iosListing.description.slice(0, 150),
       promotionalText: iosListing.promotionalText,
       whatsNew: iosListing.whatsNew.slice(0, 200),
     } : null,
     android: androidListing ? {
       title: androidListing.title,
       shortDescription: androidListing.shortDescription,
-      description: androidListing.fullDescription.slice(0, 300),
+      description: androidListing.fullDescription.slice(0, 150),
     } : null,
   };
 
@@ -124,7 +124,7 @@ ${currentMeta.android ? `
 - 人間（オーナー）の承認なしに直接変更を実行しない。提案形式のみとする
 - 確信度 medium 以上の根拠がある提案のみ生成する（推測だけによる提案は不可）
 - 過去に却下された提案と同じ内容・同じフィールドへの変更を繰り返さない
-- **提案数の上限はない。改善余地があるものは全て出すこと**
+- **最大8件まで。優先度の高いものから順に出すこと**
 
 ## 分析対象（全要素を網羅的にチェックすること）
 - タイトル: 文字数の最適化・主要KW含有
@@ -152,7 +152,7 @@ ${rejectedSection}
 2. **原因分析**（なぜその結果になっているか。データに基づく推論）
 3. **ネクストアクション**（具体的な変更内容と期待される効果）
 
-以下のJSON配列形式で**考えられる全ての改善提案**を返してください。コードブロックや説明文は不要、JSONのみ返してください。
+以下のJSON配列形式で**最大8件の改善提案（優先度順）**を返してください。コードブロックや説明文は不要、JSONのみ返してください。
 
 [
   {
@@ -168,8 +168,8 @@ ${rejectedSection}
 ]`;
 
   const message = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 4000,
+    model: "claude-sonnet-4-6",
+    max_tokens: 4096,
     messages: [{ role: "user", content: prompt }],
   });
 
