@@ -167,19 +167,22 @@ ${rejectedSection}
   }
 ]`;
 
+  // プロンプト末尾に "[" を追加してJSONを直接開始させる
+  const promptWithStart = prompt.replace(
+    /JSONのみ返してください。\n\n\[[\s\S]*\]$/,
+    'JSONのみ返してください。出力の最初の文字は [ であること。\n\n['
+  );
+
   const message = await client.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 4096,
-    system: "You are an ASO expert. Output raw JSON only. No markdown, no code blocks.",
-    messages: [
-      { role: "user", content: prompt },
-      { role: "assistant", content: "[" },
-    ],
+    system: "You are an ASO expert. Output ONLY a raw JSON array starting with [ and ending with ]. No markdown, no code blocks, no explanation.",
+    messages: [{ role: "user", content: promptWithStart }],
   });
 
-  // prefill の "[" を先頭に結合してフルのJSON配列にする
-  const rawText = message.content[0].type === "text" ? message.content[0].text : "";
-  const text = "[" + rawText;
+  const rawText = message.content[0].type === "text" ? message.content[0].text.trim() : "";
+  // レスポンスが "[" で始まっていない場合に補完
+  const text = rawText.startsWith("[") ? rawText : "[" + rawText;
 
   type ProposalInput = {
     title: string;
