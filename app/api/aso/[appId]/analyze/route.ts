@@ -170,6 +170,7 @@ ${rejectedSection}
   const message = await client.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 4096,
+    system: "You are an ASO expert. Always respond with raw JSON only, no markdown, no code blocks, no backticks, no explanation text. Start your response directly with [ and end with ].",
     messages: [{ role: "user", content: prompt }],
   });
 
