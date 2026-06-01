@@ -21,7 +21,8 @@ export function StoreSwitcher({
     router.replace(`${pathname}?${p.toString()}`);
   }
 
-  if (!hasIos || !hasAndroid) return null;
+  // どちらか1つしかない場合はラベルのみ表示（クリック不可）
+  if (!hasIos && !hasAndroid) return null;
 
   return (
     <div className="flex gap-1 bg-[#f5f5f7] rounded-lg p-1 w-fit">

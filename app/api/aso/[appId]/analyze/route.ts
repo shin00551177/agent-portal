@@ -9,6 +9,16 @@ import { readListings } from "@/lib/gplay";
 
 const client = new Anthropic();
 
+const FIELD_LABEL: Record<string, string> = {
+  title: "アプリ名",
+  subtitle: "サブタイトル",
+  keywords: "キーワードフィールド",
+  description: "説明文",
+  promotionalText: "プロモーションテキスト",
+  whatsNew: "What's New",
+  shortDescription: "ショート説明文",
+};
+
 type KwData = {
   keyword: string;
   rank: number | null;
@@ -258,7 +268,12 @@ ${rejectedSection}
           rationale: JSON.stringify({
             result: p.result ?? "",
             cause: p.cause ?? "",
-            nextAction: p.nextAction ?? "",
+            // nextActionが空の場合はproposedから自動生成
+            nextAction: p.nextAction?.trim()
+              ? p.nextAction
+              : p.proposed
+                ? `「${p.field ? FIELD_LABEL[p.field as keyof typeof FIELD_LABEL] ?? p.field : "フィールド"}」を以下に変更:\n${p.proposed}`
+                : "",
             field: p.field ?? "description",
             currentValue: p.currentValue ?? "",
             proposed: p.proposed ?? "",
