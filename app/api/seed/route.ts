@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 
 const SNS_APPS = [
   // accountKey: null = 全員に表示, "pt-BR"/"vi"/"id"/"bn" = 該当アカウントのみ
-  { id: "buzzencer",     name: "BUZZENCER",    active: true,  platforms: ["youtube","tiktok","instagram","x"], locale: "pt-BR", accountKey: "pt-BR" },
+  { id: "buzzencer",     name: "BUZZENCER",    active: true,  platforms: ["youtube","tiktok","instagram","x"], locale: "pt-BR", accountKey: null },
   { id: "twomi",         name: "Twomi",        active: true,  platforms: ["youtube","tiktok","instagram","x","facebook","threads"], locale: "ja", accountKey: null },
   { id: "ai-avatar",     name: "AI AVATAR",    active: true,  platforms: ["youtube","tiktok","instagram","x"], locale: "ja", accountKey: "ja" },
   { id: "soulriza",      name: "SOULRiZA",     active: true,  platforms: ["youtube","tiktok","instagram","x"], locale: "ja", accountKey: "ja" },
