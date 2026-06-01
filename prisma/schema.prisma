@@ -77,6 +77,7 @@ model SnsApp {
   active    Boolean      @default(false)
   platforms Json
   locale    String       @default("ja")
+  accountKey String?     // null=全員, "pt-BR"|"vi"|"id"|"bn"=該当アカウントのみ
   // Governance (行動規範 #8/#12/#13)
   escalationRules  Json   @default("{}")
   haltConditions   Json   @default("{}")

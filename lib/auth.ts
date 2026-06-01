@@ -16,21 +16,35 @@ export async function isAuthenticated(): Promise<boolean> {
   return store.get("session")?.value === token;
 }
 
-export async function createSession() {
+// アカウントキーをcookieから取得（null = 日本語管理者）
+export async function getAccountKey(): Promise<string | null> {
+  const store = await cookies();
+  return store.get("account")?.value ?? null;
+}
+
+export async function createSession(accountKey: string | null = null) {
   const store = await cookies();
   const token = await sessionToken();
-  store.set("session", token, {
+  const opts = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "lax" as const,
     maxAge: 60 * 60 * 24 * 30,
     path: "/",
-  });
+  };
+  store.set("session", token, opts);
+  // アカウントキーを別cookieで保存
+  if (accountKey) {
+    store.set("account", accountKey, opts);
+  } else {
+    store.delete("account");
+  }
 }
 
 export async function destroySession() {
   const store = await cookies();
   store.delete("session");
+  store.delete("account");
 }
 
 export function verifyPassword(input: string): boolean {

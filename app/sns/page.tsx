@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { db } from "@/lib/db";
 import { LocaleSwitcher } from "./LocaleSwitcher";
+import { getAccountKey } from "@/lib/auth";
 
 const PAGE_T: Record<string, { section: string; title: string; subtitle: string; proposal: string; proposalLabel: string; stats: string[]; appSection: string; noData: string; noCollection: string; action: string; negSection: string; empty: string; emptyDesc: string }> = {
   ja: {
@@ -82,14 +83,26 @@ export default async function SnsPage({
   searchParams: Promise<{ locale?: string }>;
 }) {
   const { locale: localeParam } = await searchParams;
+  const accountKey = await getAccountKey(); // null = 管理者（全部見える）
   const validLocales = ["ja", "pt-BR", "vi", "id", "bn"];
-  const locale = validLocales.includes(localeParam ?? "") ? localeParam! : "ja";
+  // ロケールはアカウントキーから自動決定（管理者はsearchParamsで切り替え可）
+  const autoLocale = accountKey ?? "ja";
+  const locale = validLocales.includes(localeParam ?? "") ? localeParam! : autoLocale;
   const t = PAGE_T[locale] ?? PAGE_T["ja"];
   const since7d = new Date(Date.now() - 7 * 86_400_000);
 
   const [apps, pendingProposals, recentHits] = await Promise.all([
     db.snsApp.findMany({
-      where: { active: true },
+      where: {
+        active: true,
+        // 管理者(null)は全部、それ以外は自分のアカウントキー or null(共通)のアプリのみ
+        ...(accountKey ? {
+          OR: [
+            { accountKey: null },
+            { accountKey: accountKey },
+          ],
+        } : {}),
+      },
       orderBy: { name: "asc" },
     }).then((list) => [
       ...list.filter((a) => a.id === "buzzencer"),
