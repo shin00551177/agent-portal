@@ -19,11 +19,12 @@ async function logoutAction() {
 
 export function NavShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-white">
-      <nav className="sticky top-0 z-50 h-12 flex items-center backdrop-blur-xl bg-white/90 border-b border-[#d2d2d7]/60">
+    <div className="min-h-screen" style={{ background: "#fafafa" }}>
+      <nav className="sticky top-0 z-50 h-12 flex items-center" style={{ background: "#1e1e1f", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <div className="w-full max-w-[980px] mx-auto px-5 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/" className="text-[17px] font-semibold text-[#1d1d1f] tracking-tight">
+            <Link href="/" className="text-[15px] font-semibold tracking-tight flex items-center gap-2" style={{ color: "#fff" }}>
+              <span style={{ color: "#079147", fontWeight: 700 }}>●</span>
               Agent Portal
             </Link>
             <NavLinks />
@@ -31,13 +32,14 @@ export function NavShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-4">
             <Link
               href="/settings"
-              className="text-[#6e6e73] hover:text-[#1d1d1f] transition-colors"
+              style={{ color: "rgba(255,255,255,0.4)" }}
+              className="hover:text-white transition-colors"
               aria-label="設定"
             >
               <GearIcon />
             </Link>
             <form action={logoutAction}>
-              <button type="submit" className="text-[13px] text-[#6e6e73] hover:text-[#1d1d1f] transition-colors">
+              <button type="submit" className="text-[13px] transition-colors" style={{ color: "rgba(255,255,255,0.4)" }}>
                 ログアウト
               </button>
             </form>

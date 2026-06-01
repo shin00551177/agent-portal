@@ -1,198 +1,219 @@
 /* ============================================================================
-   AI AVATAR — Color & Type Foundations
-   Source of truth: Figma "AIA課題管理表" (Issue Management Sheet, since Jul 2025)
-   Mobile app design system. iPhone-class screens (390 content / 430 frame width).
+   Neksai — Color & Type Foundations
+   Source of truth: "Brand Guideline.fig" (official brand guideline).
+   Secondary reference: www.neksai.com (Webflow marketing-site art direction).
+   ----------------------------------------------------------------------------
+   IDENTITY
+   - Logo: two-triangle bowtie mark (green + forest) + lowercase "neksai".
+   - Brand is GREEN-first on white/black. Editorial, confident, minimal.
    ----------------------------------------------------------------------------
    FONTS
-   - Latin UI face is "Fixel Display" (kefa.app) — NOT on Google Fonts.
-     Substituted here with "Onest" (geometric-humanist, near-identical metrics).
-     >> Flagged to user: drop the real Fixel Display webfonts into /fonts and
-        swap the --font-ui stack if you want pixel-exact rendering.
-   - Japanese face is "Noto Sans JP" — exact, loaded from Google Fonts.
+   - Primary (brand main font): "Helvetica Neue" — Bold (headers),
+     Medium (subheaders), Regular (body). System font on Apple devices;
+     falls back to Helvetica / Arial elsewhere.
+   - Mono: "PT Mono" (Google Fonts) — labels, eyebrows, code, specs.
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=PT+Mono&display=swap');
 
 :root {
-  /* ---- FONT FAMILIES ---------------------------------------------------- */
-  --font-ui: "Onest", "Fixel Display", -apple-system, "Helvetica Neue", system-ui, sans-serif;        /* Latin / numerals / UI labels */
-  --font-jp: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;                                /* Japanese body & headings */
-  --font-stack: var(--font-jp), var(--font-ui);                                                       /* mixed JP+Latin default */
+  /* ---- FONT FAMILIES ------------------------------------------------------- */
+  --font-primary: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: "Helvetica Neue", Helvetica, Arial, sans-serif;  /* Bold */
+  --font-mono:    "PT Mono", "Courier New", monospace;
 
-  /* ---- BRAND ------------------------------------------------------------ */
-  --brand-red:        #E52613;   /* logo gradient start, hot accent      */
-  --brand-orange:     #EE3424;   /* favorite heart, error-adjacent red   */
-  --brand-gold:       #F4AA1C;   /* primary brand gold                   */
-  --brand-gold-deep:  #F4AC00;   /* logo gradient end                    */
-  --brand-gold-soft:  #F8B939;   /* lighter gold tint                    */
-  /* The logo / brand gradient — red → gold, top-to-bottom */
-  --brand-gradient:   linear-gradient(180deg, #E52613 0%, #F4AC00 100%);
+  /* ---- BRAND (official guideline — corporate colors) ----------------------- */
+  --colors--green:   #079147;   /* PANTONE 347-c — PRIMARY brand green        */
+  --colors--forest:  #1e5129;   /* PANTONE 357-c — secondary deep green        */
+  --colors--ink:     #1e1e1f;   /* PANTONE 419-c — near-black surfaces         */
+  --colors--black:   #000000;   /* logo on light · dark canvas                 */
+  --colors--white:   #ffffff;   /* logo on dark · light canvas                 */
 
-  /* ---- INK / NEUTRALS (text + surfaces) --------------------------------- */
-  --ink:        #2E2E2E;   /* primary text, primary button fill (rgb 46,46,46)  */
-  --ink-strong: #181818;   /* densest ink, glass tint base (rgb 24,24,24)       */
-  --ink-nav:    #1D1D1D;   /* liquid-glass nav base (rgb 29,29,29)              */
-  --fg-1:       #2E2E2E;   /* body text                                         */
-  --fg-2:       #969696;   /* secondary / meta text (rgb 150,150,150)           */
-  --fg-3:       #B4B4B4;   /* tertiary / placeholder hint                       */
-  --fg-disabled:#D1D1D1;   /* disabled text & fills (rgb 209,209,209)           */
+  /* aliases for back-compat with components.css / UI kit */
+  --colors--blue:        var(--colors--forest);  /* secondary accent           */
 
-  --white:      #FFFFFF;
-  --black:      #000000;
+  /* ---- WEBSITE EXTENDED (marketing-site art direction — use sparingly) ----- */
+  --colors--dark-blue:   #010517;   /* cinematic dark canvas (web hero only)   */
+  --colors--teal:        #c6e5df;   /* soft accent on dark (web only)          */
+  --colors--sand:        #efe8e3;   /* warm light surface                      */
+  --colors--blush:       #d5bdbc;   /* warm muted accent                       */
+  --colors--blond:       #f8eacd;   /* warm highlight / blond tint             */
 
-  /* ---- SURFACES & LINES ------------------------------------------------- */
-  --surface:        #FFFFFF;   /* cards, sheets                       */
-  --surface-sunken: #F5F5F5;   /* page wash, inputs, chips (rgb 245)  */
-  --surface-pink:   #E5BFC5;   /* soft pink promo/celeb card tint     */
-  --line:           #E6E3E3;   /* hairline borders (rgb 230,227,227)  */
-  --line-strong:    #D9D9D9;   /* dividers (rgb 217,217,217)          */
-  --line-faint:     #F0F0F0;
+  /* ---- NEUTRALS (text + surfaces) ----------------------------------------- */
+  --colors--neutral-600: #1e1e1f;   /* densest ink                             */
+  --colors--neutral-500: #29292b;   /* primary text, body                      */
+  --colors--neutral-400: #bfbfbf;   /* secondary text, meta, placeholders      */
+  --colors--neutral-300: #e0e0e0;   /* hairline borders, dividers              */
+  --colors--neutral-200: #fafafa;   /* light page background                   */
+  --colors--white:       #ffffff;
+  --colors--black:       #000000;
 
-  /* ---- SEMANTIC --------------------------------------------------------- */
-  --success: #28A745;   /* rgb 40,167,69  */
-  --error:   #E93E21;   /* rgb 233,62,33  (field error border/text) */
-  --error-wash: rgba(233,62,33,0.05);
-  --info:    #6929C4;   /* purple — promo / plan badges */
-  --accent-cyan: #39EBF8;
+  /* ---- OVERLAY / GLASS ------------------------------------------------------ */
+  --frosted-background:  rgba(255,255,255,0.11);  /* hero/card glass bg         */
+  --overlay-dark:        rgba(0,0,0,0.40);        /* photo scrim                */
+  --overlay-darker:      rgba(0,0,0,0.65);        /* heavy scrim                */
+  --white-a15:           rgba(255,255,255,0.15);  /* glass border               */
+  --white-a30:           rgba(255,255,255,0.30);
 
-  /* alpha tints used on glass/overlays */
-  --ink-a05:  rgba(24,24,24,0.05);
-  --ink-a10:  rgba(24,24,24,0.10);
-  --ink-a20:  rgba(24,24,24,0.20);
-  --ink-a50:  rgba(24,24,24,0.50);
-  --scrim-40: rgba(0,0,0,0.40);   /* full-bleed photo dim behind login text */
-  --white-a30: rgba(255,255,255,0.30);
+  /* ---- SEMANTIC ------------------------------------------------------------- */
+  --success: #28a745;
+  --error:   #e93e21;
+  --info:    #0057ff;
 
-  /* ---- RADII ------------------------------------------------------------ */
-  --r-xs: 6px;     /* link rows, tiny chips        */
-  --r-sm: 12px;    /* keypad keys, small tiles     */
-  --r-md: 14px;    /* text fields                  */
-  --r-lg: 30px;    /* avatar cards (with 8px white frame) */
-  --r-xl: 32px;    /* device screen / sheet corners */
-  --r-pill: 40px;  /* buttons                      */
-  --r-round: 999px;/* circular icon buttons, nav   */
+  /* ---- RADII --------------------------------------------------------------- */
+  --corners--small:  0.25rem;   /*  4px — platform cards                       */
+  --corners--medium: 0.5rem;    /*  8px — chips, inputs, insight cards          */
+  --corners--large:  0.75rem;   /* 12px — modals, large tiles                  */
+  --corners--xl:     1.5rem;    /* 24px — sheet / hero cards                   */
+  --corners--pill:   3.2em;     /* pill buttons                                */
+  --corners--round:  9999px;    /* icon buttons                                */
 
-  /* ---- SHADOWS / ELEVATION ---------------------------------------------- */
-  --shadow-card:   0 0 10px 0 rgba(0,0,0,0.10);   /* avatar card lift        */
-  --shadow-soft:   0 0 40px 0 rgba(0,0,0,0.05);   /* primary button bloom    */
-  --shadow-pop:    0 8px 24px 0 rgba(0,0,0,0.25); /* menus, toasts, sheets   */
-  --shadow-icon:   0 0 4.7px 0 rgba(0,0,0,0.30);  /* white icon on photo     */
-  /* Liquid-glass inset rim — the signature nav / header treatment */
-  --glass-rim: inset 0 0 33px 0 rgba(242,242,242,0.5),
-               inset -3px -4.5px 1.5px -3px rgba(179,179,179,1),
-               inset 3px 4.5px 1.5px -3px rgba(179,179,179,0.2),
-               inset 4.5px 4.5px 1.5px -5.25px rgba(255,255,255,0.5),
-               inset -4.5px -4.5px 1.5px -5.25px rgba(255,255,255,0.5);
+  /* ---- SHADOWS / ELEVATION ------------------------------------------------- */
+  --shadow-card:  0 4px 24px 0 rgba(0,0,0,0.12);  /* card on light bg          */
+  --shadow-soft:  0 0  40px 0 rgba(0,0,0,0.05);   /* button bloom              */
+  --shadow-pop:   0 8px 24px 0 rgba(0,0,0,0.25);  /* menus, toasts             */
 
-  /* ---- SPACING (4px base grid) ------------------------------------------ */
-  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
-  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
+  /* ---- SPACING ------------------------------------------------------------- */
+  --site-padding--desktop: 2em;
+  --site-padding--tablet:  1rem;
+  --site-padding--mobile:  1rem;
+  --section-padding:       10em;     /* standard vertical section padding       */
+  --container-max:         1200px;
 
-  /* ---- TYPE TOKENS ------------------------------------------------------ */
-  /* sizes observed: 10 12 14 16 18 20 24 28 32 40 56 64 */
-  --text-cover:   64px;  /* cover wordmark (Latin)      */
-  --text-h1:      24px;  /* screen titles (JP)          */
-  --text-h2:      20px;
-  --text-h3:      18px;
-  --text-body:    16px;  /* default body / input value  */
-  --text-label:   14px;  /* button, field label, list   */
-  --text-cap:     12px;  /* captions, legal             */
-  --text-nav:     10px;  /* bottom-nav labels (caps)    */
+  /* ---- FONT SIZES (fixed) -------------------------------------------------- */
+  --font-size--xs:    0.85rem;   /* 13.6px — labels, captions, nav links        */
+  --font-size--small: 0.9rem;    /* 14.4px                                       */
+  --font-size--base:  1rem;      /* 16px   — body copy                          */
+  --font-size--large: 1.25rem;   /* 20px                                        */
+  --font-size--xl:    1.5rem;    /* 24px   — sub-headings                       */
+  --font-size--2xl:   2rem;      /* 32px                                        */
+  --font-size--3xl:   2.5rem;    /* 40px                                        */
+  --font-size--4xl:   3rem;      /* 48px   — section headlines                  */
+  --font-size--5xl:   3.5rem;    /* 56px                                        */
+  --font-size--6xl:   4rem;      /* 64px                                        */
+  --font-size--7xl:   5rem;      /* 80px                                        */
+  --font-size--8xl:   8.75rem;   /* 140px  — hero display                       */
 
-  --lh-tight: 1.0;
-  --lh-snug:  1.25;
-  --lh-body:  1.5;
+  /* ---- FONT SIZES (fluid — clamp-based responsive) ------------------------- */
+  --fluid-font-size--xs:    clamp(0.75rem,  1vw,   0.85rem);
+  --fluid-font-size--small: clamp(0.85rem,  1.067vw, 0.9rem);
+  --fluid-font-size--base:  clamp(0.9rem,   1.2vw,   1rem);
+  --fluid-font-size--large: clamp(1rem,     1.6vw,   1.25rem);
+  --fluid-font-size--xl:    clamp(1.25rem,  1.867vw, 1.5rem);
+  --fluid-font-size--2xl:   clamp(1.5rem,   2.133vw, 2rem);
+  --fluid-font-size--3xl:   clamp(1.875rem, 2.667vw, 2.5rem);
+  --fluid-font-size--4xl:   clamp(2.25rem,  3.2vw,   3rem);
+  --fluid-font-size--5xl:   clamp(2.5rem,   3.733vw, 3.5rem);
+  --fluid-font-size--6xl:   clamp(2.75rem,  4.267vw, 4rem);
+  --fluid-font-size--7xl:   clamp(3rem,     5.333vw, 5rem);
+  --fluid-font-size--8xl:   clamp(4rem,     9.333vw, 8.75rem);
 
-  /* ---- WEB / DASHBOARD (desktop + responsive) --------------------------- */
-  /* Fluid display sizes for marketing & dashboard headings (scale with viewport) */
-  --display-1: clamp(34px, 5vw, 64px);   /* hero */
-  --display-2: clamp(28px, 3.4vw, 44px); /* page / section hero */
-  --title-1:   clamp(22px, 2vw, 30px);   /* page title */
-  --title-2:   clamp(18px, 1.4vw, 22px); /* card / panel title */
-  --metric:    clamp(26px, 2.4vw, 34px); /* KPI numbers */
+  /* ---- LINE HEIGHTS -------------------------------------------------------- */
+  --lh-display: 1.05;
+  --lh-heading: 1.1;
+  --lh-subhead: 1.2;
+  --lh-body:    1.35;
+  --lh-loose:   1.6;
 
-  --maxw:        1280px;  /* page container max width */
-  --maxw-prose:  680px;   /* readable text column */
-  --sidebar-w:   248px;   /* dashboard sidebar */
-  --topbar-h:    64px;    /* dashboard top bar */
+  /* ---- LETTER SPACING ------------------------------------------------------ */
+  --ls-tight:  -0.05em;
+  --ls-snug:   -0.03em;
+  --ls-normal: 0;
+  --ls-wide:   0.05em;
+  --ls-mono:   0.12em;    /* used on section labels / eyebrows */
 
-  --row-h:       44px;    /* table row / dense control min height */
-  --control-h:   40px;    /* desktop input / button height (denser than mobile 50) */
+  /* ---- TRANSITIONS --------------------------------------------------------- */
+  --dur-fast:   0.2s;
+  --dur-med:    0.6s;
+  --dur-slow:   0.9s;
+  --ease:       cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-out:   ease-out;
 
-  --focus-ring:  0 0 0 3px rgba(244,170,28,0.35);  /* gold focus halo */
-  --shadow-rest: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);  /* desktop card at rest */
-  --shadow-hover:0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.05); /* desktop card hover */
+  /* Shorthand */
+  --transition-fast:   var(--dur-fast)  var(--ease-out);
+  --transition-medium: var(--dur-med)   var(--ease);
+  --transition-slow:   var(--dur-slow)  var(--ease);
 
-  --ease:        cubic-bezier(.22,.61,.36,1);  /* soft ease-out, brand default */
-  --dur:         .18s;
+  /* ---- FOCUS RING ---------------------------------------------------------- */
+  --focus-ring: 0 0 0 3px rgba(7,145,71,0.45);   /* green ring */
 }
 
 /* ============================================================================
-   SEMANTIC ELEMENT STYLES — apply directly or copy into components
+   SEMANTIC TYPE CLASSES
    ========================================================================== */
 
-.aia-h1 {
-  font-family: var(--font-jp);
-  font-weight: 400;
-  font-size: var(--text-h1);
-  line-height: var(--lh-tight);
-  color: var(--ink);
+/* ---- Display headings (fluid) -------------------------------------------- */
+.nk-display-8xl {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: var(--fluid-font-size--8xl); line-height: var(--lh-display);
+  letter-spacing: var(--ls-tight);
 }
-.aia-h2 {
-  font-family: var(--font-jp);
-  font-weight: 700;
-  font-size: var(--text-h2);
-  line-height: var(--lh-snug);
-  color: var(--ink);
+.nk-display-7xl {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: var(--fluid-font-size--7xl); line-height: var(--lh-display);
+  letter-spacing: var(--ls-tight);
 }
-.aia-h3 {
-  font-family: var(--font-jp);
-  font-weight: 700;
-  font-size: var(--text-h3);
-  line-height: var(--lh-snug);
-  color: var(--ink);
+.nk-display-6xl {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: var(--fluid-font-size--6xl); line-height: var(--lh-display);
+  letter-spacing: var(--ls-tight);
 }
-/* Section eyebrow — Latin, all-caps, bold (e.g. "FEATUREDS") */
-.aia-eyebrow {
-  font-family: var(--font-ui);
-  font-weight: 800;
-  font-size: var(--text-h2);
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-  color: var(--ink);
+.nk-display-5xl {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: var(--fluid-font-size--5xl); line-height: 1.05;
+  letter-spacing: var(--ls-tight);
 }
-.aia-body {
-  font-family: var(--font-jp);
-  font-weight: 400;
-  font-size: var(--text-body);
-  line-height: var(--lh-body);
-  color: var(--fg-1);
+.nk-display-4xl {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: var(--fluid-font-size--4xl); line-height: var(--lh-heading);
+  letter-spacing: var(--ls-tight);
 }
-.aia-label {           /* UI labels / buttons — Latin, medium */
-  font-family: var(--font-ui);
-  font-weight: 500;
-  font-size: var(--text-label);
-  line-height: 20px;
-  color: var(--ink);
+.nk-display-3xl {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: var(--fluid-font-size--3xl); line-height: 1.15;
+  letter-spacing: -0.04em;
 }
-.aia-name {            /* avatar names — Latin, bold */
-  font-family: var(--font-ui);
-  font-weight: 700;
-  font-size: var(--text-body);
-  line-height: 24px;
-  color: var(--ink);
+.nk-display-2xl {
+  font-family: var(--font-primary); font-weight: 500;
+  font-size: var(--fluid-font-size--2xl); line-height: var(--lh-subhead);
+  letter-spacing: var(--ls-snug);
 }
-.aia-cap {
-  font-family: var(--font-jp);
-  font-weight: 400;
-  font-size: var(--text-cap);
-  line-height: 16px;
-  color: var(--fg-2);
+.nk-display-xl {
+  font-family: var(--font-primary); font-weight: 500;
+  font-size: var(--fluid-font-size--xl); line-height: var(--lh-subhead);
 }
-.aia-nav-label {
-  font-family: var(--font-ui);
-  font-weight: 600;
-  font-size: var(--text-nav);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.nk-display-lg {
+  font-family: var(--font-primary); font-weight: 400;
+  font-size: var(--fluid-font-size--large); line-height: 1.3;
+}
+
+/* ---- Body ----------------------------------------------------------------- */
+.nk-body {
+  font-family: var(--font-primary); font-weight: 400;
+  font-size: var(--font-size--base); line-height: var(--lh-body);
+  color: var(--colors--neutral-500);
+}
+.nk-body-sm {
+  font-family: var(--font-primary); font-weight: 400;
+  font-size: var(--font-size--small); line-height: var(--lh-body);
+}
+.nk-caption {
+  font-family: var(--font-primary); font-weight: 400;
+  font-size: var(--font-size--xs); line-height: 1.4;
+}
+
+/* ---- Labels / eyebrows ---------------------------------------------------- */
+.nk-label {
+  font-family: var(--font-mono); font-weight: 400;
+  font-size: var(--font-size--xs); line-height: 1.4;
+  letter-spacing: var(--ls-mono); text-transform: uppercase;
+  color: var(--colors--neutral-400);
+}
+.nk-label--teal { color: var(--colors--teal); }
+.nk-label--green { color: var(--colors--green); }
+.nk-label--white { color: var(--colors--white); }
+
+/* ---- Mono / code --------------------------------------------------------- */
+.nk-mono {
+  font-family: var(--font-mono); font-size: var(--font-size--base);
 }
