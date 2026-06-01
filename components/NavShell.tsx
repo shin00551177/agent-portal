@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NavLinks } from "./NavLinks";
+import { AccountSwitchModal } from "./AccountSwitchModal";
 import { destroySession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
@@ -23,10 +24,7 @@ export function NavShell({ children }: { children: React.ReactNode }) {
       <nav className="sticky top-0 z-50 h-12 flex items-center" style={{ background: "#1e1e1f", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
         <div className="w-full max-w-[980px] mx-auto px-5 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href="/" className="text-[15px] font-semibold tracking-tight flex items-center gap-2" style={{ color: "#fff" }}>
-              <span style={{ color: "#079147", fontWeight: 700 }}>●</span>
-              Agent Portal
-            </Link>
+            <AccountSwitchModal onLogout={logoutAction} />
             <NavLinks />
           </div>
           <div className="flex items-center gap-4">
