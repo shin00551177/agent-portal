@@ -37,8 +37,8 @@ function EmptySlot() {
 
 export async function StoreImages({ appId, iosId, googlePlayId }: Props) {
   const [iosData, androidData] = await Promise.all([
-    iosId ? fetchAscScreenshots(iosId, "ja") : null,
-    googlePlayId ? fetchGPlayImages(googlePlayId, "ja-JP") : null,
+    iosId ? fetchAscScreenshots(iosId, "ja").catch(() => null) : null,
+    googlePlayId ? fetchGPlayImages(googlePlayId, "ja-JP").catch(() => null) : null,
   ]);
 
   const hasAny =
