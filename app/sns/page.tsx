@@ -18,7 +18,10 @@ export default async function SnsPage() {
     db.snsApp.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
-    }),
+    }).then((list) => [
+      ...list.filter((a) => a.id === "buzzencer"),
+      ...list.filter((a) => a.id !== "buzzencer"),
+    ]),
     db.proposal.count({ where: { status: "pending", domain: "ego" } }),
     db.egoHit.findMany({
       where: { createdAt: { gte: since7d } },

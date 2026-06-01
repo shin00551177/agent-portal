@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 const SNS_APPS = [
+  { id: "buzzencer",     name: "BUZZENCER",    active: true,  platforms: ["youtube","tiktok","instagram","x"] },
   { id: "twomi",         name: "Twomi",        active: true,  platforms: ["youtube","tiktok","instagram","x","facebook","threads"] },
   { id: "ai-avatar",     name: "AI AVATAR",    active: true,  platforms: ["youtube","tiktok","instagram","x"] },
   { id: "soulriza",      name: "SOULRiZA",     active: true,  platforms: ["youtube","tiktok","instagram","x"] },

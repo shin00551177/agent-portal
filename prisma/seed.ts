@@ -63,6 +63,12 @@ const APP_KEYWORDS: Record<string, { keyword: string; priority: string }[]> = {
 
 const SNS_APPS = [
   {
+    id: "buzzencer",
+    name: "BUZZENCER",
+    active: true,
+    platforms: ["youtube", "tiktok", "instagram", "x"],
+  },
+  {
     id: "twomi",
     name: "Twomi",
     active: true,

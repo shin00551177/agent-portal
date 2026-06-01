@@ -6,6 +6,12 @@ export type AppContext = {
 };
 
 const APP_CONTEXTS: Record<string, AppContext> = {
+  buzzencer: {
+    name: "BUZZENCER",
+    description: "バズを科学するSNSマーケティング支援ツール。バズ動画の分析・シナリオ生成・制作進行管理を一元化する。",
+    target: "SNSマーケター・コンテンツクリエイター・企業マーケ担当",
+    platforms: ["youtube", "tiktok", "instagram", "x"],
+  },
   twomi: {
     name: "Twomi",
     description: "AIアバターと自由に会話・ビデオ通話できるアプリ。AIキャラクターとのリアルタイム会話、アバター作成、ライブ配信機能を持つ。",
