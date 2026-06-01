@@ -186,22 +186,39 @@ ${rejectedSection}
     proposed: string;
   };
 
-  // JSON 配列を堅牢に抽出（改行・特殊文字を含む長い出力に対応）
+  // JSON 配列を堅牢に抽出（マークダウンコードブロック・改行・特殊文字を含む出力に対応）
   function extractProposals(raw: string): ProposalInput[] {
-    // 最初の [ から最後の ] を探す
-    const start = raw.indexOf("[");
-    const end = raw.lastIndexOf("]");
+    // ```json ... ``` を剥がす
+    const codeBlockMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+    const cleaned = codeBlockMatch ? codeBlockMatch[1] : raw;
+
+    const start = cleaned.indexOf("[");
+    const end = cleaned.lastIndexOf("]");
     if (start === -1 || end === -1 || end <= start) return [];
-    const jsonStr = raw.slice(start, end + 1);
+
+    // 文字列リテラル内の未エスケープ改行をエスケープ
+    let jsonStr = cleaned.slice(start, end + 1);
+    // 各フィールド値内の literal newline を \n に変換（JSON文字列内のみ）
+    jsonStr = jsonStr.replace(/"((?:[^"\\]|\\.)*)"/g, (_match, p1) => {
+      return '"' + p1.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + '"';
+    });
+
     try {
       return JSON.parse(jsonStr);
     } catch {
-      // フォールバック: 個別オブジェクトを抽出して配列化
+      // フォールバック: 個別オブジェクトを1つずつ抽出
       const items: ProposalInput[] = [];
-      const objRegex = /\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g;
-      let m;
-      while ((m = objRegex.exec(jsonStr)) !== null) {
-        try { items.push(JSON.parse(m[0])); } catch { /* skip invalid */ }
+      let depth = 0, inStr = false, start2 = -1;
+      for (let i = 0; i < jsonStr.length; i++) {
+        const c = jsonStr[i];
+        if (c === '"' && jsonStr[i - 1] !== '\\') inStr = !inStr;
+        if (!inStr) {
+          if (c === '{') { if (depth === 0) start2 = i; depth++; }
+          if (c === '}') { depth--; if (depth === 0 && start2 !== -1) {
+            try { items.push(JSON.parse(jsonStr.slice(start2, i + 1))); } catch { /* skip */ }
+            start2 = -1;
+          }}
+        }
       }
       return items;
     }
