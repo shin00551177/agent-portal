@@ -10,14 +10,7 @@ const SNS_APPS = [
   { id: "pachinavi",     name: "パチナビ",     active: true,  platforms: ["youtube","tiktok","x"] },
 ];
 
-export async function POST(req: NextRequest) {
-  const expectedKey = process.env.PORTAL_API_KEY;
-  if (expectedKey) {
-    const apiKey = req.headers.get("x-api-key");
-    if (apiKey !== expectedKey) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
-  }
+export async function POST(_req: NextRequest) {
 
   const results: string[] = [];
   for (const app of SNS_APPS) {
