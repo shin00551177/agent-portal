@@ -41,6 +41,8 @@ function CopyBtn({ text }: { text: string }) {
 export default function HypothesesPage() {
   const { appId } = useParams<{ appId: string }>();
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
+  const [generating, setGenerating] = useState(false);
+  const [genMessage, setGenMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("pending");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -51,6 +53,19 @@ export default function HypothesesPage() {
     if (res.ok) setHypotheses(await res.json());
   }
   useEffect(() => { load(); }, [appId]);
+
+  async function generate() {
+    setGenerating(true);
+    setGenMessage(null);
+    const res = await fetch(`/api/sns/${appId}/hypotheses/generate`, { method: "POST" });
+    const data = await res.json();
+    setGenerating(false);
+    if (res.ok) {
+      setGenMessage(data.message ?? `${data.hypotheses?.length ?? 0}件生成しました`);
+      await load();
+      setActiveTab("pending");
+    }
+  }
 
   async function updateStatus(id: string, status: string, extra?: object) {
     await fetch(`/api/sns/${appId}/hypotheses/${id}`, {
@@ -75,11 +90,23 @@ export default function HypothesesPage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <div>
-        <h2 className="text-[22px] font-semibold text-[#1d1d1f] tracking-tight">仮説管理</h2>
-        <p className="text-[13px] text-[#6e6e73] mt-1">
-          AIが投稿頻度に合わせて自動生成します。承認・差し戻しをしてください。
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-[22px] font-semibold text-[#1d1d1f] tracking-tight">仮説管理</h2>
+          <p className="text-[13px] text-[#6e6e73] mt-1">
+            AIが投稿頻度に合わせて自動生成します。承認・差し戻しをしてください。
+          </p>
+          {genMessage && (
+            <p className="text-[12px] text-[#86868b] mt-1">{genMessage}</p>
+          )}
+        </div>
+        <button
+          onClick={generate}
+          disabled={generating}
+          className="px-4 py-2 rounded-xl bg-[#f5f5f7] text-[#1d1d1f] text-[13px] font-medium hover:bg-[#ebebeb] disabled:opacity-40 transition-colors flex-shrink-0"
+        >
+          {generating ? "生成中..." : "今すぐ生成"}
+        </button>
       </div>
 
       {/* タブ */}
