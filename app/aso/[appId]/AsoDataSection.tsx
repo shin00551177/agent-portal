@@ -271,7 +271,13 @@ function ProposalCard({
             {/* ネクストアクション */}
             <div className="bg-[#f0faf4] rounded-xl px-4 py-3">
               <p className="text-[11px] font-semibold text-[#1d7a47] uppercase tracking-wide mb-1">ネクストアクション</p>
-              <p className="text-[13px] text-[#1d1d1f] leading-relaxed">{analysis.nextAction}</p>
+              <p className="text-[13px] text-[#1d1d1f] leading-relaxed whitespace-pre-wrap">
+                {analysis.nextAction?.trim()
+                  ? analysis.nextAction
+                  : analysis.proposed
+                    ? `「${FIELD_LABEL[analysis.field as keyof typeof FIELD_LABEL] ?? analysis.field}」を以下に変更:\n${analysis.proposed}`
+                    : "（分析を再実行するとネクストアクションが生成されます）"}
+              </p>
             </div>
           </div>
         ) : (

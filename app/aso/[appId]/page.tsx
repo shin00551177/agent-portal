@@ -88,18 +88,32 @@ export default async function AsoAppPage({
         />
       </section>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-0 divide-x divide-[#f0f0f0] py-12 border-b border-[#f0f0f0]">
-        {[
-          { n: app.keywords.length, label: "キーワード" },
-          { n: highCount,           label: "優先度 高" },
-          { n: recentReports.length, label: "レポート数" },
-        ].map(({ n, label }) => (
-          <div key={label} className="px-8 first:pl-0 last:pr-0">
-            <p className="text-[48px] font-semibold text-[#1d1d1f] leading-none tracking-tight">{n}</p>
-            <p className="text-[13px] text-[#6e6e73] mt-2">{label}</p>
+      {/* Stats + ストア切り替えタブ */}
+      <div className="py-8 border-b border-[#f0f0f0] flex items-center justify-between gap-6">
+        <div className="grid grid-cols-3 gap-0 divide-x divide-[#f0f0f0] flex-1">
+          {[
+            { n: app.keywords.length, label: "キーワード" },
+            { n: highCount,           label: "優先度 高" },
+            { n: recentReports.length, label: "レポート数" },
+          ].map(({ n, label }) => (
+            <div key={label} className="px-8 first:pl-0">
+              <p className="text-[40px] font-semibold text-[#1d1d1f] leading-none tracking-tight">{n}</p>
+              <p className="text-[13px] text-[#6e6e73] mt-2">{label}</p>
+            </div>
+          ))}
+        </div>
+        {(app.iosId || app.googlePlayId) && (
+          <div className="flex-shrink-0">
+            <p className="text-[10px] font-semibold text-[#bfbfbf] uppercase tracking-widest mb-2">ストア</p>
+            <Suspense>
+              <StoreSwitcher
+                hasIos={!!app.iosId}
+                hasAndroid={!!app.googlePlayId}
+                current={store}
+              />
+            </Suspense>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Apptweak データ + 提案 */}
@@ -134,18 +148,11 @@ export default async function AsoAppPage({
         )}
       </section>
 
-      {/* ストア別タブ */}
+      {/* ストア別コンテンツ */}
       <section className="py-8 border-b border-[#f0f0f0]">
-        <div className="flex items-center gap-4 mb-8">
-          <Suspense>
-            <StoreSwitcher
-              hasIos={!!app.iosId}
-              hasAndroid={!!app.googlePlayId}
-              current={store}
-            />
-          </Suspense>
-          <p className="text-[12px] text-[#bfbfbf]">
-            {store === "ios" ? "App Store（iOS）" : "Google Play（Android）"} のデータを表示中
+        <div className="mb-6">
+          <p className="text-[13px] text-[#86868b]">
+            {store === "ios" ? "🍎 App Store（iOS）" : "🤖 Google Play（Android）"} のストア情報
           </p>
         </div>
 
