@@ -275,7 +275,7 @@ function ProposalCard({
                 {analysis.nextAction?.trim()
                   ? analysis.nextAction
                   : analysis.proposed
-                    ? `「${FIELD_LABEL[analysis.field as keyof typeof FIELD_LABEL] ?? analysis.field}」を以下に変更:\n${analysis.proposed}`
+                    ? `「${FIELD_LABELS[analysis.field] ?? analysis.field}」を以下に変更:\n${analysis.proposed}`
                     : "（分析を再実行するとネクストアクションが生成されます）"}
               </p>
             </div>
