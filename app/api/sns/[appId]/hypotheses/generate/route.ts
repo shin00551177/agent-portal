@@ -132,7 +132,16 @@ JSONのみ返してください。`;
 
   try {
     const m = text.match(/\[[\s\S]*\]/);
-    if (m) items = JSON.parse(m[0]);
+    if (m) {
+      const parsed = JSON.parse(m[0]);
+      // contentBriefが配列で返ってきた場合に文字列に変換
+      items = parsed.map((item: Record<string, unknown>) => ({
+        ...item,
+        contentBrief: Array.isArray(item.contentBrief)
+          ? (item.contentBrief as string[]).join("\n")
+          : (item.contentBrief ?? null),
+      }));
+    }
   } catch {
     return NextResponse.json({ error: "AI応答のパースに失敗しました" }, { status: 500 });
   }
