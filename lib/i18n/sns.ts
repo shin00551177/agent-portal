@@ -12,6 +12,9 @@ export interface SnsTranslations {
     trends: string; frequency: string; emptyTitle: string; emptyDesc: string;
     emptyLink: string; egoDetail: string; freqDetail: string;
     pending: string; unprocessed: string; freqCheck: string;
+    pdcaCards: { ego: string; hypothesis: string; contentLab: string; buzz: string };
+    pdcaSubs: { egoSub: (neg: number, pos: number) => string; hypoSub: (n: number) => string; briefSub: string; buzzSub: string };
+    egoNotRun: string;
   };
   hypotheses: {
     title: string; desc: string; generate: string; generating: string;
@@ -60,6 +63,14 @@ const JA: SnsTranslations = {
     emptyDesc: "毎朝8時・夜20時に投稿頻度に合わせて自動補充されます",
     emptyLink: "投稿頻度を設定する →", egoDetail: "エゴサ詳細 →", freqDetail: "詳細・調整 →",
     pending: "承認待ちの仮説", unprocessed: "未処理のユーザーFB", freqCheck: "投稿頻度レコメンドを確認",
+    pdcaCards: { ego: "エゴサ", hypothesis: "仮説", contentLab: "Content-lab送信", buzz: "バズ検知" },
+    pdcaSubs: {
+      egoSub: (neg: number, pos: number) => `直近7日 ${neg}ネガ / ${pos}ポジ`,
+      hypoSub: (n: number) => `承認済 ${n}件`,
+      briefSub: "ブリーフ送信済み",
+      buzzSub: "直近7日",
+    },
+    egoNotRun: "未実行",
   },
   hypotheses: {
     title: "仮説管理", desc: "AIが投稿頻度に合わせて自動生成します。承認・差し戻しをしてください。",
@@ -113,6 +124,14 @@ const PT_BR: SnsTranslations = {
     emptyDesc: "Reposições automáticas às 8h e 20h com base na frequência recomendada",
     emptyLink: "Configurar frequência →", egoDetail: "Ver monitoramento →", freqDetail: "Detalhes e ajustes →",
     pending: "Hipóteses aguardando aprovação", unprocessed: "Feedbacks não processados", freqCheck: "Verificar frequência recomendada",
+    pdcaCards: { ego: "Monitoramento", hypothesis: "Hipóteses", contentLab: "Enviado ao Content-lab", buzz: "Detecção viral" },
+    pdcaSubs: {
+      egoSub: (neg: number, pos: number) => `Últimos 7 dias: ${neg} neg / ${pos} pos`,
+      hypoSub: (n: number) => `Aprovadas: ${n}`,
+      briefSub: "Briefs enviados",
+      buzzSub: "Últimos 7 dias",
+    },
+    egoNotRun: "Não executado",
   },
   hypotheses: {
     title: "Hipóteses", desc: "A IA gera hipóteses automaticamente. Aprove ou rejeite cada uma.",

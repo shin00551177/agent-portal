@@ -75,9 +75,12 @@ export default async function DashboardPage({
   const egoAgo = lastEgoHit
     ? (() => {
         const h = Math.floor((Date.now() - new Date(lastEgoHit.createdAt).getTime()) / 3_600_000);
+        if (locale === "pt-BR") {
+          return h < 1 ? "Há menos de 1h" : h < 24 ? `Há ${h}h` : `Há ${Math.floor(h / 24)} dias`;
+        }
         return h < 1 ? "1時間以内" : h < 24 ? `${h}時間前` : `${Math.floor(h / 24)}日前`;
       })()
-    : "未実行";
+    : t.egoNotRun;
 
   return (
     <div className="space-y-8 max-w-3xl">
@@ -123,10 +126,10 @@ export default async function DashboardPage({
         <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest mb-3">{t.pdca}</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
-            { label: "エゴサ", value: egoAgo, sub: `直近7日 ${neg7d}ネガ / ${pos7d}ポジ`, color: "text-[#1d1d1f]" },
-            { label: "仮説", value: `${pendingHypotheses.length}件待機中`, sub: `承認済 ${approvedHypotheses}件`, color: pendingHypotheses.length > 0 ? "text-amber-500" : "text-[#1d1d1f]" },
-            { label: "Content-lab送信", value: `${briefedHypotheses}件`, sub: "ブリーフ送信済み", color: "text-[#1d1d1f]" },
-            { label: "バズ検知", value: `${buzz7d}件`, sub: "直近7日", color: buzz7d > 0 ? "text-emerald-600" : "text-[#1d1d1f]" },
+            { label: t.pdcaCards.ego, value: egoAgo, sub: t.pdcaSubs.egoSub(neg7d, pos7d), color: "text-[#1d1d1f]" },
+            { label: t.pdcaCards.hypothesis, value: `${pendingHypotheses.length}`, sub: t.pdcaSubs.hypoSub(approvedHypotheses), color: pendingHypotheses.length > 0 ? "text-amber-500" : "text-[#1d1d1f]" },
+            { label: t.pdcaCards.contentLab, value: `${briefedHypotheses}`, sub: t.pdcaSubs.briefSub, color: "text-[#1d1d1f]" },
+            { label: t.pdcaCards.buzz, value: `${buzz7d}`, sub: t.pdcaSubs.buzzSub, color: buzz7d > 0 ? "text-emerald-600" : "text-[#1d1d1f]" },
           ].map(({ label, value, sub, color }) => (
             <div key={label} className="rounded-2xl border border-[#f0f0f0] p-4">
               <p className="text-[10px] text-[#86868b] uppercase tracking-wide mb-2">{label}</p>
