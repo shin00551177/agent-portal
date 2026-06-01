@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { db } from "@/lib/db";
 import { LocaleSwitcher } from "./LocaleSwitcher";
 
-const PAGE_T = {
+const PAGE_T: Record<string, { section: string; title: string; subtitle: string; proposal: string; proposalLabel: string; stats: string[]; appSection: string; noData: string; noCollection: string; action: string; negSection: string; empty: string; emptyDesc: string }> = {
   ja: {
     section: "SNS",
     title: "SNS エージェント",
@@ -35,6 +35,30 @@ const PAGE_T = {
     negSection: "Ação necessária — Negativos principais",
     empty: "Sem dados nos últimos 7 dias",
     emptyDesc: "Execute o monitoramento para ver os dados aqui",
+  },
+  vi: {
+    section: "SNS", title: "Đại lý SNS", subtitle: "Theo dõi · Tạo nội dung · 7 ngày gần nhất",
+    proposal: " đang chờ →", proposalLabel: "Đề xuất",
+    stats: ["Tổng", "Tiêu cực", "Tích cực", "Viral"],
+    appSection: "Theo ứng dụng", noData: "Không có dữ liệu", noCollection: "Chưa thu thập",
+    action: "Cần xử lý", negSection: "Cần xử lý — Tiêu cực hàng đầu",
+    empty: "Không có dữ liệu trong 7 ngày qua", emptyDesc: "Chạy theo dõi để xem dữ liệu tại đây",
+  },
+  id: {
+    section: "SNS", title: "Agen SNS", subtitle: "Pemantauan · Pembuatan konten · 7 hari terakhir",
+    proposal: " menunggu →", proposalLabel: "Proposal",
+    stats: ["Total", "Negatif", "Positif", "Viral"],
+    appSection: "Per aplikasi", noData: "Tidak ada data", noCollection: "Belum dikumpulkan",
+    action: "Perlu ditangani", negSection: "Perlu ditangani — Negatif utama",
+    empty: "Tidak ada data dalam 7 hari terakhir", emptyDesc: "Jalankan pemantauan untuk melihat data di sini",
+  },
+  bn: {
+    section: "SNS", title: "SNS এজেন্ট", subtitle: "মনিটরিং · কন্টেন্ট তৈরি · গত ৭ দিন",
+    proposal: " অপেক্ষমাণ →", proposalLabel: "প্রস্তাব",
+    stats: ["মোট", "নেতিবাচক", "ইতিবাচক", "ভাইরাল"],
+    appSection: "অ্যাপ অনুযায়ী", noData: "কোনো ডেটা নেই", noCollection: "সংগ্রহ হয়নি",
+    action: "পদক্ষেপ প্রয়োজন", negSection: "পদক্ষেপ প্রয়োজন — শীর্ষ নেতিবাচক",
+    empty: "গত ৭ দিনে কোনো ডেটা নেই", emptyDesc: "ডেটা দেখতে মনিটরিং চালান",
   },
 };
 
