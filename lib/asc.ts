@@ -369,7 +369,7 @@ export type IosFullListing = {
 
 export async function fetchIosFullListing(iosId: string, locale = "ja"): Promise<IosFullListing | null> {
   try {
-    const data = await asc(`/v1/apps/${iosId}/appStoreVersions?filter[platform]=IOS&limit=1&sort=-createdDate`);
+    const data = await asc(`/v1/apps/${iosId}/appStoreVersions?filter[platform]=IOS&limit=1`);
     const versionId = data?.data?.[0]?.id;
     if (!versionId) { console.error("[fetchIosFullListing] no versionId for", iosId); return null; }
     const locData = await asc(`/v1/appStoreVersions/${versionId}/appStoreVersionLocalizations`);
