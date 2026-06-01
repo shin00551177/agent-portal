@@ -377,11 +377,14 @@ export async function fetchIosFullListing(iosId: string, locale = "ja"): Promise
 
     // appInfoLocalizations (title, subtitle)
     const infoId = infoData?.data?.[0]?.id;
+    console.log("[fetchIosFullListing] infoId:", infoId, "iosId:", iosId);
     const infoLocData = infoId
       ? await asc(`/v1/appInfos/${infoId}/appInfoLocalizations`)
       : null;
+    console.log("[fetchIosFullListing] infoLocData count:", infoLocData?.data?.length, "locales:", infoLocData?.data?.map((l: { attributes: { locale: string } }) => l.attributes.locale));
     const infoLoc = infoLocData?.data?.find((l: { attributes: { locale: string } }) => l.attributes.locale === locale)
       ?? infoLocData?.data?.[0];
+    console.log("[fetchIosFullListing] infoLoc name:", infoLoc?.attributes?.name, "subtitle:", infoLoc?.attributes?.subtitle);
 
     // appStoreVersionLocalizations (keywords, description, promotionalText, whatsNew)
     const versionId = verData?.data?.[0]?.id;
