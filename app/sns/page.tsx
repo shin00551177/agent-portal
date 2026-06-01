@@ -174,7 +174,7 @@ export default async function SnsPage({
         <p className="text-[13px] text-[#6e6e73] uppercase tracking-wide mb-6">{t.appSection}</p>
         <div className="divide-y divide-[#f0f0f0]">
           {hitsByApp.map((app) => {
-            const appLocale = (app as { locale?: string }).locale ?? "ja";
+
             return (
               <Link
                 key={app.id}
@@ -190,9 +190,6 @@ export default async function SnsPage({
                       <p className="text-[15px] font-medium text-[#1d1d1f] group-hover:text-[#079147] transition-colors">
                         {app.name}
                       </p>
-                      {appLocale === "pt-BR" && (
-                        <span className="text-[10px] bg-[#f0faf4] text-[#079147] border border-[#a8e4bc] px-1.5 py-0.5 rounded-full font-medium">🇧🇷 PT</span>
-                      )}
                     </div>
                     <p className="text-[12px] text-[#86868b]">
                       {app.latest ? timeAgo(new Date(app.latest), locale) : t.noData}
