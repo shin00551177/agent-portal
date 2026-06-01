@@ -41,6 +41,8 @@ type DraftPreview = {
   imagePrompt: string | null;
   notes: string | null;
   confidence: string;
+  imageUrl?: string | null;
+  imageLoading?: boolean;
 };
 
 type Stage = "idle" | "generating" | "previewing" | "saving" | "saved" | "error";
@@ -77,9 +79,40 @@ export function ContentGenerator({ appId }: { appId: string }) {
       });
       if (!res.ok) throw new Error(await res.text());
       const { items } = await res.json();
-      setPreviews(items);
+      // プレビューをすぐ表示（画像はloading状態で開始）
+      const withLoading = items.map((item: DraftPreview) => ({
+        ...item,
+        imageUrl: null,
+        imageLoading: !!item.imagePrompt,
+      }));
+      setPreviews(withLoading);
       setSelected(new Set(items.map((_: unknown, i: number) => i)));
       setStage("previewing");
+
+      // 画像を並行生成してカードを随時更新
+      items.forEach((item: DraftPreview, i: number) => {
+        if (!item.imagePrompt) return;
+        fetch(`/api/sns/${appId}/preview-image`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imagePrompt: item.imagePrompt, platform: item.platform }),
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            setPreviews((prev) => {
+              const next = [...prev];
+              next[i] = { ...next[i], imageUrl: data.url ?? null, imageLoading: false };
+              return next;
+            });
+          })
+          .catch(() => {
+            setPreviews((prev) => {
+              const next = [...prev];
+              next[i] = { ...next[i], imageLoading: false };
+              return next;
+            });
+          });
+      });
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "生成エラー");
       setStage("error");
@@ -273,7 +306,27 @@ export function ContentGenerator({ appId }: { appId: string }) {
                           {draft.hashtags.map((t) => `#${t}`).join(" ")}
                         </p>
                       )}
-                      {draft.imagePrompt && (
+                      {/* 画像プレビュー */}
+                      {draft.imageLoading && (
+                        <div className="w-full h-36 rounded-xl bg-[#f5f5f7] flex items-center justify-center">
+                          <div className="flex items-center gap-2 text-[12px] text-[#86868b]">
+                            <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                            </svg>
+                            画像生成中...
+                          </div>
+                        </div>
+                      )}
+                      {draft.imageUrl && !draft.imageLoading && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={draft.imageUrl}
+                          alt="生成画像"
+                          className="w-full rounded-xl object-cover max-h-64"
+                        />
+                      )}
+                      {!draft.imageUrl && !draft.imageLoading && draft.imagePrompt && (
                         <p className="text-[11px] text-[#6e6e73] bg-[#f5f5f7] px-3 py-1.5 rounded-xl">
                           画像プロンプト: {draft.imagePrompt}
                         </p>
