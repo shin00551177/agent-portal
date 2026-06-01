@@ -188,9 +188,8 @@ ${rejectedSection}
 
   // JSON 配列を堅牢に抽出（マークダウンコードブロック・改行・特殊文字を含む出力に対応）
   function extractProposals(raw: string): ProposalInput[] {
-    // ```json ... ``` を剥がす
-    const codeBlockMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-    const cleaned = codeBlockMatch ? codeBlockMatch[1] : raw;
+    // ```json ... ``` フェンスを除去
+    const cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
 
     const start = cleaned.indexOf("[");
     const end = cleaned.lastIndexOf("]");
