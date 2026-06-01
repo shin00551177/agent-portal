@@ -9,6 +9,7 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ appId: string }> }
 ) {
+  try {
   const { appId } = await params;
   const appCtx = getAppContext(appId);
 
@@ -154,4 +155,8 @@ JSONのみ返してください。`;
   );
 
   return NextResponse.json({ hypotheses: saved });
+  } catch (e) {
+    const msg = e instanceof Error ? `${e.message}\n${e.stack}` : String(e);
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }
