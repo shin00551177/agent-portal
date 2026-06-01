@@ -22,6 +22,7 @@ async function asc(path: string, options: RequestInit = {}) {
   const token = await makeToken();
   const res = await fetch(`${BASE}${path}`, {
     ...options,
+    cache: "no-store",
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
