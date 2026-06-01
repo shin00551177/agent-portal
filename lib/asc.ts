@@ -369,16 +369,31 @@ export type IosFullListing = {
 
 export async function fetchIosFullListing(iosId: string, locale = "ja"): Promise<IosFullListing | null> {
   try {
-    const data = await asc(`/v1/apps/${iosId}/appStoreVersions?filter[platform]=IOS&limit=1`);
-    const versionId = data?.data?.[0]?.id;
+    // タイトル・サブタイトルは appInfoLocalizations から取得
+    const [infoData, verData] = await Promise.all([
+      asc(`/v1/apps/${iosId}/appInfos?limit=1`),
+      asc(`/v1/apps/${iosId}/appStoreVersions?filter[platform]=IOS&limit=1`),
+    ]);
+
+    // appInfoLocalizations (title, subtitle)
+    const infoId = infoData?.data?.[0]?.id;
+    const infoLocData = infoId
+      ? await asc(`/v1/appInfos/${infoId}/appInfoLocalizations`)
+      : null;
+    const infoLoc = infoLocData?.data?.find((l: { attributes: { locale: string } }) => l.attributes.locale === locale)
+      ?? infoLocData?.data?.[0];
+
+    // appStoreVersionLocalizations (keywords, description, promotionalText, whatsNew)
+    const versionId = verData?.data?.[0]?.id;
     if (!versionId) { console.error("[fetchIosFullListing] no versionId for", iosId); return null; }
     const locData = await asc(`/v1/appStoreVersions/${versionId}/appStoreVersionLocalizations`);
-    const loc = locData.data?.find((l: { attributes: { locale: string } }) => l.attributes.locale === locale)
-      ?? locData.data?.[0];
+    const loc = locData?.data?.find((l: { attributes: { locale: string } }) => l.attributes.locale === locale)
+      ?? locData?.data?.[0];
     if (!loc) { console.error("[fetchIosFullListing] no localization for", versionId); return null; }
+
     return {
-      title: loc.attributes.name ?? "",
-      subtitle: loc.attributes.subtitle ?? "",
+      title: infoLoc?.attributes?.name ?? "",
+      subtitle: infoLoc?.attributes?.subtitle ?? "",
       keywords: loc.attributes.keywords ?? "",
       description: loc.attributes.description ?? "",
       promotionalText: loc.attributes.promotionalText ?? "",
