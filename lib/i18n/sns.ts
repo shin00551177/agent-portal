@@ -171,7 +171,190 @@ const PT_BR: SnsTranslations = {
   },
 };
 
-const TRANSLATIONS: Record<string, SnsTranslations> = { ja: JA, "pt-BR": PT_BR };
+// ─── Vietnamese (vi) ──────────────────────────────────────────────────────────
+const VI: SnsTranslations = {
+  nav: {
+    dashboard: "Bảng điều khiển", hypotheses: "Giả thuyết", ego: "Theo dõi",
+    feedback: "Phản hồi", frequency: "Tần suất", learnings: "Kiến thức",
+    accounts: "Tài khoản", settings: "Cài đặt", back: "← Quay lại SNS",
+    groups: { main: "Chính", pdca: "PDCA", config: "Cài đặt" },
+  },
+  dashboard: {
+    title: "Bảng điều khiển", todo: "Việc cần làm", noTodo: "Không có nhiệm vụ nào cần xử lý",
+    pdca: "Trạng thái vòng PDCA", trends: "Xu hướng 14 ngày gần nhất",
+    frequency: "Đề xuất tần suất đăng bài", emptyTitle: "Giả thuyết được tạo tự động",
+    emptyDesc: "Tự động bổ sung lúc 8h và 20h theo tần suất đề xuất",
+    emptyLink: "Cài đặt tần suất →", egoDetail: "Xem theo dõi →", freqDetail: "Chi tiết và điều chỉnh →",
+    pending: "Giả thuyết chờ phê duyệt", unprocessed: "Phản hồi chưa xử lý", freqCheck: "Xem đề xuất tần suất",
+    pdcaCards: { ego: "Theo dõi", hypothesis: "Giả thuyết", contentLab: "Gửi Content-lab", buzz: "Phát hiện viral" },
+    pdcaSubs: {
+      egoSub: (neg: number, pos: number) => `7 ngày: ${neg} tiêu cực / ${pos} tích cực`,
+      hypoSub: (n: number) => `Đã duyệt: ${n}`,
+      briefSub: "Đã gửi brief", buzzSub: "7 ngày gần nhất",
+    },
+    egoNotRun: "Chưa thực hiện",
+  },
+  hypotheses: {
+    title: "Giả thuyết", desc: "AI tự động tạo giả thuyết. Hãy phê duyệt hoặc từ chối.",
+    generate: "Tạo ngay", generating: "Đang tạo...",
+    status: { pending: "Chờ phê duyệt", approved: "Đã duyệt", rejected: "Bị từ chối", briefed: "Đã gửi Content-lab", posted: "Đã đăng", measured: "Đã đo lường" },
+    empty_pending: "Không có giả thuyết nào. Nhấn \"Tạo ngay\".", empty: "Không tìm thấy giả thuyết",
+    approve: "Phê duyệt", reject: "Từ chối", send: "Gửi Content-lab", markPosted: "Đánh dấu đã đăng",
+    rejectPlaceholder: "Lý do từ chối (AI sẽ dùng để cải thiện giả thuyết tiếp theo)",
+    submitReject: "Từ chối", cancel: "Hủy", pendingBadge: "đang triển khai",
+    labels: { platform: "Nền tảng", target: "Đối tượng mục tiêu", format: "Định dạng", brief: "Brief cho Content-lab", rejectNote: "Lý do từ chối" },
+  },
+  ego: {
+    title: "Theo dõi", collect: "Theo dõi ngay", collecting: "Đang thu thập...",
+    summary: { total: "Tổng", buzz: "Viral", neg: "Tiêu cực", pos: "Tích cực" },
+    buzzTop: "🔥 Viral nhất", all: "Tất cả (theo điểm)", empty: "Nhấn \"Theo dõi ngay\" để thu thập dữ liệu",
+  },
+  feedback: {
+    title: "Phản hồi", desc: "Phản hồi từ đánh giá và đề cập trên mạng xã hội",
+    add: "+ Thêm thủ công", unprocessedOnly: "Chỉ chưa xử lý", showProcessed: "Đang hiển thị đã xử lý",
+    done: "Hoàn thành", empty: "Không có phản hồi",
+    form: { source: "Nguồn", type: "Loại", importance: "Mức độ quan trọng", content: "Nội dung", author: "Tác giả (tùy chọn)", url: "URL (tùy chọn)", submit: "Thêm", cancel: "Hủy" },
+  },
+  frequency: {
+    title: "Tần suất đăng bài", desc: "AI đề xuất tần suất tối ưu dựa trên dữ liệu theo dõi",
+    analyze: "Phân tích bằng AI", analyzing: "Đang phân tích...", empty: "Nhấn \"Phân tích bằng AI\" để tạo đề xuất",
+    accept: "Xác nhận đề xuất", adjust: "Điều chỉnh", confirm: "Xác nhận tần suất này", cancel: "Hủy",
+    current: "Hiện tại", perWeek: "lần/tuần", aiRec: "AI đề xuất", adjusted: "Đã điều chỉnh",
+    unconfirmed: "Chờ xác nhận", confirmed: "Đã xác nhận",
+  },
+  learnings: {
+    title: "Kiến thức", desc: "Danh sách nguyên tắc được đưa vào tạo giả thuyết. ", valid: " đang hoạt động.",
+    synthesize: "Tổng hợp từ từ chối", synthesizing: "Đang tổng hợp...", add: "+ Thêm thủ công",
+    activeOnly: "Chỉ đang hoạt động", showAll: "Bao gồm không hoạt động", edit: "Sửa", disable: "Tắt",
+    enable: "Bật", delete: "Xóa", save: "Lưu", cancel: "Hủy",
+    empty: "Chưa có kiến thức nào", emptyDesc: "Khi có đủ từ chối, dùng \"Tổng hợp từ từ chối\"",
+    types: { avoid: "Tránh", prioritize: "Ưu tiên", general: "Nguyên tắc chung" },
+  },
+};
+
+// ─── Indonesian (id) ──────────────────────────────────────────────────────────
+const ID: SnsTranslations = {
+  nav: {
+    dashboard: "Dasbor", hypotheses: "Hipotesis", ego: "Pemantauan",
+    feedback: "Umpan Balik", frequency: "Frekuensi", learnings: "Pembelajaran",
+    accounts: "Akun", settings: "Pengaturan", back: "← Kembali ke SNS",
+    groups: { main: "Utama", pdca: "PDCA", config: "Pengaturan" },
+  },
+  dashboard: {
+    title: "Dasbor", todo: "Yang harus dilakukan", noTodo: "Tidak ada tugas yang perlu ditangani",
+    pdca: "Status Siklus PDCA", trends: "Tren 14 hari terakhir",
+    frequency: "Rekomendasi Frekuensi Posting", emptyTitle: "Hipotesis dibuat otomatis",
+    emptyDesc: "Diisi ulang otomatis pukul 8 dan 20 sesuai frekuensi rekomendasi",
+    emptyLink: "Atur frekuensi →", egoDetail: "Lihat pemantauan →", freqDetail: "Detail dan penyesuaian →",
+    pending: "Hipotesis menunggu persetujuan", unprocessed: "Umpan balik belum diproses", freqCheck: "Cek rekomendasi frekuensi",
+    pdcaCards: { ego: "Pemantauan", hypothesis: "Hipotesis", contentLab: "Kirim Content-lab", buzz: "Deteksi viral" },
+    pdcaSubs: {
+      egoSub: (neg: number, pos: number) => `7 hari: ${neg} negatif / ${pos} positif`,
+      hypoSub: (n: number) => `Disetujui: ${n}`,
+      briefSub: "Brief terkirim", buzzSub: "7 hari terakhir",
+    },
+    egoNotRun: "Belum dijalankan",
+  },
+  hypotheses: {
+    title: "Hipotesis", desc: "AI membuat hipotesis secara otomatis. Setujui atau tolak.",
+    generate: "Buat sekarang", generating: "Membuat...",
+    status: { pending: "Menunggu persetujuan", approved: "Disetujui", rejected: "Ditolak", briefed: "Terkirim ke Content-lab", posted: "Diposting", measured: "Terukur" },
+    empty_pending: "Tidak ada hipotesis. Klik \"Buat sekarang\".", empty: "Tidak ada hipotesis",
+    approve: "Setujui", reject: "Tolak", send: "Kirim ke Content-lab", markPosted: "Tandai sudah diposting",
+    rejectPlaceholder: "Alasan penolakan (AI akan menggunakan ini untuk hipotesis berikutnya)",
+    submitReject: "Tolak", cancel: "Batal", pendingBadge: "dalam pengembangan",
+    labels: { platform: "Platform", target: "Target audiens", format: "Format", brief: "Brief untuk Content-lab", rejectNote: "Alasan penolakan" },
+  },
+  ego: {
+    title: "Pemantauan", collect: "Pantau sekarang", collecting: "Mengumpulkan...",
+    summary: { total: "Total", buzz: "Viral", neg: "Negatif", pos: "Positif" },
+    buzzTop: "🔥 Paling viral", all: "Semua (berdasarkan skor)", empty: "Klik \"Pantau sekarang\" untuk mengumpulkan data",
+  },
+  feedback: {
+    title: "Umpan Balik", desc: "Umpan balik dari ulasan dan sebutan di media sosial",
+    add: "+ Tambah manual", unprocessedOnly: "Hanya belum diproses", showProcessed: "Menampilkan sudah diproses",
+    done: "Selesai", empty: "Tidak ada umpan balik",
+    form: { source: "Sumber", type: "Jenis", importance: "Tingkat kepentingan", content: "Konten", author: "Penulis (opsional)", url: "URL (opsional)", submit: "Tambah", cancel: "Batal" },
+  },
+  frequency: {
+    title: "Frekuensi Posting", desc: "AI menyarankan frekuensi optimal berdasarkan data pemantauan",
+    analyze: "Analisis dengan AI", analyzing: "Menganalisis...", empty: "Klik \"Analisis dengan AI\" untuk rekomendasi",
+    accept: "Konfirmasi rekomendasi", adjust: "Sesuaikan", confirm: "Konfirmasi frekuensi ini", cancel: "Batal",
+    current: "Saat ini", perWeek: "x/minggu", aiRec: "Rekomendasi AI", adjusted: "Disesuaikan",
+    unconfirmed: "Menunggu", confirmed: "Dikonfirmasi",
+  },
+  learnings: {
+    title: "Pembelajaran", desc: "Daftar prinsip yang dimasukkan ke pembuatan hipotesis. ", valid: " aktif.",
+    synthesize: "Sintesis dari penolakan", synthesizing: "Mensintesis...", add: "+ Tambah manual",
+    activeOnly: "Hanya aktif", showAll: "Termasuk tidak aktif", edit: "Edit", disable: "Nonaktifkan",
+    enable: "Aktifkan", delete: "Hapus", save: "Simpan", cancel: "Batal",
+    empty: "Belum ada pembelajaran", emptyDesc: "Gunakan \"Sintesis dari penolakan\" saat ada cukup penolakan",
+    types: { avoid: "Hindari", prioritize: "Prioritaskan", general: "Prinsip umum" },
+  },
+};
+
+// ─── Bengali / Bangladesh (bn) ────────────────────────────────────────────────
+const BN: SnsTranslations = {
+  nav: {
+    dashboard: "ড্যাশবোর্ড", hypotheses: "অনুমান", ego: "মনিটরিং",
+    feedback: "মতামত", frequency: "পোস্টের ফ্রিকোয়েন্সি", learnings: "শিক্ষা",
+    accounts: "অ্যাকাউন্ট", settings: "সেটিংস", back: "← SNS-এ ফিরুন",
+    groups: { main: "প্রধান", pdca: "PDCA", config: "সেটিংস" },
+  },
+  dashboard: {
+    title: "ড্যাশবোর্ড", todo: "এখন কী করতে হবে", noTodo: "কোনো সক্রিয় কাজ নেই",
+    pdca: "PDCA সাইকেলের অবস্থা", trends: "গত ১৪ দিনের ট্রেন্ড",
+    frequency: "পোস্টের ফ্রিকোয়েন্সি সুপারিশ", emptyTitle: "অনুমান স্বয়ংক্রিয়ভাবে তৈরি হয়",
+    emptyDesc: "সকাল ৮টা ও রাত ৮টায় স্বয়ংক্রিয়ভাবে পূরণ হয়",
+    emptyLink: "ফ্রিকোয়েন্সি সেট করুন →", egoDetail: "মনিটরিং দেখুন →", freqDetail: "বিস্তারিত ও সামঞ্জস্য →",
+    pending: "অনুমোদনের অপেক্ষায় অনুমান", unprocessed: "অপ্রক্রিয়াকৃত মতামত", freqCheck: "ফ্রিকোয়েন্সি সুপারিশ দেখুন",
+    pdcaCards: { ego: "মনিটরিং", hypothesis: "অনুমান", contentLab: "Content-lab পাঠানো", buzz: "ভাইরাল সনাক্তকরণ" },
+    pdcaSubs: {
+      egoSub: (neg: number, pos: number) => `৭ দিন: ${neg} নেতিবাচক / ${pos} ইতিবাচক`,
+      hypoSub: (n: number) => `অনুমোদিত: ${n}`,
+      briefSub: "ব্রিফ পাঠানো হয়েছে", buzzSub: "গত ৭ দিন",
+    },
+    egoNotRun: "চালানো হয়নি",
+  },
+  hypotheses: {
+    title: "অনুমান", desc: "AI স্বয়ংক্রিয়ভাবে অনুমান তৈরি করে। অনুমোদন বা প্রত্যাখ্যান করুন।",
+    generate: "এখনই তৈরি করুন", generating: "তৈরি হচ্ছে...",
+    status: { pending: "অনুমোদনের অপেক্ষায়", approved: "অনুমোদিত", rejected: "প্রত্যাখ্যাত", briefed: "Content-lab-এ পাঠানো", posted: "পোস্ট করা হয়েছে", measured: "পরিমাপ করা হয়েছে" },
+    empty_pending: "কোনো অনুমান নেই। \"এখনই তৈরি করুন\" ক্লিক করুন।", empty: "কোনো অনুমান পাওয়া যায়নি",
+    approve: "অনুমোদন করুন", reject: "প্রত্যাখ্যান করুন", send: "Content-lab-এ পাঠান", markPosted: "পোস্ট করা হিসেবে চিহ্নিত করুন",
+    rejectPlaceholder: "প্রত্যাখ্যানের কারণ (AI পরবর্তী অনুমানে ব্যবহার করবে)",
+    submitReject: "প্রত্যাখ্যান করুন", cancel: "বাতিল", pendingBadge: "বাস্তবায়নাধীন",
+    labels: { platform: "প্ল্যাটফর্ম", target: "লক্ষ্য দর্শক", format: "ফরম্যাট", brief: "Content-lab-এর জন্য ব্রিফ", rejectNote: "প্রত্যাখ্যানের কারণ" },
+  },
+  ego: {
+    title: "মনিটরিং", collect: "এখনই মনিটর করুন", collecting: "সংগ্রহ করা হচ্ছে...",
+    summary: { total: "মোট", buzz: "ভাইরাল", neg: "নেতিবাচক", pos: "ইতিবাচক" },
+    buzzTop: "🔥 সবচেয়ে ভাইরাল", all: "সব (স্কোর অনুযায়ী)", empty: "ডেটা সংগ্রহ করতে \"এখনই মনিটর করুন\" ক্লিক করুন",
+  },
+  feedback: {
+    title: "মতামত", desc: "রিভিউ ও সোশ্যাল মিডিয়া উল্লেখ থেকে সংগৃহীত মতামত",
+    add: "+ ম্যানুয়ালি যোগ করুন", unprocessedOnly: "শুধু অপ্রক্রিয়াকৃত", showProcessed: "প্রক্রিয়াকৃত দেখাচ্ছে",
+    done: "সম্পন্ন", empty: "কোনো মতামত নেই",
+    form: { source: "উৎস", type: "ধরন", importance: "গুরুত্ব", content: "বিষয়বস্তু", author: "লেখক (ঐচ্ছিক)", url: "URL (ঐচ্ছিক)", submit: "যোগ করুন", cancel: "বাতিল" },
+  },
+  frequency: {
+    title: "পোস্টের ফ্রিকোয়েন্সি", desc: "AI মনিটরিং ডেটার উপর ভিত্তি করে সর্বোত্তম ফ্রিকোয়েন্সি সুপারিশ করে",
+    analyze: "AI দিয়ে বিশ্লেষণ করুন", analyzing: "বিশ্লেষণ করা হচ্ছে...", empty: "সুপারিশ পেতে \"AI দিয়ে বিশ্লেষণ করুন\" ক্লিক করুন",
+    accept: "সুপারিশ নিশ্চিত করুন", adjust: "সামঞ্জস্য করুন", confirm: "এই ফ্রিকোয়েন্সি নিশ্চিত করুন", cancel: "বাতিল",
+    current: "বর্তমান", perWeek: "বার/সপ্তাহ", aiRec: "AI সুপারিশ", adjusted: "সামঞ্জস্যকৃত",
+    unconfirmed: "অপেক্ষমাণ", confirmed: "নিশ্চিত",
+  },
+  learnings: {
+    title: "শিক্ষা", desc: "অনুমান তৈরিতে ব্যবহৃত নীতির তালিকা। ", valid: " টি সক্রিয়।",
+    synthesize: "প্রত্যাখ্যান থেকে সংশ্লেষণ", synthesizing: "সংশ্লেষণ করা হচ্ছে...", add: "+ ম্যানুয়ালি যোগ করুন",
+    activeOnly: "শুধু সক্রিয়", showAll: "নিষ্ক্রিয় সহ", edit: "সম্পাদনা", disable: "নিষ্ক্রিয় করুন",
+    enable: "সক্রিয় করুন", delete: "মুছুন", save: "সংরক্ষণ করুন", cancel: "বাতিল",
+    empty: "এখনো কোনো শিক্ষা নেই", emptyDesc: "পর্যাপ্ত প্রত্যাখ্যান জমা হলে \"প্রত্যাখ্যান থেকে সংশ্লেষণ\" ব্যবহার করুন",
+    types: { avoid: "এড়িয়ে চলুন", prioritize: "অগ্রাধিকার দিন", general: "সাধারণ নীতি" },
+  },
+};
+
+const TRANSLATIONS: Record<string, SnsTranslations> = { ja: JA, "pt-BR": PT_BR, vi: VI, id: ID, bn: BN };
 
 export function getSnsT(locale: string): SnsTranslations {
   return TRANSLATIONS[locale] ?? JA;

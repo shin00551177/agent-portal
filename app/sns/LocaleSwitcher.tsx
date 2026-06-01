@@ -5,6 +5,9 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 const LOCALES = [
   { code: "ja",    flag: "🇯🇵", label: "日本語" },
   { code: "pt-BR", flag: "🇧🇷", label: "Português" },
+  { code: "vi",    flag: "🇻🇳", label: "Tiếng Việt" },
+  { code: "id",    flag: "🇮🇩", label: "Bahasa Indonesia" },
+  { code: "bn",    flag: "🇧🇩", label: "বাংলা" },
 ];
 
 export function LocaleSwitcher({ current }: { current: string }) {

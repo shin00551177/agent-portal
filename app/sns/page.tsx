@@ -58,8 +58,9 @@ export default async function SnsPage({
   searchParams: Promise<{ locale?: string }>;
 }) {
   const { locale: localeParam } = await searchParams;
-  const locale = localeParam === "pt-BR" ? "pt-BR" : "ja";
-  const t = PAGE_T[locale];
+  const validLocales = ["ja", "pt-BR", "vi", "id", "bn"];
+  const locale = validLocales.includes(localeParam ?? "") ? localeParam! : "ja";
+  const t = PAGE_T[locale] ?? PAGE_T["ja"];
   const since7d = new Date(Date.now() - 7 * 86_400_000);
 
   const [apps, pendingProposals, recentHits] = await Promise.all([
