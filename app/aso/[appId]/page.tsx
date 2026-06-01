@@ -14,8 +14,7 @@ import { AsoChatBot } from "@/components/AsoChatBot";
 import { StoreHealthDashboard } from "./StoreHealthDashboard";
 import { ReviewsSection } from "./ReviewsSection";
 import { PreviewVideosSection } from "./PreviewVideosSection";
-import { StoreSwitcher } from "./StoreSwitcher";
-import { Suspense } from "react";
+import { StoreTabsClient } from "./StoreTabsClient";
 
 export default async function AsoAppPage({
   params,
@@ -88,9 +87,9 @@ export default async function AsoAppPage({
         />
       </section>
 
-      {/* Stats + ストア切り替えタブ */}
-      <div className="py-8 border-b border-[#f0f0f0] flex items-center justify-between gap-6">
-        <div className="grid grid-cols-3 gap-0 divide-x divide-[#f0f0f0] flex-1">
+      {/* Stats */}
+      <div className="py-8 border-b border-[#f0f0f0]">
+        <div className="grid grid-cols-3 gap-0 divide-x divide-[#f0f0f0]">
           {[
             { n: app.keywords.length, label: "キーワード" },
             { n: highCount,           label: "優先度 高" },
@@ -102,18 +101,6 @@ export default async function AsoAppPage({
             </div>
           ))}
         </div>
-        {(app.iosId || app.googlePlayId) && (
-          <div className="flex-shrink-0">
-            <p className="text-[10px] font-semibold text-[#bfbfbf] uppercase tracking-widest mb-2">ストア</p>
-            <Suspense>
-              <StoreSwitcher
-                hasIos={!!app.iosId}
-                hasAndroid={!!app.googlePlayId}
-                current={store}
-              />
-            </Suspense>
-          </div>
-        )}
       </div>
 
       {/* Apptweak データ + 提案 */}
@@ -148,66 +135,51 @@ export default async function AsoAppPage({
         )}
       </section>
 
-      {/* ストア別コンテンツ */}
+      {/* ストア別コンテンツ（シームレス切り替え） */}
       <section className="py-8 border-b border-[#f0f0f0]">
-        <div className="mb-6">
-          <p className="text-[13px] text-[#86868b]">
-            {store === "ios" ? "🍎 App Store（iOS）" : "🤖 Google Play（Android）"} のストア情報
-          </p>
-        </div>
-
-        <div className="space-y-10">
-          {/* Store Preview */}
-          <StorePreview
-            iosId={app.iosId}
-            googlePlayId={app.googlePlayId}
-            ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null}
-            store={store}
-          />
-
-          {/* iOS専用: Analytics */}
-          {store === "ios" && (
-            <section>
+        <StoreTabsClient
+          defaultStore={store}
+          hasIos={!!app.iosId}
+          hasAndroid={!!app.googlePlayId}
+          iosContent={
+            <div className="space-y-10">
+              <StorePreview iosId={app.iosId} googlePlayId={null} ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null} store="ios" />
               <StoreAnalytics iosId={app.iosId} />
-            </section>
-          )}
-
-          {/* ストア画像 */}
-          <StoreImages
-            appId={appId}
-            iosId={app.iosId}
-            googlePlayId={app.googlePlayId}
-            store={store}
-          />
-
-          {/* 画像アップロード */}
-          <div>
-            <p className="text-[15px] font-semibold text-[#1d1d1f] mb-4">画像を更新する</p>
-            <ImageUploadSection
-              appId={appId}
-              hasIos={store === "ios" && !!app.iosId}
-              hasAndroid={store === "android" && !!app.googlePlayId}
-            />
-          </div>
-
-          {/* iOS専用: Preview動画 */}
-          {store === "ios" && app.iosId && (
-            <div>
-              <h2 className="text-[20px] font-semibold text-[#1d1d1f] tracking-tight mb-4">App Preview動画</h2>
-              <p className="text-[13px] text-[#6e6e73] mb-6">スクリーンショットより高CVRを実現するプレビュー動画</p>
-              <PreviewVideosSection appId={appId} iosId={app.iosId} />
+              <StoreImages appId={appId} iosId={app.iosId} googlePlayId={null} store="ios" />
+              <div>
+                <p className="text-[15px] font-semibold text-[#1d1d1f] mb-4">画像を更新する</p>
+                <ImageUploadSection appId={appId} hasIos={!!app.iosId} hasAndroid={false} />
+              </div>
+              {app.iosId && (
+                <div>
+                  <h2 className="text-[20px] font-semibold text-[#1d1d1f] tracking-tight mb-2">App Preview動画</h2>
+                  <p className="text-[13px] text-[#6e6e73] mb-6">スクリーンショットより高CVRを実現するプレビュー動画</p>
+                  <PreviewVideosSection appId={appId} iosId={app.iosId} />
+                </div>
+              )}
+              <div>
+                <h2 className="text-[20px] font-semibold text-[#1d1d1f] tracking-tight mb-2">レビュー管理</h2>
+                <p className="text-[13px] text-[#6e6e73] mb-4">App Store のレビューを確認し、AI返信案を生成できます</p>
+                <ReviewsSection appId={appId} platform="ios" />
+              </div>
             </div>
-          )}
-
-          {/* レビュー */}
-          <div>
-            <h2 className="text-[20px] font-semibold text-[#1d1d1f] tracking-tight mb-2">レビュー管理</h2>
-            <p className="text-[13px] text-[#6e6e73] mb-6">
-              {store === "ios" ? "App Store" : "Google Play"} のレビューを確認し、AI返信案を生成できます
-            </p>
-            <ReviewsSection appId={appId} platform={store === "ios" ? "ios" : "android"} />
-          </div>
-        </div>
+          }
+          androidContent={
+            <div className="space-y-10">
+              <StorePreview iosId={null} googlePlayId={app.googlePlayId} ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null} store="android" />
+              <StoreImages appId={appId} iosId={null} googlePlayId={app.googlePlayId} store="android" />
+              <div>
+                <p className="text-[15px] font-semibold text-[#1d1d1f] mb-4">画像を更新する</p>
+                <ImageUploadSection appId={appId} hasIos={false} hasAndroid={!!app.googlePlayId} />
+              </div>
+              <div>
+                <h2 className="text-[20px] font-semibold text-[#1d1d1f] tracking-tight mb-2">レビュー管理</h2>
+                <p className="text-[13px] text-[#6e6e73] mb-4">Google Play のレビューを確認し、AI返信案を生成できます</p>
+                <ReviewsSection appId={appId} platform="android" />
+              </div>
+            </div>
+          }
+        />
       </section>
 
       {/* Keywords */}
