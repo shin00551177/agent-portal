@@ -41,7 +41,6 @@ function CopyBtn({ text }: { text: string }) {
 export default function HypothesesPage() {
   const { appId } = useParams<{ appId: string }>();
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
-  const [generating, setGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("pending");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -52,13 +51,6 @@ export default function HypothesesPage() {
     if (res.ok) setHypotheses(await res.json());
   }
   useEffect(() => { load(); }, [appId]);
-
-  async function generate() {
-    setGenerating(true);
-    const res = await fetch(`/api/sns/${appId}/hypotheses/generate`, { method: "POST" });
-    setGenerating(false);
-    if (res.ok) { await load(); setActiveTab("pending"); }
-  }
 
   async function updateStatus(id: string, status: string, extra?: object) {
     await fetch(`/api/sns/${appId}/hypotheses/${id}`, {
@@ -83,20 +75,11 @@ export default function HypothesesPage() {
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-[22px] font-semibold text-[#1d1d1f] tracking-tight">仮説管理</h2>
-          <p className="text-[13px] text-[#6e6e73] mt-1">
-            AIが生成した投稿仮説を確認・承認してContent-labに送信します
-          </p>
-        </div>
-        <button
-          onClick={generate}
-          disabled={generating}
-          className="px-4 py-2 rounded-xl bg-[#1d1d1f] text-white text-[13px] font-medium hover:bg-black disabled:opacity-40 transition-colors"
-        >
-          {generating ? "生成中..." : "仮説を生成"}
-        </button>
+      <div>
+        <h2 className="text-[22px] font-semibold text-[#1d1d1f] tracking-tight">仮説管理</h2>
+        <p className="text-[13px] text-[#6e6e73] mt-1">
+          AIが投稿頻度に合わせて自動生成します。承認・差し戻しをしてください。
+        </p>
       </div>
 
       {/* タブ */}

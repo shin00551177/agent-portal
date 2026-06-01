@@ -200,13 +200,13 @@ export default async function DashboardPage({
       {/* 仮説がない場合のCTA */}
       {pendingHypotheses.length === 0 && frequencyRecs.length === 0 && (
         <section className="py-10 rounded-2xl border border-dashed border-[#d2d2d7] text-center space-y-3">
-          <p className="text-[15px] font-medium text-[#1d1d1f]">まず仮説を生成しましょう</p>
-          <p className="text-[13px] text-[#6e6e73]">エゴサデータをもとにAIがバズ仮説を自動生成します</p>
+          <p className="text-[15px] font-medium text-[#1d1d1f]">仮説は自動生成されます</p>
+          <p className="text-[13px] text-[#6e6e73]">毎朝8時・夜20時に投稿頻度に合わせて自動補充されます</p>
           <Link
-            href={`/sns/${appId}/hypotheses`}
-            className="inline-block mt-2 px-5 py-2.5 rounded-xl bg-[#1d1d1f] text-white text-[13px] font-medium"
+            href={`/sns/${appId}/frequency`}
+            className="inline-block mt-2 px-5 py-2.5 rounded-xl bg-[#f5f5f7] text-[#1d1d1f] text-[13px] font-medium"
           >
-            仮説を生成する
+            投稿頻度を設定する →
           </Link>
         </section>
       )}

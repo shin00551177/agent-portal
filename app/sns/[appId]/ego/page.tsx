@@ -29,6 +29,7 @@ export default async function EgoPage({
   const positive = egoHits.filter((h) => h.sentiment === "positive");
   const buzz     = egoHits.filter((h) => h.category === "buzz");
   const feedback = egoHits.filter((h) => h.category === "feedback");
+  const buzzHits = egoHits.filter((h) => h.category === "buzz").slice(0, 5);
 
   return (
     <div className="space-y-8 max-w-3xl">
@@ -52,7 +53,45 @@ export default async function EgoPage({
         ))}
       </div>
 
-      {/* 一覧 */}
+      {/* バズ上位 */}
+      {buzzHits.length > 0 && (
+        <section>
+          <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest mb-3">
+            🔥 バズ検知トップ5
+          </p>
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 divide-y divide-emerald-100">
+            {buzzHits.map((h) => (
+              <a
+                key={h.id}
+                href={h.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-start justify-between px-4 py-3 gap-4 group hover:bg-emerald-100/50 transition-colors"
+              >
+                <div className="min-w-0 space-y-0.5">
+                  <p className="text-[13px] font-medium text-emerald-900 group-hover:text-emerald-700 transition-colors truncate">
+                    {h.title}
+                  </p>
+                  {h.snippet && (
+                    <p className="text-[11px] text-emerald-600 line-clamp-1">{h.snippet}</p>
+                  )}
+                  {h.author && (
+                    <p className="text-[11px] text-emerald-500">@{h.author}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-[11px] text-emerald-600 bg-white px-2 py-0.5 rounded-full border border-emerald-200">
+                    {SOURCE_LABEL[h.source] ?? h.source}
+                  </span>
+                  <span className="text-emerald-400 group-hover:translate-x-0.5 transition-transform">→</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 全件一覧 */}
       {egoHits.length === 0 ? (
         <div className="py-16 rounded-2xl border border-dashed border-[#d2d2d7] text-center">
           <p className="text-[14px] text-[#6e6e73]">データなし。エゴサを実行してください。</p>
