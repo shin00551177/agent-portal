@@ -174,10 +174,6 @@ ${rejectedSection}
   });
 
   const text = message.content[0].type === "text" ? message.content[0].text : "";
-  const jsonMatch = text.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) {
-    return NextResponse.json({ error: "parse failed", raw: text }, { status: 500 });
-  }
 
   type ProposalInput = {
     title: string;
@@ -190,7 +186,32 @@ ${rejectedSection}
     proposed: string;
   };
 
-  const proposals: ProposalInput[] = JSON.parse(jsonMatch[0]);
+  // JSON 配列を堅牢に抽出（改行・特殊文字を含む長い出力に対応）
+  function extractProposals(raw: string): ProposalInput[] {
+    // 最初の [ から最後の ] を探す
+    const start = raw.indexOf("[");
+    const end = raw.lastIndexOf("]");
+    if (start === -1 || end === -1 || end <= start) return [];
+    const jsonStr = raw.slice(start, end + 1);
+    try {
+      return JSON.parse(jsonStr);
+    } catch {
+      // フォールバック: 個別オブジェクトを抽出して配列化
+      const items: ProposalInput[] = [];
+      const objRegex = /\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g;
+      let m;
+      while ((m = objRegex.exec(jsonStr)) !== null) {
+        try { items.push(JSON.parse(m[0])); } catch { /* skip invalid */ }
+      }
+      return items;
+    }
+  }
+
+  const proposals = extractProposals(text);
+  if (proposals.length === 0) {
+    console.error("[analyze] parse failed, raw length:", text.length);
+    return NextResponse.json({ error: "parse failed", proposalIds: [] });
+  }
 
   // 既存の pending 提案を古いものとして reject（重複防止）
   await db.proposal.updateMany({
@@ -254,7 +275,10 @@ ${rejectedSection}
 
   return NextResponse.json({ proposalIds: created.map((p) => p.id) });
   } catch (err) {
-    await sendSlackError({ step: "analyze", appId, appName: app?.name, error: err });
+    // noReport=true（cron経由）の場合はSlack通知しない
+    if (!reqBody.noReport) {
+      await sendSlackError({ step: "analyze", appId, appName: app?.name, error: err });
+    }
     throw err;
   }
 }
