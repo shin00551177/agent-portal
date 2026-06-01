@@ -66,7 +66,11 @@ async function generateForApp(appId: string) {
   const pos = recentHits.filter((h) => h.sentiment === "positive").length;
   const buzz = recentHits.filter((h) => h.category === "buzz").length;
 
-  const prompt = `あなたは${appCtx.name}のSNSストラテジストです。
+  const langInstruction = appCtx.outputLang !== "日本語"
+    ? `\n⚠️ IMPORTANT: All output must be in ${appCtx.outputLang}. Every field must be in ${appCtx.outputLang}.\n`
+    : "";
+
+  const prompt = `${langInstruction}あなたは${appCtx.name}のSNSストラテジストです。
 ${appCtx.description} ターゲット: ${appCtx.target}
 
 ## 直近14日間のエゴサ

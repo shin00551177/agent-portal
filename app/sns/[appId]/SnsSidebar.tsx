@@ -3,37 +3,38 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Lightbulb, Search, MessageSquare,
-  Clock, Users, Settings, BookOpen,
+  LayoutDashboard, Radar, Lightbulb, MessageCircle,
+  Brain, BarChart2, AtSign, Settings,
 } from "lucide-react";
 
 type NavItem = { href: string; label: string; icon: React.ElementType; badge?: number };
 type NavGroup = { label: string; items: NavItem[] };
+type NavT = { dashboard: string; hypotheses: string; ego: string; feedback: string; frequency: string; learnings: string; accounts: string; settings: string; back: string; groups: { main: string; pdca: string; config: string } };
 
-function makeGroups(appId: string, counts: { pending: number; unprocessedFb: number }): NavGroup[] {
+function makeGroups(appId: string, counts: { pending: number; unprocessedFb: number }, t: NavT): NavGroup[] {
   const base = `/sns/${appId}`;
   return [
     {
-      label: "メイン",
+      label: t.groups.main,
       items: [
-        { href: base, label: "ダッシュボード", icon: LayoutDashboard },
+        { href: base, label: t.dashboard, icon: LayoutDashboard },
       ],
     },
     {
-      label: "PDCA",
+      label: t.groups.pdca,
       items: [
-        { href: `${base}/hypotheses`, label: "仮説管理", icon: Lightbulb, badge: counts.pending },
-        { href: `${base}/ego`,        label: "エゴサ",   icon: Search },
-        { href: `${base}/feedback`,   label: "ユーザーFB", icon: MessageSquare, badge: counts.unprocessedFb },
-        { href: `${base}/frequency`,  label: "投稿頻度",  icon: Clock },
-        { href: `${base}/learnings`,  label: "学習DB",    icon: BookOpen },
+        { href: `${base}/ego`,        label: t.ego,        icon: Radar },
+        { href: `${base}/hypotheses`, label: t.hypotheses, icon: Lightbulb, badge: counts.pending },
+        { href: `${base}/feedback`,   label: t.feedback,   icon: MessageCircle, badge: counts.unprocessedFb },
+        { href: `${base}/learnings`,  label: t.learnings,  icon: Brain },
+        { href: `${base}/frequency`,  label: t.frequency,  icon: BarChart2 },
       ],
     },
     {
-      label: "設定",
+      label: t.groups.config,
       items: [
-        { href: `${base}/accounts`, label: "アカウント", icon: Users },
-        { href: `${base}/settings`, label: "設定",       icon: Settings },
+        { href: `${base}/accounts`, label: t.accounts, icon: AtSign },
+        { href: `${base}/settings`, label: t.settings, icon: Settings },
       ],
     },
   ];
@@ -44,14 +45,16 @@ export function SnsSidebar({
   appName,
   pendingHypotheses,
   unprocessedFeedback,
+  t,
 }: {
   appId: string;
   appName: string;
   pendingHypotheses: number;
   unprocessedFeedback: number;
+  t: NavT;
 }) {
   const pathname = usePathname();
-  const groups = makeGroups(appId, { pending: pendingHypotheses, unprocessedFb: unprocessedFeedback });
+  const groups = makeGroups(appId, { pending: pendingHypotheses, unprocessedFb: unprocessedFeedback }, t);
 
   function isActive(href: string) {
     if (href === `/sns/${appId}`) return pathname === `/sns/${appId}`;
@@ -112,7 +115,7 @@ export function SnsSidebar({
           href="/sns"
           className="flex items-center gap-2 px-3 py-2 rounded-md text-[11px] text-white/30 hover:text-white/60 hover:bg-white/5 transition-all font-mono"
         >
-          ← SNS管理に戻る
+          {t.back}
         </Link>
       </div>
     </aside>

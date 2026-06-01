@@ -84,7 +84,11 @@ export async function POST(
   const posCount = recentHits.filter((h) => h.sentiment === "positive").length;
   const buzzCount = recentHits.filter((h) => h.category === "buzz").length;
 
-  const prompt = `あなたは${appCtx.name}のSNSストラテジストです。
+  const langInstruction = appCtx.outputLang !== "日本語"
+    ? `\n⚠️ IMPORTANT: All output must be written entirely in ${appCtx.outputLang}. Every field (hypothesis, reasoning, targetAudience, format, contentBrief) must be in ${appCtx.outputLang}.\n`
+    : "";
+
+  const prompt = `${langInstruction}あなたは${appCtx.name}のSNSストラテジストです。
 ${appCtx.description}
 ターゲット: ${appCtx.target}
 

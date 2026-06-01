@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { SnsSidebar } from "./SnsSidebar";
+import { getSnsT } from "@/lib/i18n/sns";
 
 export default async function AppLayout({
   children,
@@ -19,6 +20,9 @@ export default async function AppLayout({
   ]);
   if (!app) notFound();
 
+  const locale = (app as { locale?: string }).locale ?? "ja";
+  const t = getSnsT(locale);
+
   return (
     <div className="flex gap-6 items-start min-h-[calc(100vh-10rem)]">
       <SnsSidebar
@@ -26,6 +30,7 @@ export default async function AppLayout({
         appName={app.name}
         pendingHypotheses={pendingHypotheses}
         unprocessedFeedback={unprocessedFeedback}
+        t={t.nav}
       />
       <div className="flex-1 min-w-0 py-1">
         {children}

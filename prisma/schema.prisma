@@ -76,6 +76,7 @@ model SnsApp {
   name      String
   active    Boolean      @default(false)
   platforms Json
+  locale    String       @default("ja")
   // Governance (行動規範 #8/#12/#13)
   escalationRules  Json   @default("{}")
   haltConditions   Json   @default("{}")
