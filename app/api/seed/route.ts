@@ -11,9 +11,12 @@ const SNS_APPS = [
 ];
 
 export async function POST(req: NextRequest) {
-  const apiKey = req.headers.get("x-api-key");
-  if (apiKey !== process.env.PORTAL_API_KEY) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const expectedKey = process.env.PORTAL_API_KEY;
+  if (expectedKey) {
+    const apiKey = req.headers.get("x-api-key");
+    if (apiKey !== expectedKey) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
   }
 
   const results: string[] = [];
