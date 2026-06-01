@@ -135,9 +135,12 @@ export default async function SnsPage({
       <div className="pb-10 border-b border-[#f0f0f0]">
         <div className="flex items-start justify-between mb-4">
           <p className="text-[13px] text-[#6e6e73] uppercase tracking-wide">{t.section}</p>
-          <Suspense>
-            <LocaleSwitcher current={locale} />
-          </Suspense>
+          {/* 管理者（日本アカウント）のみ言語スイッチャーを表示 */}
+          {!accountKey && (
+            <Suspense>
+              <LocaleSwitcher current={locale} />
+            </Suspense>
+          )}
         </div>
         <h1 className="text-[48px] font-semibold text-[#1d1d1f] tracking-tight leading-tight">
           {t.title}
