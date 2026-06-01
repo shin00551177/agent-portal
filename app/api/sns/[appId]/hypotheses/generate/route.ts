@@ -106,12 +106,18 @@ ${platformList}
 
 JSONのみ返してください。`;
 
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 3000,
-    system: "SNSストラテジストとして、データに基づく戦略的な投稿仮説をJSON形式のみで返してください。",
-    messages: [{ role: "user", content: prompt }],
-  });
+  let message;
+  try {
+    message = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 3000,
+      system: "SNSストラテジストとして、データに基づく戦略的な投稿仮説をJSON形式のみで返してください。",
+      messages: [{ role: "user", content: prompt }],
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: `Claude API error: ${msg}` }, { status: 500 });
+  }
 
   const text = message.content[0].type === "text" ? message.content[0].text : "[]";
   let items: Array<{
