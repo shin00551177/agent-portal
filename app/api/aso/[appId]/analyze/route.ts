@@ -39,6 +39,7 @@ export async function POST(
   }
 
   const { appId } = await params;
+  const reqBody = await req.json().catch(() => ({})) as { noReport?: boolean };
 
   const app = await db.asoApp.findUnique({ where: { id: appId } });
   if (!app) return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -232,19 +233,22 @@ ${rejectedSection}
     req,
   });
 
-  // 分析完了後に自動で Slack レポート送信（fire-and-forget）
-  const baseUrl = req.nextUrl.origin;
-  const syncSecret = process.env.SYNC_SECRET;
-  const reportHeaders: Record<string, string> = {};
-  if (syncSecret) reportHeaders["x-sync-secret"] = syncSecret;
-  fetch(`${baseUrl}/api/aso/${appId}/report`, { method: "POST", headers: reportHeaders })
-    .then(async (r) => {
-      if (!r.ok) {
-        const body = await r.text().catch(() => r.statusText);
-        await sendSlackError({ step: "report", appId, appName: app.name, error: `HTTP ${r.status}: ${body}` });
-      }
-    })
-    .catch((err) => sendSlackError({ step: "report", appId, appName: app.name, error: err }));
+  // 分析完了後の Slack レポート送信 — noReport=true の場合はスキップ（cronからの呼び出し用）
+  const noReport = reqBody.noReport;
+  if (!noReport) {
+    const baseUrl = req.nextUrl.origin;
+    const syncSecret = process.env.SYNC_SECRET;
+    const reportHeaders: Record<string, string> = {};
+    if (syncSecret) reportHeaders["x-sync-secret"] = syncSecret;
+    fetch(`${baseUrl}/api/aso/${appId}/report`, { method: "POST", headers: reportHeaders })
+      .then(async (r) => {
+        if (!r.ok) {
+          const body = await r.text().catch(() => r.statusText);
+          await sendSlackError({ step: "report", appId, appName: app.name, error: `HTTP ${r.status}: ${body}` });
+        }
+      })
+      .catch((err) => sendSlackError({ step: "report", appId, appName: app.name, error: err }));
+  }
 
   return NextResponse.json({ proposalIds: created.map((p) => p.id) });
   } catch (err) {
