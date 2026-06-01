@@ -236,7 +236,9 @@ ${rejectedSection}
   // 分析完了後の Slack レポート送信 — noReport=true の場合はスキップ（cronからの呼び出し用）
   const noReport = reqBody.noReport;
   if (!noReport) {
-    const baseUrl = req.nextUrl.origin;
+    // Railway内部では req.nextUrl.origin が解決不能になるため RAILWAY_PUBLIC_DOMAIN を優先
+    const publicDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
+    const baseUrl = publicDomain ? `https://${publicDomain}` : req.nextUrl.origin;
     const syncSecret = process.env.SYNC_SECRET;
     const reportHeaders: Record<string, string> = {};
     if (syncSecret) reportHeaders["x-sync-secret"] = syncSecret;

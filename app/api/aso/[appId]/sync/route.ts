@@ -169,10 +169,15 @@ export async function POST(
 
   // スナップショット時のみ自動で分析・提案生成（fire-and-forget）
   if (!isRangeQuery) {
-    const baseUrl = req.nextUrl.origin;
-    const analyzeHeaders: Record<string, string> = {};
+    const publicDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
+    const baseUrl = publicDomain ? `https://${publicDomain}` : req.nextUrl.origin;
+    const analyzeHeaders: Record<string, string> = { "Content-Type": "application/json" };
     if (syncSecret) analyzeHeaders["x-sync-secret"] = syncSecret;
-    fetch(`${baseUrl}/api/aso/${appId}/analyze`, { method: "POST", headers: analyzeHeaders })
+    fetch(`${baseUrl}/api/aso/${appId}/analyze`, {
+      method: "POST",
+      headers: analyzeHeaders,
+      body: JSON.stringify({ noReport: true }),  // sync経由はSlack通知不要
+    })
       .then(async (r) => {
         if (!r.ok) {
           const body = await r.text().catch(() => r.statusText);
