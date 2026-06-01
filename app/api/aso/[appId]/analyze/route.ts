@@ -170,11 +170,16 @@ ${rejectedSection}
   const message = await client.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 4096,
-    system: "You are an ASO expert. Always respond with raw JSON only, no markdown, no code blocks, no backticks, no explanation text. Start your response directly with [ and end with ].",
-    messages: [{ role: "user", content: prompt }],
+    system: "You are an ASO expert. Output raw JSON only. No markdown, no code blocks.",
+    messages: [
+      { role: "user", content: prompt },
+      { role: "assistant", content: "[" },
+    ],
   });
 
-  const text = message.content[0].type === "text" ? message.content[0].text : "";
+  // prefill の "[" を先頭に結合してフルのJSON配列にする
+  const rawText = message.content[0].type === "text" ? message.content[0].text : "";
+  const text = "[" + rawText;
 
   type ProposalInput = {
     title: string;
