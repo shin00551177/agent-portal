@@ -230,6 +230,13 @@ ${rejectedSection}
     data: { status: "rejected", decision: "no", decidedAt: new Date() },
   });
 
+  // フィールド名からストアを推定
+  function inferStore(field: string): "ios" | "android" | null {
+    if (["subtitle", "keywords", "promotionalText"].includes(field)) return "ios";
+    if (["shortDescription"].includes(field)) return "android";
+    return null; // title / description / whatsNew は共通
+  }
+
   const created = await Promise.all(
     proposals.map((p) =>
       db.proposal.create({
@@ -237,6 +244,7 @@ ${rejectedSection}
           domain: "aso",
           targetType: "aso_app",
           targetId: appId,
+          store: inferStore(p.field),
           title: p.title,
           summary: p.summary,
           rationale: JSON.stringify({

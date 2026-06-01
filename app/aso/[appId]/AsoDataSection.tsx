@@ -47,6 +47,7 @@ type Proposal = {
   summary: string;
   rationale: string; // JSON string of Analysis
   status: string;
+  store?: string | null;
   result?: { waitingForVersion?: boolean; error?: string } | null;
 };
 
@@ -219,7 +220,14 @@ function ProposalCard({
   return (
     <div className="border border-[#d2d2d7] rounded-2xl overflow-hidden">
       <div className="px-5 py-4">
-        <p className="text-[15px] font-medium text-[#1d1d1f] mb-1">{proposal.title}</p>
+        <div className="flex items-center gap-2 mb-1">
+          <p className="text-[15px] font-medium text-[#1d1d1f]">{proposal.title}</p>
+          {proposal.store && (
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#f5f5f7] text-[#6e6e73]">
+              {proposal.store === "ios" ? "App Store" : "Google Play"}
+            </span>
+          )}
+        </div>
         <p className="text-[13px] text-[#6e6e73] leading-relaxed">{proposal.summary}</p>
 
         {analysis ? (

@@ -60,11 +60,16 @@ export default async function AsoAppPage({
     syncedAt?: string;
   };
 
-  // 承認待ちの ASO 提案を取得
+  // 承認待ちの ASO 提案を取得（ストア別 + 共通）
   const pendingProposals = await db.proposal.findMany({
-    where: { domain: "aso", targetId: appId, status: { in: ["pending", "approved"] } },
+    where: {
+      domain: "aso",
+      targetId: appId,
+      status: { in: ["pending", "approved"] },
+      OR: [{ store: store }, { store: null }],
+    },
     orderBy: { createdAt: "desc" },
-    select: { id: true, title: true, summary: true, rationale: true, status: true },
+    select: { id: true, title: true, summary: true, rationale: true, status: true, store: true },
   });
 
   return (

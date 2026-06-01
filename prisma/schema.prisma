@@ -328,6 +328,7 @@ model Proposal {
   domain       String       // "aso" | "sns" | "ego" | "general"
   targetType   String?      // "aso_app" | "sns_app" | null（横断的な提案）
   targetId     String?      // アプリID
+  store        String?      // "ios" | "android" | null（共通）
 
   // 提案内容
   title        String
