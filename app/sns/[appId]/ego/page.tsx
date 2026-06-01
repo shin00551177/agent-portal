@@ -53,7 +53,10 @@ export default function EgoPage() {
     const data = await res.json();
     setCollecting(false);
     if (res.ok) {
-      setCollectResult(`${data.saved}件追加（スキップ ${data.skipped}件 / 検出 ${data.total_found}件）`);
+      const msg = data.message
+        ? `${data.saved}件追加 — ${data.message}${data.debug ? ` [YouTube:${data.debug.ytKey ? "✓" : "✗"} CSE:${data.debug.cseKey ? "✓" : "✗"} raw:${data.debug.rawFound}件]` : ""}`
+        : `${data.saved}件追加（スキップ ${data.skipped}件 / 検出 ${data.total_found}件）`;
+      setCollectResult(msg);
       await load();
     } else {
       setCollectResult(`エラー: ${data.error}`);

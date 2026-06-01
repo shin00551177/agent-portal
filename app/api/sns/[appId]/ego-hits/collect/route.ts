@@ -174,16 +174,25 @@ export async function POST(
     // 検索キーワード
     const keywords = [appCtx.name, `${appCtx.name} アプリ`, `${appCtx.name} 使ってみた`];
 
-    // YouTube + Web を並行検索
-    const rawResults = await Promise.all([
+    // YouTube + Web を並行検索（エラーはcatchして空配列）
+    const rawResults = await Promise.allSettled([
       ...keywords.map((kw) => searchYouTube(kw, 5)),
       ...keywords.slice(0, 2).map((kw) => searchWeb(kw, 5)),
     ]);
 
-    const allHits = rawResults.flat().filter((h) => !existingUrls.has(h.url));
+    const rawHits = rawResults.flatMap((r) => r.status === "fulfilled" ? r.value : []);
+    const ytKey   = !!process.env.YOUTUBE_API_KEY;
+    const cseKey  = !!process.env.GOOGLE_CSE_KEY && !!process.env.GOOGLE_CSE_ID;
+    const allHits = rawHits.filter((h) => !existingUrls.has(h.url));
 
     if (allHits.length === 0) {
-      return NextResponse.json({ saved: 0, message: "新しい言及はありませんでした" });
+      return NextResponse.json({
+        saved: 0, skipped: 0, total_found: rawHits.length,
+        debug: { ytKey, cseKey, rawFound: rawHits.length, existingCount: existingUrls.size },
+        message: rawHits.length === 0
+          ? "検索結果が0件です（APIキーを確認してください）"
+          : "新しい言及はありませんでした（全件既存）",
+      });
     }
 
     // Claude でスコアリング
