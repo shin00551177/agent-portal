@@ -17,6 +17,15 @@ export async function GET(
   return NextResponse.json(hits);
 }
 
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ appId: string }> }
+) {
+  const { appId } = await params;
+  const { count } = await db.egoHit.deleteMany({ where: { appId } });
+  return NextResponse.json({ deleted: count });
+}
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ appId: string }> }
