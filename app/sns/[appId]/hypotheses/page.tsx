@@ -191,9 +191,10 @@ export default function HypothesesPage() {
                       <div className="flex gap-2 pt-2">
                         <button
                           onClick={() => updateStatus(h.id, "briefed", { briefSentAt: new Date().toISOString() })}
-                          className="flex-1 py-2.5 rounded-xl bg-blue-500 text-white text-[13px] font-medium hover:bg-blue-600 transition-colors"
+                          className="flex-1 py-2.5 rounded-xl bg-blue-500 text-white text-[13px] font-medium hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
                         >
-                          Content-lab に送信済みとしてマーク
+                          Content-lab に送信
+                          <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">実装待ち</span>
                         </button>
                       </div>
                     )}
