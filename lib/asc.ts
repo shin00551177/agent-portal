@@ -338,10 +338,10 @@ export async function getLocalizationId(versionId: string, locale: string): Prom
   return null;
 }
 
-// メタデータ更新（keywords / subtitle / description）
+// メタデータ更新（title / keywords / subtitle / description / promotionalText）
 export async function updateLocalization(
   locId: string,
-  fields: { keywords?: string; subtitle?: string; description?: string },
+  fields: { keywords?: string; subtitle?: string; description?: string; name?: string; promotionalText?: string },
 ): Promise<void> {
   await asc(`/v1/appStoreVersionLocalizations/${locId}`, {
     method: "PATCH",
@@ -353,4 +353,144 @@ export async function updateLocalization(
       },
     }),
   });
+}
+
+// ─── フルメタデータ取得 ─────────────────────────────────────────────────────
+
+export type IosFullListing = {
+  title: string;
+  subtitle: string;
+  keywords: string;
+  description: string;
+  promotionalText: string;
+  whatsNew: string;
+  locId: string;
+};
+
+export async function fetchIosFullListing(iosId: string, locale = "ja"): Promise<IosFullListing | null> {
+  try {
+    const data = await asc(`/v1/apps/${iosId}/appStoreVersions?filter[platform]=IOS&limit=1&sort=-createdDate`);
+    const versionId = data?.data?.[0]?.id;
+    if (!versionId) return null;
+    const locData = await asc(`/v1/appStoreVersions/${versionId}/appStoreVersionLocalizations`);
+    const loc = locData.data?.find((l: { attributes: { locale: string } }) => l.attributes.locale === locale)
+      ?? locData.data?.[0];
+    if (!loc) return null;
+    return {
+      title: loc.attributes.name ?? "",
+      subtitle: loc.attributes.subtitle ?? "",
+      keywords: loc.attributes.keywords ?? "",
+      description: loc.attributes.description ?? "",
+      promotionalText: loc.attributes.promotionalText ?? "",
+      whatsNew: loc.attributes.whatsNew ?? "",
+      locId: loc.id,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// アプリアイコンURL取得
+export async function fetchAppIconUrl(iosId: string): Promise<string | null> {
+  try {
+    const data = await asc(`/v1/apps/${iosId}?fields[apps]=iconAssetToken`);
+    const asset = data?.data?.attributes?.iconAssetToken;
+    if (!asset?.templateUrl) return null;
+    return (asset.templateUrl as string)
+      .replace("{w}", "256").replace("{h}", "256").replace("{f}", "jpg").replace("{c}", "bb");
+  } catch {
+    return null;
+  }
+}
+
+// レビュー一覧取得（iOS）
+export type AscReview = {
+  id: string;
+  rating: number;
+  title: string;
+  body: string;
+  reviewerNickname: string;
+  createdDate: string;
+  territory: string;
+};
+
+export async function fetchIosReviews(iosId: string, limit = 20): Promise<AscReview[]> {
+  try {
+    const data = await asc(`/v1/apps/${iosId}/customerReviews?sort=-createdDate&limit=${limit}&filter[territory]=JPN,USA`);
+    return (data?.data ?? []).map((r: {
+      id: string;
+      attributes: {
+        rating: number; title: string; body: string;
+        reviewerNickname: string; createdDate: string; territory: string;
+      }
+    }) => ({
+      id: r.id,
+      rating: r.attributes.rating,
+      title: r.attributes.title ?? "",
+      body: r.attributes.body ?? "",
+      reviewerNickname: r.attributes.reviewerNickname ?? "",
+      createdDate: r.attributes.createdDate ?? "",
+      territory: r.attributes.territory ?? "",
+    }));
+  } catch {
+    return [];
+  }
+}
+
+// レビューへの返信
+export async function replyToReview(reviewId: string, body: string): Promise<void> {
+  await asc(`/v1/customerReviewResponses`, {
+    method: "POST",
+    body: JSON.stringify({
+      data: {
+        type: "customerReviewResponses",
+        attributes: { responseBody: body },
+        relationships: { review: { data: { type: "customerReviews", id: reviewId } } },
+      },
+    }),
+  });
+}
+
+// App Preview（動画）取得
+export type AppPreview = {
+  id: string;
+  sourceFileChecksum: string | null;
+  videoUrl: string | null;
+  previewFrameTimeCode: string | null;
+  mimeType: string | null;
+  previewType: string;
+  previewImage: string | null;
+};
+
+export async function fetchAppPreviews(iosId: string, locale = "ja"): Promise<AppPreview[]> {
+  try {
+    const verData = await asc(`/v1/apps/${iosId}/appStoreVersions?filter[platform]=IOS&filter[appStoreState]=READY_FOR_SALE&limit=1`);
+    const versionId = verData?.data?.[0]?.id;
+    if (!versionId) return [];
+    const locData = await asc(`/v1/appStoreVersions/${versionId}/appStoreVersionLocalizations`);
+    const loc = locData.data?.find((l: { attributes: { locale: string } }) => l.attributes.locale === locale)
+      ?? locData.data?.[0];
+    if (!loc) return [];
+    const pvData = await asc(`/v1/appStoreVersionLocalizations/${loc.id}/appPreviews?limit=10`);
+    return (pvData?.data ?? []).map((p: {
+      id: string;
+      attributes: {
+        sourceFileChecksum: string | null; videoUrl: string | null;
+        previewFrameTimeCode: string | null; mimeType: string | null;
+        previewType: string; previewImage: { templateUrl?: string } | null;
+      }
+    }) => ({
+      id: p.id,
+      sourceFileChecksum: p.attributes.sourceFileChecksum,
+      videoUrl: p.attributes.videoUrl,
+      previewFrameTimeCode: p.attributes.previewFrameTimeCode,
+      mimeType: p.attributes.mimeType,
+      previewType: p.attributes.previewType,
+      previewImage: p.attributes.previewImage?.templateUrl
+        ? (p.attributes.previewImage.templateUrl as string).replace("{w}", "390").replace("{h}", "844").replace("{f}", "jpg").replace("{c}", "bb")
+        : null,
+    }));
+  } catch {
+    return [];
+  }
 }

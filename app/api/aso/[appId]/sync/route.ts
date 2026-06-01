@@ -4,6 +4,8 @@ import { writeAuditLog } from "@/lib/audit";
 import { fetchKeywordRankings, fetchKeywordMetrics, fetchAppMetrics, fetchKeywordRankingHistory } from "@/lib/apptweak";
 import { isAuthenticated } from "@/lib/auth";
 import { sendSlackError, sendSlackHalt } from "@/lib/slack-alert";
+import { fetchIosFullListing, fetchAscScreenshots, fetchAppIconUrl } from "@/lib/asc";
+import { readListings, fetchGPlayImages, fetchPlayWhatsNew } from "@/lib/gplay";
 
 export async function POST(
   req: NextRequest,
@@ -44,8 +46,8 @@ export async function POST(
   });
   const prevData = (prevReport?.data ?? {}) as Record<string, unknown>;
 
-  // Apptweak からデータ取得
-  const [rankings, metrics, kwMetrics, rankingHistory] = await Promise.all([
+  // Apptweak + ストアメタデータを並行取得
+  const [rankings, metrics, kwMetrics, rankingHistory, iosListing, androidListings, iosScreenshots, androidImages, iosIconUrl, androidWhatsNew] = await Promise.all([
     keywords.length > 0 && !isRangeQuery
       ? fetchKeywordRankings(app.iosId, keywords, app.country, app.language)
       : Promise.resolve({}),
@@ -58,7 +60,39 @@ export async function POST(
     keywords.length > 0 && isRangeQuery
       ? fetchKeywordRankingHistory(app.iosId, keywords, startDate!, endDate, app.country, app.language)
       : Promise.resolve(null),
+    fetchIosFullListing(app.iosId).catch(() => null),
+    app.googlePlayId ? readListings(app.googlePlayId).catch(() => []) : Promise.resolve([]),
+    fetchAscScreenshots(app.iosId, "ja").catch(() => null),
+    app.googlePlayId ? fetchGPlayImages(app.googlePlayId, "ja-JP").catch(() => null) : Promise.resolve(null),
+    fetchAppIconUrl(app.iosId).catch(() => null),
+    app.googlePlayId ? fetchPlayWhatsNew(app.googlePlayId).catch(() => null) : Promise.resolve(null),
   ]);
+
+  const androidListing = (androidListings ?? []).find((l) => l.language === "ja-JP") ?? (androidListings ?? [])[0] ?? null;
+
+  // ストアスナップショット
+  const storeSnapshot = {
+    ios: iosListing ? {
+      title: iosListing.title,
+      subtitle: iosListing.subtitle,
+      keywords: iosListing.keywords,
+      description: iosListing.description,
+      promotionalText: iosListing.promotionalText,
+      whatsNew: iosListing.whatsNew,
+      screenshotCount: iosScreenshots?.screenshots.length ?? 0,
+      iconUrl: iosIconUrl,
+      syncedAt: new Date().toISOString(),
+    } : null,
+    android: androidListing ? {
+      title: androidListing.title,
+      shortDescription: androidListing.shortDescription,
+      description: androidListing.fullDescription,
+      whatsNew: androidWhatsNew,
+      featureGraphic: androidImages?.featureGraphic ?? null,
+      screenshotCount: androidImages?.screenshots.length ?? 0,
+      syncedAt: new Date().toISOString(),
+    } : null,
+  };
 
   // レポートデータ構築
   type RankResult = { rank: number | null; installs: number | null };
@@ -82,6 +116,7 @@ export async function POST(
     })),
     appMetrics: null,
     prevAppMetrics: null,
+    storeSnapshot,
     syncedAt: new Date().toISOString(),
   } : {
     // スナップショット（通常の今日のデータ）
@@ -98,6 +133,7 @@ export async function POST(
     })),
     appMetrics: metrics,
     prevAppMetrics: prevData.appMetrics ?? null,
+    storeSnapshot,
     syncedAt: new Date().toISOString(),
   };
 

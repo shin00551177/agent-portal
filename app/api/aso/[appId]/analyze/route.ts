@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
 import { sendSlackError } from "@/lib/slack-alert";
+import { fetchIosFullListing } from "@/lib/asc";
+import { readListings } from "@/lib/gplay";
 
 const client = new Anthropic();
 
@@ -42,11 +44,13 @@ export async function POST(
   if (!app) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   try {
-  const report = await db.asoReport.findFirst({
-    where: { appId },
-    orderBy: { date: "desc" },
-  });
+  const [report, iosListing, androidListings] = await Promise.all([
+    db.asoReport.findFirst({ where: { appId }, orderBy: { date: "desc" } }),
+    app.iosId ? fetchIosFullListing(app.iosId).catch(() => null) : null,
+    app.googlePlayId ? readListings(app.googlePlayId).catch(() => []) : [],
+  ]);
   if (!report) return NextResponse.json({ error: "no report data" }, { status: 400 });
+  const androidListing = (androidListings ?? []).find((l) => l.language === "ja-JP") ?? (androidListings ?? [])[0] ?? null;
 
   const data = report.data as { keywords?: KwData[]; appMetrics?: AppMetrics; periodFrom?: string; periodTo?: string };
   const keywords = data.keywords ?? [];
@@ -82,13 +86,53 @@ export async function POST(
         .join("\n")}\n`
     : "";
 
-  const prompt = `あなたはApp Store最適化（ASO）の専門家です。以下の ${app.name} のASO データを分析し、売上向上に直結する改善提案を3件生成してください。
+  // 現在のストアメタデータをまとめる
+  const currentMeta = {
+    ios: iosListing ? {
+      title: iosListing.title,
+      subtitle: iosListing.subtitle,
+      keywords: iosListing.keywords,
+      description: iosListing.description.slice(0, 300),
+      promotionalText: iosListing.promotionalText,
+      whatsNew: iosListing.whatsNew.slice(0, 200),
+    } : null,
+    android: androidListing ? {
+      title: androidListing.title,
+      shortDescription: androidListing.shortDescription,
+      description: androidListing.fullDescription.slice(0, 300),
+    } : null,
+  };
 
-## エージェント行動規範（AI AGENT 行動規範 v0.1 より）
+  const metaSection = currentMeta.ios ? `
+## 現在のストアメタデータ（iOS / 日本語）
+- タイトル（${currentMeta.ios.title.length}/30文字）: "${currentMeta.ios.title}"
+- サブタイトル（${currentMeta.ios.subtitle.length}/30文字）: "${currentMeta.ios.subtitle}"
+- キーワードフィールド（${currentMeta.ios.keywords.length}/100文字）: "${currentMeta.ios.keywords}"
+- プロモーションテキスト: "${currentMeta.ios.promotionalText || "（未設定）"}"
+- 説明文（冒頭300文字）: "${currentMeta.ios.description}"
+- What's New: "${currentMeta.ios.whatsNew || "（未設定）"}"
+${currentMeta.android ? `
+## 現在のストアメタデータ（Android / 日本語）
+- タイトル: "${currentMeta.android.title}"
+- ショート説明文: "${currentMeta.android.shortDescription}"` : ""}` : "";
+
+  const prompt = `あなたはApp Store最適化（ASO）の専門家です。以下の ${app.name} のASO データを徹底的に分析し、考えられる全ての改善点を提案してください。
+
+## エージェント行動規範
 - 提案は必ず「結果→原因分析→ネクストアクション」の3点セットで構成する
 - 人間（オーナー）の承認なしに直接変更を実行しない。提案形式のみとする
 - 確信度 medium 以上の根拠がある提案のみ生成する（推測だけによる提案は不可）
 - 過去に却下された提案と同じ内容・同じフィールドへの変更を繰り返さない
+- **提案数の上限はない。改善余地があるものは全て出すこと**
+
+## 分析対象（全要素を網羅的にチェックすること）
+- タイトル: 文字数の最適化・主要KW含有
+- サブタイトル: 30文字フル活用・補完KW投入
+- キーワードフィールド: 100文字フル活用・重複排除・高ボリューム低競合KW
+- 説明文: 冒頭3行（折りたたみ前）の訴求力・CTA・KW密度
+- プロモーションテキスト: 季節性・キャンペーン・バージョン不要の強み
+- What's New: 新機能訴求・KW含有
+- App Power / DL数 / CVR: 数値の意味と改善アクション
 
 ## 集計期間: ${periodLabel}
 
@@ -100,13 +144,14 @@ export async function POST(
 
 ## キーワード順位
 ${kwSummary}
+${metaSection}
 ${rejectedSection}
 各提案は以下の3点セットで構成してください：
 1. **結果**（現状の数値・事実のみ。判断・意見を含まない）
 2. **原因分析**（なぜその結果になっているか。データに基づく推論）
 3. **ネクストアクション**（具体的な変更内容と期待される効果）
 
-以下のJSON配列形式で3件の提案を返してください。コードブロックや説明文は不要、JSONのみ返してください。
+以下のJSON配列形式で**考えられる全ての改善提案**を返してください。コードブロックや説明文は不要、JSONのみ返してください。
 
 [
   {
@@ -115,14 +160,15 @@ ${rejectedSection}
     "result": "【結果】現状の数値・事実（例: 「アバター」はvol:59にもかかわらず圏外）",
     "cause": "【原因分析】なぜこの結果になっているか（例: サブタイトルに「アバター」が含まれていないため検索インデックスに含まれていない可能性が高い）",
     "nextAction": "【ネクストアクション】具体的な変更内容と期待効果（例: サブタイトルを「AIアバターと話そう」に変更→アバターキーワードでTop50入り見込み）",
-    "field": "title" | "subtitle" | "keywords" | "description",
+    "field": "title" | "subtitle" | "keywords" | "description" | "promotionalText" | "whatsNew" | "shortDescription",
+    "currentValue": "現在の値（上記メタデータから引用）",
     "proposed": "変更後の具体的な値"
   }
 ]`;
 
   const message = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 2048,
+    max_tokens: 8000,
     messages: [{ role: "user", content: prompt }],
   });
 
@@ -139,6 +185,7 @@ ${rejectedSection}
     cause: string;
     nextAction: string;
     field: string;
+    currentValue: string;
     proposed: string;
   };
 
@@ -164,6 +211,7 @@ ${rejectedSection}
             cause: p.cause,
             nextAction: p.nextAction,
             field: p.field,
+            currentValue: p.currentValue ?? "",
             proposed: p.proposed,
             periodLabel,
           }),

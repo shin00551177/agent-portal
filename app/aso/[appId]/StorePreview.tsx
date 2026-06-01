@@ -1,5 +1,5 @@
-import { readListings } from "@/lib/gplay";
-import { makeToken } from "@/lib/asc";
+import { readListings, fetchPlayWhatsNew } from "@/lib/gplay";
+import { fetchIosFullListing } from "@/lib/asc";
 
 type Listing = {
   platform: "ios" | "android";
@@ -8,39 +8,25 @@ type Listing = {
   subtitle?: string;
   shortDescription?: string;
   description: string;
+  promotionalText?: string;
+  whatsNew?: string;
   keywords?: string;
 };
 
-// iOS メタデータ取得
+// iOS メタデータ取得（fetchIosFullListing に委譲）
 async function fetchIosListing(iosId: string): Promise<Listing | null> {
   try {
-    const token = await makeToken();
-    const res = await fetch(
-      `https://api.appstoreconnect.apple.com/v1/apps/${iosId}/appStoreVersions?filter[platform]=IOS&limit=1`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 3600 } }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    const versionId = data.data?.[0]?.id;
-    if (!versionId) return null;
-
-    const locRes = await fetch(
-      `https://api.appstoreconnect.apple.com/v1/appStoreVersions/${versionId}/appStoreVersionLocalizations`,
-      { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 3600 } }
-    );
-    if (!locRes.ok) return null;
-    const locData = await locRes.json();
-    const ja = locData.data?.find((l: { attributes: { locale: string } }) => l.attributes.locale === "ja");
-    const loc = ja ?? locData.data?.[0];
-    if (!loc) return null;
-
+    const full = await fetchIosFullListing(iosId);
+    if (!full) return null;
     return {
       platform: "ios",
-      language: loc.attributes.locale,
-      title: loc.attributes.name ?? "",
-      subtitle: loc.attributes.subtitle ?? "",
-      description: loc.attributes.description ?? "",
-      keywords: loc.attributes.keywords ?? "",
+      language: "ja",
+      title: full.title,
+      subtitle: full.subtitle,
+      description: full.description,
+      keywords: full.keywords,
+      promotionalText: full.promotionalText,
+      whatsNew: full.whatsNew,
     };
   } catch {
     return null;
@@ -50,7 +36,10 @@ async function fetchIosListing(iosId: string): Promise<Listing | null> {
 // Android メタデータ取得
 async function fetchAndroidListing(packageName: string): Promise<Listing | null> {
   try {
-    const listings = await readListings(packageName);
+    const [listings, whatsNew] = await Promise.all([
+      readListings(packageName),
+      fetchPlayWhatsNew(packageName).catch(() => null),
+    ]);
     const ja = listings.find((l) => l.language === "ja-JP") ?? listings[0];
     if (!ja) return null;
     return {
@@ -59,6 +48,7 @@ async function fetchAndroidListing(packageName: string): Promise<Listing | null>
       title: ja.title,
       shortDescription: ja.shortDescription,
       description: ja.fullDescription,
+      whatsNew: whatsNew ?? "",
     };
   } catch {
     return null;
@@ -109,6 +99,13 @@ function IosCard({ listing }: { listing: Listing }) {
             {listing.subtitle && <p className="text-[12px] text-[#6e6e73] mt-0.5">{listing.subtitle}</p>}
           </div>
         </div>
+        {/* Promotional text */}
+        {listing.promotionalText && (
+          <div className="mb-2 px-2 py-1.5 bg-[#f0f8ff] rounded-lg">
+            <p className="text-[10px] text-[#0071e3] font-semibold uppercase tracking-wide mb-0.5">プロモーションテキスト</p>
+            <p className="text-[11px] text-[#1d1d1f] leading-relaxed">{listing.promotionalText}</p>
+          </div>
+        )}
         {/* Description */}
         {listing.description && (
           <p className="text-[12px] text-[#6e6e73] leading-relaxed line-clamp-3">{listing.description}</p>
@@ -124,6 +121,13 @@ function IosCard({ listing }: { listing: Listing }) {
                 </span>
               ))}
             </div>
+          </div>
+        )}
+        {/* What's New */}
+        {listing.whatsNew && (
+          <div className="mt-3 px-2 py-1.5 bg-[#f0faf4] rounded-lg">
+            <p className="text-[10px] text-[#1d7a47] font-semibold uppercase tracking-wide mb-0.5">What&apos;s New</p>
+            <p className="text-[11px] text-[#1d1d1f] leading-relaxed line-clamp-2">{listing.whatsNew}</p>
           </div>
         )}
       </div>
@@ -158,6 +162,12 @@ function AndroidCard({ listing }: { listing: Listing }) {
         </div>
         {listing.description && (
           <p className="text-[12px] text-[#6e6e73] leading-relaxed line-clamp-3">{listing.description}</p>
+        )}
+        {listing.whatsNew && (
+          <div className="mt-3 px-2 py-1.5 bg-[#f0faf4] rounded-lg">
+            <p className="text-[10px] text-[#1d7a47] font-semibold uppercase tracking-wide mb-0.5">What&apos;s New</p>
+            <p className="text-[11px] text-[#1d1d1f] leading-relaxed line-clamp-2">{listing.whatsNew}</p>
+          </div>
         )}
       </div>
     </div>

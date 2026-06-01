@@ -156,6 +156,103 @@ export async function readListings(packageName: string): Promise<PlayListing[]> 
   }
 }
 
+// レビュー一覧取得（Google Play）
+export type PlayReview = {
+  reviewId: string;
+  authorName: string;
+  rating: number;
+  body: string;
+  date: string;
+  language: string;
+  replyText: string | null;
+  replyDate: string | null;
+};
+
+export async function fetchPlayReviews(packageName: string, maxResults = 20): Promise<PlayReview[]> {
+  try {
+    const token = await getAccessToken();
+    const res = await fetch(
+      `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${packageName}/reviews?maxResults=${maxResults}&translationLanguage=ja`,
+      { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data?.reviews ?? []).map((r: {
+      reviewId: string;
+      authorName: string;
+      comments: { userComment?: { starRating?: number; text?: string; lastModified?: { seconds?: string }; reviewerLanguage?: string }; developerComment?: { text?: string; lastModified?: { seconds?: string } } }[];
+    }) => {
+      const user = r.comments?.find((c) => c.userComment)?.userComment;
+      const dev = r.comments?.find((c) => c.developerComment)?.developerComment;
+      return {
+        reviewId: r.reviewId,
+        authorName: r.authorName ?? "",
+        rating: user?.starRating ?? 0,
+        body: user?.text ?? "",
+        date: user?.lastModified?.seconds ? new Date(parseInt(user.lastModified.seconds) * 1000).toISOString() : "",
+        language: user?.reviewerLanguage ?? "",
+        replyText: dev?.text ?? null,
+        replyDate: dev?.lastModified?.seconds ? new Date(parseInt(dev.lastModified.seconds) * 1000).toISOString() : null,
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+// レビューへの返信（Google Play）
+export async function replyToPlayReview(packageName: string, reviewId: string, replyText: string): Promise<void> {
+  const token = await getAccessToken();
+  const res = await fetch(
+    `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${packageName}/reviews/${reviewId}:reply`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ replyText }),
+    }
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`GPlay reply ${res.status}: ${text.slice(0, 200)}`);
+  }
+}
+
+// What's New / Recent Changes 取得
+export async function fetchPlayWhatsNew(packageName: string, language = "ja-JP"): Promise<string | null> {
+  try {
+    const editId = await createEdit(packageName);
+    try {
+      // 最新トラック（production）からwhatsnewを取得
+      const tracksData = await gplay("GET", `/${packageName}/edits/${editId}/tracks`);
+      const prodTrack = tracksData?.tracks?.find((t: { track: string }) => t.track === "production");
+      const release = prodTrack?.releases?.[0];
+      const notes = release?.releaseNotes?.find((n: { language: string }) => n.language === language);
+      return notes?.text ?? null;
+    } finally {
+      await deleteEdit(packageName, editId);
+    }
+  } catch {
+    return null;
+  }
+}
+
+// アイコンURL取得（Google Play）
+export async function fetchPlayIconUrl(packageName: string): Promise<string | null> {
+  try {
+    const editId = await createEdit(packageName);
+    try {
+      const data = await gplay("GET", `/${packageName}/edits/${editId}/images/icon`);
+      const icons = data?.images ?? [];
+      if (icons.length === 0) return null;
+      return icons[icons.length - 1]?.url ?? null;
+    } finally {
+      await deleteEdit(packageName, editId);
+    }
+  } catch {
+    return null;
+  }
+}
+
 // メタデータ書き込み（1言語ずつ）
 export async function updateListing(
   packageName: string,

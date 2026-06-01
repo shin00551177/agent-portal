@@ -21,11 +21,22 @@ type AppMetrics = {
   appPower: number | null;
 };
 
+const FIELD_LABELS: Record<string, string> = {
+  title: "アプリ名",
+  subtitle: "サブタイトル",
+  keywords: "キーワード",
+  description: "説明文",
+  promotionalText: "プロモーションテキスト",
+  whatsNew: "What's New",
+  shortDescription: "ショート説明文",
+};
+
 type Analysis = {
   result: string;
   cause: string;
   nextAction: string;
   field: string;
+  currentValue: string;
   proposed: string;
   periodLabel: string;
 };
@@ -223,15 +234,36 @@ function ProposalCard({
               <p className="text-[11px] font-semibold text-[#a05c00] uppercase tracking-wide mb-1">原因分析</p>
               <p className="text-[13px] text-[#1d1d1f] leading-relaxed">{analysis.cause}</p>
             </div>
+            {/* Before / After */}
+            {analysis.proposed && (
+              <div className="rounded-xl overflow-hidden border border-[#e5e5ea]">
+                <div className="px-4 py-2 bg-[#f5f5f7] border-b border-[#e5e5ea]">
+                  <span className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wide">
+                    {FIELD_LABELS[analysis.field] ?? analysis.field} — Before / After
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 divide-x divide-[#e5e5ea]">
+                  <div className="px-4 py-3 bg-[#fff5f5]">
+                    <p className="text-[10px] font-semibold text-[#c0392b] uppercase tracking-wide mb-1.5">Before</p>
+                    <p className="text-[12px] text-[#1d1d1f] leading-relaxed break-words">
+                      {analysis.currentValue || <span className="italic text-[#86868b]">（未設定）</span>}
+                    </p>
+                    {analysis.currentValue && (
+                      <p className="text-[10px] text-[#86868b] mt-1">{analysis.currentValue.length}文字</p>
+                    )}
+                  </div>
+                  <div className="px-4 py-3 bg-[#f0faf4]">
+                    <p className="text-[10px] font-semibold text-[#1d7a47] uppercase tracking-wide mb-1.5">After</p>
+                    <p className="text-[12px] text-[#1d1d1f] leading-relaxed break-words">{analysis.proposed}</p>
+                    <p className="text-[10px] text-[#86868b] mt-1">{analysis.proposed.length}文字</p>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* ネクストアクション */}
             <div className="bg-[#f0faf4] rounded-xl px-4 py-3">
               <p className="text-[11px] font-semibold text-[#1d7a47] uppercase tracking-wide mb-1">ネクストアクション</p>
               <p className="text-[13px] text-[#1d1d1f] leading-relaxed">{analysis.nextAction}</p>
-              {analysis.proposed && (
-                <p className="text-[12px] text-[#6e6e73] mt-1.5 font-mono bg-white rounded-lg px-2 py-1 inline-block">
-                  → &ldquo;{analysis.proposed}&rdquo;
-                </p>
-              )}
             </div>
           </div>
         ) : (

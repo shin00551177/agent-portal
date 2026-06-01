@@ -11,6 +11,9 @@ import { StoreImages } from "./StoreImages";
 import { StoreAnalytics } from "./StoreAnalytics";
 import { ImageUploadSection } from "./ImageUploadSection";
 import { AsoChatBot } from "@/components/AsoChatBot";
+import { StoreHealthDashboard } from "./StoreHealthDashboard";
+import { ReviewsSection } from "./ReviewsSection";
+import { PreviewVideosSection } from "./PreviewVideosSection";
 
 export default async function AsoAppPage({
   params,
@@ -59,6 +62,20 @@ export default async function AsoAppPage({
 
   return (
     <div>
+      {/* Store Health Dashboard */}
+      <section className="py-12 border-b border-[#f0f0f0]">
+        <div className="mb-6">
+          <h2 className="text-[24px] font-semibold text-[#1d1d1f] tracking-tight">ストア健全性</h2>
+          <p className="text-[13px] text-[#6e6e73] mt-1">全ストア要素のステータス一覧</p>
+        </div>
+        <StoreHealthDashboard
+          appId={appId}
+          iosId={app.iosId ?? null}
+          googlePlayId={app.googlePlayId ?? null}
+          ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null}
+        />
+      </section>
+
       {/* Stats */}
       <div className="grid grid-cols-3 gap-0 divide-x divide-[#f0f0f0] py-12 border-b border-[#f0f0f0]">
         {[
@@ -131,6 +148,24 @@ export default async function AsoAppPage({
             hasAndroid={!!app.googlePlayId}
           />
         </div>
+      </section>
+
+      {/* Preview Videos */}
+      <section className="py-12 border-b border-[#f0f0f0]">
+        <div className="mb-6">
+          <h2 className="text-[24px] font-semibold text-[#1d1d1f] tracking-tight">App Preview動画</h2>
+          <p className="text-[13px] text-[#6e6e73] mt-1">スクリーンショットより高CVRを実現するプレビュー動画</p>
+        </div>
+        <PreviewVideosSection appId={appId} iosId={app.iosId ?? null} />
+      </section>
+
+      {/* Reviews */}
+      <section className="py-12 border-b border-[#f0f0f0]">
+        <div className="mb-6">
+          <h2 className="text-[24px] font-semibold text-[#1d1d1f] tracking-tight">レビュー管理</h2>
+          <p className="text-[13px] text-[#6e6e73] mt-1">iOS・Android のレビューを確認し、AI返信案を生成できます</p>
+        </div>
+        <ReviewsSection appId={appId} />
       </section>
 
       {/* Keywords */}

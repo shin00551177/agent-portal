@@ -27,6 +27,7 @@ model AsoApp {
   keywords       AsoKeyword[]
   reports      AsoReport[]
   releases     AsoRelease[]
+  reviews      AsoReview[]
   createdAt    DateTime     @default(now())
 }
 
@@ -364,6 +365,31 @@ model Proposal {
   @@index([status])
   @@index([domain, targetId])
   @@index([sourceJobId])
+}
+
+// ASO レビュー管理
+model AsoReview {
+  id               String   @id @default(cuid())
+  appId            String
+  app              AsoApp   @relation(fields: [appId], references: [id])
+  platform         String   // "ios" | "android"
+  reviewId         String
+  rating           Int
+  title            String   @default("")
+  body             String
+  authorName       String   @default("")
+  reviewDate       String
+  language         String   @default("")
+  territory        String   @default("")
+  replyText        String?
+  replyDate        String?
+  aiReplySuggestion String?
+  fetchedAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([appId, platform, reviewId])
+  @@index([appId, platform])
+  @@index([rating])
 }
 
 // §7 監査ログ (Backend Base Spec 準拠 / 行動規範 #9)
