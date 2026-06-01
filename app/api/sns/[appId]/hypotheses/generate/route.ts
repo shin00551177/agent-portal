@@ -147,7 +147,9 @@ JSONのみ返してください。`;
           reasoning: item.reasoning,
           targetAudience: item.targetAudience ?? null,
           format: item.format ?? null,
-          contentBrief: item.contentBrief ?? null,
+          contentBrief: Array.isArray(item.contentBrief)
+            ? item.contentBrief.join("\n")
+            : (item.contentBrief ?? null),
           status: "pending",
         },
       })
