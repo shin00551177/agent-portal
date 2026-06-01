@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useSnsLocale } from "../LocaleContext";
 
 type Hypothesis = {
   id: string;
@@ -19,7 +20,7 @@ type Hypothesis = {
 const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   pending:   { label: "承認待ち",        cls: "bg-amber-50 text-amber-600 border-amber-200" },
   approved:  { label: "承認済み",        cls: "bg-emerald-50 text-emerald-600 border-emerald-200" },
-  rejected:  { label: "差し戻し",        cls: "bg-red-50 text-red-500 border-red-200" },
+  rejected:  { label: "差し戻し / Rejeitada", cls: "bg-red-50 text-red-500 border-red-200" },
   briefed:   { label: "Content-lab送信済", cls: "bg-blue-50 text-blue-600 border-blue-200" },
   posted:    { label: "投稿済み",        cls: "bg-purple-50 text-purple-600 border-purple-200" },
   measured:  { label: "測定済み",        cls: "bg-gray-50 text-gray-500 border-gray-200" },
@@ -39,6 +40,8 @@ function CopyBtn({ text }: { text: string }) {
 }
 
 export default function HypothesesPage() {
+  const { t } = useSnsLocale();
+
   const { appId } = useParams<{ appId: string }>();
   const [hypotheses, setHypotheses] = useState<Hypothesis[]>([]);
   const [generating, setGenerating] = useState(false);
@@ -105,7 +108,7 @@ export default function HypothesesPage() {
           disabled={generating}
           className="px-4 py-2 rounded-xl bg-[#f5f5f7] text-[#1d1d1f] text-[13px] font-medium hover:bg-[#ebebeb] disabled:opacity-40 transition-colors flex-shrink-0"
         >
-          {generating ? "生成中..." : "今すぐ生成"}
+          {generating ? t.hypotheses.generating : t.hypotheses.generate}
         </button>
       </div>
 

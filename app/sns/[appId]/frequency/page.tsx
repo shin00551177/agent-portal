@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useSnsLocale } from "../LocaleContext";
 
 type FreqRec = {
   id: string;
@@ -14,6 +15,8 @@ type FreqRec = {
 };
 
 export default function FrequencyPage() {
+  const { t } = useSnsLocale();
+
   const { appId } = useParams<{ appId: string }>();
   const [recs, setRecs] = useState<FreqRec[]>([]);
   const [generating, setGenerating] = useState(false);
@@ -70,7 +73,7 @@ export default function FrequencyPage() {
           disabled={generating}
           className="px-4 py-2 rounded-xl bg-[#1d1d1f] text-white text-[13px] font-medium hover:bg-black disabled:opacity-40 transition-colors"
         >
-          {generating ? "分析中..." : "AIに分析させる"}
+          {generating ? t.frequency.analyzing : t.frequency.analyze}
         </button>
       </div>
 
@@ -122,7 +125,7 @@ export default function FrequencyPage() {
                       週{effective}回
                     </p>
                     <p className="text-[11px] text-[#86868b] mt-1">
-                      {rec.adjustedFrequency ? "調整後" : "AI推奨"}
+                      {rec.adjustedFrequency ? t.frequency.adjusted : t.frequency.aiRec}
                     </p>
                   </div>
                   {rec.currentFrequency !== null && rec.currentFrequency !== effective && (

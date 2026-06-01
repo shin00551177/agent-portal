@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useSnsLocale } from "../LocaleContext";
 
 type EgoHit = {
   id: string;
@@ -32,6 +33,8 @@ function fmt(n?: number) {
 }
 
 export default function EgoPage() {
+  const { t } = useSnsLocale();
+
   const { appId } = useParams<{ appId: string }>();
   const [hits, setHits] = useState<EgoHit[]>([]);
   const [collecting, setCollecting] = useState(false);
@@ -88,7 +91,7 @@ export default function EgoPage() {
           disabled={collecting}
           className="px-4 py-2 rounded-xl bg-[#1d1d1f] text-white text-[13px] font-medium hover:bg-black disabled:opacity-40 transition-colors flex-shrink-0"
         >
-          {collecting ? "収集中..." : "今すぐエゴサ"}
+          {collecting ? t.ego.collecting : t.ego.collect}
         </button>
       </div>
 

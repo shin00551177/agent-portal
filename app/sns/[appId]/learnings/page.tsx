@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useSnsLocale } from "../LocaleContext";
 
 type Learning = {
   id: string;
@@ -22,6 +23,8 @@ const TYPE_CONFIG = {
 const TYPES = Object.keys(TYPE_CONFIG) as (keyof typeof TYPE_CONFIG)[];
 
 export default function LearningsPage() {
+  const { t } = useSnsLocale();
+
   const { appId } = useParams<{ appId: string }>();
   const [learnings, setLearnings] = useState<Learning[]>([]);
   const [synthesizing, setSynthesizing] = useState(false);
@@ -108,14 +111,14 @@ export default function LearningsPage() {
               showInactive ? "bg-[#1d1d1f] text-white" : "bg-[#f5f5f7] text-[#6e6e73]"
             }`}
           >
-            {showInactive ? "無効を含む" : "有効のみ"}
+            {showInactive ? t.learnings.showAll : t.learnings.activeOnly}
           </button>
           <button
             onClick={synthesize}
             disabled={synthesizing}
             className="px-4 py-2 rounded-xl bg-purple-500 text-white text-[13px] font-medium hover:bg-purple-600 disabled:opacity-40 transition-colors"
           >
-            {synthesizing ? "合成中..." : "差し戻しから合成"}
+            {synthesizing ? t.learnings.synthesizing : t.learnings.synthesize}
           </button>
           <button
             onClick={() => setAdding(!adding)}
@@ -234,7 +237,7 @@ export default function LearningsPage() {
                           onClick={() => toggle(l.id, !l.active)}
                           className="text-[11px] text-[#86868b] hover:text-[#1d1d1f] transition-colors"
                         >
-                          {l.active ? "無効化" : "有効化"}
+                          {l.active ? t.learnings.disable : t.learnings.enable}
                         </button>
                         <button
                           onClick={() => remove(l.id)}

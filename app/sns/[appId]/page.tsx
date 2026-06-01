@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { getAppContext } from "@/lib/snsAppContext";
+import { getSnsT } from "@/lib/i18n/sns";
 
 function statusDot(color: string) {
   return <span className={`inline-block w-2 h-2 rounded-full ${color}`} />;
@@ -19,6 +20,8 @@ export default async function DashboardPage({
   if (!app) notFound();
 
   const appCtx = getAppContext(appId);
+  const locale = (app as { locale?: string }).locale ?? "ja";
+  const t = getSnsT(locale).dashboard;
   const since7d  = new Date(Date.now() - 7  * 86_400_000);
   const since14d = new Date(Date.now() - 14 * 86_400_000);
 
@@ -60,13 +63,13 @@ export default async function DashboardPage({
   // 「今やること」
   const todoItems: { urgency: "red" | "amber"; label: string; href: string; count: number }[] = [];
   if (pendingHypotheses.length > 0) {
-    todoItems.push({ urgency: "red", label: `承認待ちの仮説`, href: `/sns/${appId}/hypotheses`, count: pendingHypotheses.length });
+    todoItems.push({ urgency: "red", label: t.pending, href: `/sns/${appId}/hypotheses`, count: pendingHypotheses.length });
   }
   if (unprocessedFeedback > 0) {
-    todoItems.push({ urgency: "amber", label: `未処理のユーザーFB`, href: `/sns/${appId}/feedback`, count: unprocessedFeedback });
+    todoItems.push({ urgency: "amber", label: t.unprocessed, href: `/sns/${appId}/feedback`, count: unprocessedFeedback });
   }
   if (frequencyRecs.some((r) => !r.acceptedAt)) {
-    todoItems.push({ urgency: "amber", label: `投稿頻度レコメンドを確認`, href: `/sns/${appId}/frequency`, count: frequencyRecs.filter((r) => !r.acceptedAt).length });
+    todoItems.push({ urgency: "amber", label: t.freqCheck, href: `/sns/${appId}/frequency`, count: frequencyRecs.filter((r) => !r.acceptedAt).length });
   }
 
   const egoAgo = lastEgoHit
@@ -81,15 +84,15 @@ export default async function DashboardPage({
       {/* App header */}
       <div>
         <p className="text-[11px] text-[#86868b] uppercase tracking-widest mb-1">{appCtx.name} — SNS Agent</p>
-        <h1 className="text-[28px] font-semibold text-[#1d1d1f] tracking-tight">ダッシュボード</h1>
+        <h1 className="text-[28px] font-semibold text-[#1d1d1f] tracking-tight">{t.title}</h1>
       </div>
 
       {/* 今やること */}
       <section>
-        <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest mb-3">今やること</p>
+        <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest mb-3">{t.todo}</p>
         {todoItems.length === 0 ? (
           <div className="rounded-2xl border border-[#f0f0f0] px-5 py-4 text-[14px] text-[#6e6e73]">
-            {statusDot("bg-emerald-500")} <span className="ml-2">対応が必要なタスクはありません</span>
+            {statusDot("bg-emerald-500")} <span className="ml-2">{t.noTodo}</span>
           </div>
         ) : (
           <div className="space-y-2">
@@ -117,7 +120,7 @@ export default async function DashboardPage({
 
       {/* PDCAサイクル現状 */}
       <section>
-        <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest mb-3">PDCAサイクル現状</p>
+        <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest mb-3">{t.pdca}</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { label: "エゴサ", value: egoAgo, sub: `直近7日 ${neg7d}ネガ / ${pos7d}ポジ`, color: "text-[#1d1d1f]" },
@@ -139,10 +142,10 @@ export default async function DashboardPage({
         <section>
           <div className="flex items-center justify-between mb-3">
             <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest">
-              直近14日のトレンドワード（エゴサから自動抽出）
+              {t.trends}
             </p>
             <Link href={`/sns/${appId}/ego`} className="text-[12px] text-[#079147] hover:underline">
-              エゴサ詳細 →
+              {t.egoDetail}
             </Link>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -163,9 +166,9 @@ export default async function DashboardPage({
       {frequencyRecs.length > 0 && (
         <section>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest">投稿頻度レコメンド</p>
+            <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest">{t.frequency}</p>
             <Link href={`/sns/${appId}/frequency`} className="text-[12px] text-[#079147] hover:underline">
-              詳細・調整 →
+              {t.freqDetail}
             </Link>
           </div>
           <div className="rounded-2xl border border-[#f0f0f0] divide-y divide-[#f0f0f0]">
@@ -200,13 +203,13 @@ export default async function DashboardPage({
       {/* 仮説がない場合のCTA */}
       {pendingHypotheses.length === 0 && frequencyRecs.length === 0 && (
         <section className="py-10 rounded-2xl border border-dashed border-[#d2d2d7] text-center space-y-3">
-          <p className="text-[15px] font-medium text-[#1d1d1f]">仮説は自動生成されます</p>
-          <p className="text-[13px] text-[#6e6e73]">毎朝8時・夜20時に投稿頻度に合わせて自動補充されます</p>
+          <p className="text-[15px] font-medium text-[#1d1d1f]">{t.emptyTitle}</p>
+          <p className="text-[13px] text-[#6e6e73]">{t.emptyDesc}</p>
           <Link
             href={`/sns/${appId}/frequency`}
             className="inline-block mt-2 px-5 py-2.5 rounded-xl bg-[#f5f5f7] text-[#1d1d1f] text-[13px] font-medium"
           >
-            投稿頻度を設定する →
+            {t.emptyLink}
           </Link>
         </section>
       )}

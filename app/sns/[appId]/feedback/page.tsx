@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useSnsLocale } from "../LocaleContext";
 
 type ProductFeedback = {
   id: string;
@@ -30,6 +31,8 @@ const IMPORTANCE_LABEL: Record<string, string> = {
 };
 
 export default function FeedbackPage() {
+  const { t } = useSnsLocale();
+
   const { appId } = useParams<{ appId: string }>();
   const [feedbacks, setFeedbacks] = useState<ProductFeedback[]>([]);
   const [showProcessed, setShowProcessed] = useState(false);
@@ -81,7 +84,7 @@ export default function FeedbackPage() {
               showProcessed ? "bg-[#1d1d1f] text-white" : "bg-[#f5f5f7] text-[#6e6e73]"
             }`}
           >
-            {showProcessed ? "処理済みを表示中" : "未処理のみ"}
+            {showProcessed ? t.feedback.showProcessed : t.feedback.unprocessedOnly}
           </button>
           <button
             onClick={() => setAdding(!adding)}

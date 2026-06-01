@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { SnsSidebar } from "./SnsSidebar";
 import { getSnsT } from "@/lib/i18n/sns";
+import { SnsLocaleProvider } from "./LocaleContext";
 
 export default async function AppLayout({
   children,
@@ -24,17 +25,19 @@ export default async function AppLayout({
   const t = getSnsT(locale);
 
   return (
-    <div className="flex gap-6 items-start min-h-[calc(100vh-10rem)]">
-      <SnsSidebar
-        appId={appId}
-        appName={app.name}
-        pendingHypotheses={pendingHypotheses}
-        unprocessedFeedback={unprocessedFeedback}
-        t={t.nav}
-      />
-      <div className="flex-1 min-w-0 py-1">
-        {children}
+    <SnsLocaleProvider locale={locale}>
+      <div className="flex gap-6 items-start min-h-[calc(100vh-10rem)]">
+        <SnsSidebar
+          appId={appId}
+          appName={app.name}
+          pendingHypotheses={pendingHypotheses}
+          unprocessedFeedback={unprocessedFeedback}
+          t={t.nav}
+        />
+        <div className="flex-1 min-w-0 py-1">
+          {children}
+        </div>
       </div>
-    </div>
+    </SnsLocaleProvider>
   );
 }
