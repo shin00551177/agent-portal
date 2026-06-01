@@ -371,11 +371,11 @@ export async function fetchIosFullListing(iosId: string, locale = "ja"): Promise
   try {
     const data = await asc(`/v1/apps/${iosId}/appStoreVersions?filter[platform]=IOS&limit=1&sort=-createdDate`);
     const versionId = data?.data?.[0]?.id;
-    if (!versionId) return null;
+    if (!versionId) { console.error("[fetchIosFullListing] no versionId for", iosId); return null; }
     const locData = await asc(`/v1/appStoreVersions/${versionId}/appStoreVersionLocalizations`);
     const loc = locData.data?.find((l: { attributes: { locale: string } }) => l.attributes.locale === locale)
       ?? locData.data?.[0];
-    if (!loc) return null;
+    if (!loc) { console.error("[fetchIosFullListing] no localization for", versionId); return null; }
     return {
       title: loc.attributes.name ?? "",
       subtitle: loc.attributes.subtitle ?? "",
@@ -385,7 +385,8 @@ export async function fetchIosFullListing(iosId: string, locale = "ja"): Promise
       whatsNew: loc.attributes.whatsNew ?? "",
       locId: loc.id,
     };
-  } catch {
+  } catch (e) {
+    console.error("[fetchIosFullListing] error:", (e as Error).message);
     return null;
   }
 }
