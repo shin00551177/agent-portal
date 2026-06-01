@@ -15,7 +15,7 @@ export async function POST(
 
   const since14d = new Date(Date.now() - 14 * 86_400_000);
 
-  const [recentHits, pastHypotheses, rejectedHypotheses, learnings, accounts] = await Promise.all([
+  const [recentHits, pastHypotheses, rejectedHypotheses, learnings, accounts, freqRecs, pendingCount] = await Promise.all([
     db.egoHit.findMany({
       where: { appId, createdAt: { gte: since14d } },
       orderBy: { score: "desc" },
@@ -33,7 +33,18 @@ export async function POST(
     }),
     db.snsLearning.findMany({ where: { appId, active: true }, orderBy: { type: "asc" } }),
     db.snsAccount.findMany({ where: { appId } }),
+    db.snsFrequencyRecommendation.findMany({ where: { appId } }),
+    db.snsHypothesis.count({ where: { appId, status: "pending" } }),
   ]);
+
+  // 目標pending数 = 推奨週投稿数の合計（最低3、最大7）、現在のpendingで不足分のみ生成
+  const targetPerWeek = freqRecs.reduce((sum, r) => sum + (r.adjustedFrequency ?? r.recommendedFrequency), 0);
+  const targetPending = Math.min(Math.max(targetPerWeek || 3, 3), 7);
+  const needed = Math.max(targetPending - pendingCount, 0);
+
+  if (needed === 0) {
+    return NextResponse.json({ hypotheses: [], message: `pending ${pendingCount}件で目標${targetPending}件達成済み` });
+  }
 
   const hitsText = recentHits.length > 0
     ? recentHits.slice(0, 20).map((h) =>
@@ -90,7 +101,7 @@ ${platformList}
 
 ---
 
-上記のデータを分析し、「今これを投稿すればバズる」という仮説を5件生成してください。
+上記のデータを分析し、「今これを投稿すればバズる」という仮説を${needed}件生成してください。
 各仮説は根拠のある戦略的な仮説であり、実際のコンテンツ制作はContent-labに委託します。
 
 以下のJSON配列形式で返してください:
