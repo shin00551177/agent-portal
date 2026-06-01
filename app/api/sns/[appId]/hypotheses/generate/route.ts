@@ -14,7 +14,7 @@ export async function POST(
 
   const since14d = new Date(Date.now() - 14 * 86_400_000);
 
-  const [recentHits, pastHypotheses, rejectedHypotheses, accounts] = await Promise.all([
+  const [recentHits, pastHypotheses, rejectedHypotheses, learnings, accounts] = await Promise.all([
     db.egoHit.findMany({
       where: { appId, createdAt: { gte: since14d } },
       orderBy: { score: "desc" },
@@ -30,6 +30,7 @@ export async function POST(
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
+    db.snsLearning.findMany({ where: { appId, active: true }, orderBy: { type: "asc" } }),
     db.snsAccount.findMany({ where: { appId } }),
   ]);
 
@@ -43,7 +44,21 @@ export async function POST(
     ? pastHypotheses.map((h) => `- [${h.platform}] ${h.hypothesis}（${h.status}）`).join("\n")
     : "（過去の承認済み仮説なし）";
 
-  const rejectedText = rejectedHypotheses.length > 0
+  // 蒸留済み学びDB（優先）+ 生の差し戻し（補完）
+  const avoidLearnings    = learnings.filter((l) => l.type === "avoid");
+  const prioritizeLearnings = learnings.filter((l) => l.type === "prioritize");
+  const generalLearnings  = learnings.filter((l) => l.type === "general");
+
+  const learningsText = learnings.length > 0
+    ? [
+        avoidLearnings.length    > 0 && `【やってはいけない】\n${avoidLearnings.map((l) => `- ${l.content}${l.platform ? `（${l.platform}）` : ""}`).join("\n")}`,
+        prioritizeLearnings.length > 0 && `【優先すべき】\n${prioritizeLearnings.map((l) => `- ${l.content}${l.platform ? `（${l.platform}）` : ""}`).join("\n")}`,
+        generalLearnings.length  > 0 && `【一般原則】\n${generalLearnings.map((l) => `- ${l.content}${l.platform ? `（${l.platform}）` : ""}`).join("\n")}`,
+      ].filter(Boolean).join("\n\n")
+    : null;
+
+  // 学びDBにない場合のみ生データの差し戻しを補完
+  const rejectedText = learnings.length === 0 && rejectedHypotheses.length > 0
     ? rejectedHypotheses.map((h) =>
         `- [${h.platform}] ${h.hypothesis}\n  → 差し戻し理由: ${h.rejectionNote}`
       ).join("\n")
@@ -68,7 +83,7 @@ ${hitsText}
 
 ## 過去の承認済み仮説（参考: 何がOKだったか）
 ${pastText}
-${rejectedText ? `\n## ❌ 差し戻された仮説（これを反省して次に活かす）\n${rejectedText}\n\n上記の差し戻し理由を必ず踏まえ、同じ失敗を繰り返さないこと。` : ""}
+${learningsText ? `\n## 📚 蓄積された学び（必ず遵守すること）\n${learningsText}` : ""}${rejectedText ? `\n## ❌ 差し戻し履歴（参考）\n${rejectedText}` : ""}
 ## 運用プラットフォーム
 ${platformList}
 

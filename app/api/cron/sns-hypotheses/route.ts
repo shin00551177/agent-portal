@@ -9,7 +9,7 @@ async function generateForApp(appId: string) {
   const appCtx = getAppContext(appId);
   const since14d = new Date(Date.now() - 14 * 86_400_000);
 
-  const [freqRecs, pendingCount, recentHits, pastHypotheses, rejectedHypotheses, accounts] = await Promise.all([
+  const [freqRecs, pendingCount, recentHits, pastHypotheses, rejectedHypotheses, learnings, accounts] = await Promise.all([
     db.snsFrequencyRecommendation.findMany({ where: { appId } }),
     db.snsHypothesis.count({ where: { appId, status: "pending" } }),
     db.egoHit.findMany({ where: { appId, createdAt: { gte: since14d } }, orderBy: { score: "desc" }, take: 50 }),
@@ -23,6 +23,7 @@ async function generateForApp(appId: string) {
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
+    db.snsLearning.findMany({ where: { appId, active: true }, orderBy: { type: "asc" } }),
     db.snsAccount.findMany({ where: { appId } }),
   ]);
 
@@ -40,7 +41,18 @@ async function generateForApp(appId: string) {
 
   const pastText = pastHypotheses.map((h) => `- [${h.platform}] ${h.hypothesis}（${h.status}）`).join("\n") || "（なし）";
 
-  const rejectedText = rejectedHypotheses.length > 0
+  const avoidL    = learnings.filter((l) => l.type === "avoid");
+  const prioritizeL = learnings.filter((l) => l.type === "prioritize");
+  const generalL  = learnings.filter((l) => l.type === "general");
+  const learningsText = learnings.length > 0
+    ? [
+        avoidL.length    > 0 && `【やってはいけない】\n${avoidL.map((l) => `- ${l.content}`).join("\n")}`,
+        prioritizeL.length > 0 && `【優先すべき】\n${prioritizeL.map((l) => `- ${l.content}`).join("\n")}`,
+        generalL.length  > 0 && `【一般原則】\n${generalL.map((l) => `- ${l.content}`).join("\n")}`,
+      ].filter(Boolean).join("\n\n")
+    : null;
+
+  const rejectedText = learnings.length === 0 && rejectedHypotheses.length > 0
     ? rejectedHypotheses.map((h) =>
         `- [${h.platform}] ${h.hypothesis}\n  → 差し戻し理由: ${h.rejectionNote}`
       ).join("\n")
@@ -63,7 +75,7 @@ ${hitsText}
 
 ## 過去の承認済み仮説（参考）
 ${pastText}
-${rejectedText ? `\n## ❌ 差し戻された仮説（反省して次に活かす）\n${rejectedText}\n\n上記の差し戻し理由を必ず踏まえ、同じ失敗を繰り返さないこと。` : ""}
+${learningsText ? `\n## 📚 蓄積された学び（必ず遵守すること）\n${learningsText}` : ""}${rejectedText ? `\n## ❌ 差し戻し履歴（参考）\n${rejectedText}` : ""}
 ## 運用プラットフォーム
 ${platformList}
 

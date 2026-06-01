@@ -88,9 +88,10 @@ model SnsApp {
   patterns     SnsPattern[]
   scripts      SnsScript[]
   briefs       SnsBrief[]
-  hypotheses   SnsHypothesis[]
+  hypotheses       SnsHypothesis[]
   productFeedbacks SnsProductFeedback[]
   frequencyRecs    SnsFrequencyRecommendation[]
+  learnings        SnsLearning[]
   createdAt DateTime     @default(now())
 }
 
@@ -287,6 +288,21 @@ model SnsFrequencyRecommendation {
 
   @@unique([appId, platform])
   @@index([appId])
+}
+
+model SnsLearning {
+  id        String   @id @default(cuid())
+  appId     String
+  app       SnsApp   @relation(fields: [appId], references: [id])
+  type      String   // "avoid" | "prioritize" | "general"
+  content   String
+  platform  String?  // null=全体 or "tiktok" | "x" | "instagram" etc.
+  source    String   @default("human") // "human" | "ai_synthesis"
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([appId, active])
 }
 
 // --------------------------------------------------------------------------

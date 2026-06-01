@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Lightbulb, Search, MessageSquare,
-  Clock, Users, Settings,
+  Clock, Users, Settings, BookOpen,
 } from "lucide-react";
 
 type NavItem = { href: string; label: string; icon: React.ElementType; badge?: number };
@@ -26,6 +26,7 @@ function makeGroups(appId: string, counts: { pending: number; unprocessedFb: num
         { href: `${base}/ego`,        label: "エゴサ",   icon: Search },
         { href: `${base}/feedback`,   label: "ユーザーFB", icon: MessageSquare, badge: counts.unprocessedFb },
         { href: `${base}/frequency`,  label: "投稿頻度",  icon: Clock },
+        { href: `${base}/learnings`,  label: "学習DB",    icon: BookOpen },
       ],
     },
     {
