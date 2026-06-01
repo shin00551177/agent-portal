@@ -214,8 +214,14 @@ ${rejectedSection}
 
   const proposals = extractProposals(text);
   if (proposals.length === 0) {
-    console.error("[analyze] parse failed, raw length:", text.length, "first 200:", text.slice(0, 200));
-    return NextResponse.json({ error: "parse failed", proposalIds: [], rawPreview: text.slice(0, 500) });
+    // cleanedも確認するためextractProposalsの内部処理を再現
+    const cleaned2 = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+    const s2 = cleaned2.indexOf("["), e2 = cleaned2.lastIndexOf("]");
+    const jsonStr2 = s2 >= 0 && e2 > s2 ? cleaned2.slice(s2, e2+1) : "";
+    let parseErr = "";
+    try { if (jsonStr2) JSON.parse(jsonStr2); } catch(e) { parseErr = (e as Error).message; }
+    console.error("[analyze] parse failed. cleanedLen:", cleaned2.length, "jsonLen:", jsonStr2.length, "parseErr:", parseErr);
+    return NextResponse.json({ error: "parse failed", proposalIds: [], rawPreview: text.slice(0, 300), cleanedPreview: jsonStr2.slice(0, 300), parseErr });
   }
 
   // 既存の pending 提案を古いものとして reject（重複防止）
