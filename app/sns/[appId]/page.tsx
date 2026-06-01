@@ -20,7 +20,7 @@ export default async function DashboardPage({
   if (!app) notFound();
 
   const appCtx = getAppContext(appId);
-  const locale = (app as { locale?: string }).locale ?? "ja";
+  const locale = (app as Record<string, unknown>).locale as string | undefined ?? "ja";
   const t = getSnsT(locale).dashboard;
   const since7d  = new Date(Date.now() - 7  * 86_400_000);
   const since14d = new Date(Date.now() - 14 * 86_400_000);
