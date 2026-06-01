@@ -9,12 +9,17 @@ async function generateForApp(appId: string) {
   const appCtx = getAppContext(appId);
   const since14d = new Date(Date.now() - 14 * 86_400_000);
 
-  const [freqRecs, pendingCount, recentHits, pastHypotheses, accounts] = await Promise.all([
+  const [freqRecs, pendingCount, recentHits, pastHypotheses, rejectedHypotheses, accounts] = await Promise.all([
     db.snsFrequencyRecommendation.findMany({ where: { appId } }),
     db.snsHypothesis.count({ where: { appId, status: "pending" } }),
     db.egoHit.findMany({ where: { appId, createdAt: { gte: since14d } }, orderBy: { score: "desc" }, take: 50 }),
     db.snsHypothesis.findMany({
       where: { appId, status: { in: ["approved", "briefed", "posted"] } },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
+    db.snsHypothesis.findMany({
+      where: { appId, status: "rejected", rejectionNote: { not: null } },
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
@@ -35,6 +40,12 @@ async function generateForApp(appId: string) {
 
   const pastText = pastHypotheses.map((h) => `- [${h.platform}] ${h.hypothesis}（${h.status}）`).join("\n") || "（なし）";
 
+  const rejectedText = rejectedHypotheses.length > 0
+    ? rejectedHypotheses.map((h) =>
+        `- [${h.platform}] ${h.hypothesis}\n  → 差し戻し理由: ${h.rejectionNote}`
+      ).join("\n")
+    : null;
+
   const platformList = freqRecs.length > 0
     ? freqRecs.map((r) => `${r.platform}（週${r.adjustedFrequency ?? r.recommendedFrequency}回推奨）`).join(", ")
     : (accounts.map((a) => a.platform).join(", ") || "x, instagram");
@@ -50,9 +61,9 @@ ${appCtx.description} ターゲット: ${appCtx.target}
 - 収集${recentHits.length}件（ネガ${neg} / ポジ${pos} / バズ${buzz}）
 ${hitsText}
 
-## 過去の承認済み仮説
+## 過去の承認済み仮説（参考）
 ${pastText}
-
+${rejectedText ? `\n## ❌ 差し戻された仮説（反省して次に活かす）\n${rejectedText}\n\n上記の差し戻し理由を必ず踏まえ、同じ失敗を繰り返さないこと。` : ""}
 ## 運用プラットフォーム
 ${platformList}
 

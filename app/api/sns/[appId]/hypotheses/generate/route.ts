@@ -14,7 +14,7 @@ export async function POST(
 
   const since14d = new Date(Date.now() - 14 * 86_400_000);
 
-  const [recentHits, pastHypotheses, accounts] = await Promise.all([
+  const [recentHits, pastHypotheses, rejectedHypotheses, accounts] = await Promise.all([
     db.egoHit.findMany({
       where: { appId, createdAt: { gte: since14d } },
       orderBy: { score: "desc" },
@@ -22,6 +22,11 @@ export async function POST(
     }),
     db.snsHypothesis.findMany({
       where: { appId, status: { in: ["approved", "briefed", "posted", "measured"] } },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
+    db.snsHypothesis.findMany({
+      where: { appId, status: "rejected", rejectionNote: { not: null } },
       orderBy: { createdAt: "desc" },
       take: 10,
     }),
@@ -35,10 +40,14 @@ export async function POST(
     : "（直近14日間のエゴサデータなし）";
 
   const pastText = pastHypotheses.length > 0
-    ? pastHypotheses.map((h) =>
-        `- [${h.platform}] ${h.hypothesis}（${h.status}）`
-      ).join("\n")
+    ? pastHypotheses.map((h) => `- [${h.platform}] ${h.hypothesis}（${h.status}）`).join("\n")
     : "（過去の承認済み仮説なし）";
+
+  const rejectedText = rejectedHypotheses.length > 0
+    ? rejectedHypotheses.map((h) =>
+        `- [${h.platform}] ${h.hypothesis}\n  → 差し戻し理由: ${h.rejectionNote}`
+      ).join("\n")
+    : null;
 
   const platformList = accounts.length > 0
     ? [...new Set(accounts.map((a) => a.platform))].join(", ")
@@ -57,9 +66,9 @@ ${appCtx.description}
 - 主な言及:
 ${hitsText}
 
-## 過去の承認済み仮説
+## 過去の承認済み仮説（参考: 何がOKだったか）
 ${pastText}
-
+${rejectedText ? `\n## ❌ 差し戻された仮説（これを反省して次に活かす）\n${rejectedText}\n\n上記の差し戻し理由を必ず踏まえ、同じ失敗を繰り返さないこと。` : ""}
 ## 運用プラットフォーム
 ${platformList}
 
