@@ -71,25 +71,25 @@ const SNS_APPS = [
   {
     id: "ai-avatar",
     name: "AI AVATAR",
-    active: false,
+    active: true,
     platforms: ["youtube", "tiktok", "instagram", "x"],
   },
   {
     id: "soulriza",
     name: "SOULRiZA",
-    active: false,
+    active: true,
     platforms: ["youtube", "tiktok", "instagram", "x"],
   },
   {
     id: "king-together",
     name: "KING Together",
-    active: false,
+    active: true,
     platforms: ["youtube", "tiktok", "instagram", "x"],
   },
   {
     id: "education",
     name: "Education",
-    active: false,
+    active: true,
     platforms: ["youtube", "instagram", "x"],
   },
   {

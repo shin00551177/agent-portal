@@ -3,10 +3,10 @@ import { db } from "@/lib/db";
 
 const SNS_APPS = [
   { id: "twomi",         name: "Twomi",        active: true,  platforms: ["youtube","tiktok","instagram","x","facebook","threads"] },
-  { id: "ai-avatar",     name: "AI AVATAR",    active: false, platforms: ["youtube","tiktok","instagram","x"] },
-  { id: "soulriza",      name: "SOULRiZA",     active: false, platforms: ["youtube","tiktok","instagram","x"] },
-  { id: "king-together", name: "KING Together", active: false, platforms: ["youtube","tiktok","instagram","x"] },
-  { id: "education",     name: "Education",    active: false, platforms: ["youtube","instagram","x"] },
+  { id: "ai-avatar",     name: "AI AVATAR",    active: true,  platforms: ["youtube","tiktok","instagram","x"] },
+  { id: "soulriza",      name: "SOULRiZA",     active: true,  platforms: ["youtube","tiktok","instagram","x"] },
+  { id: "king-together", name: "KING Together", active: true,  platforms: ["youtube","tiktok","instagram","x"] },
+  { id: "education",     name: "Education",    active: true,  platforms: ["youtube","instagram","x"] },
   { id: "pachinavi",     name: "パチナビ",     active: true,  platforms: ["youtube","tiktok","x"] },
 ];
 
