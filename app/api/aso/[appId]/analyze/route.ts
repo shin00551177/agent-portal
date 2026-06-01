@@ -130,11 +130,13 @@ ${currentMeta.android ? `
   const prompt = `あなたはApp Store最適化（ASO）の専門家です。以下の ${app.name} のASO データを徹底的に分析し、考えられる全ての改善点を提案してください。
 
 ## エージェント行動規範
-- 提案は必ず「結果→原因分析→ネクストアクション」の3点セットで構成する
+- 提案は必ず「結果→原因分析→ネクストアクション」の3点セットで構成する（絶対に空欄にしない）
+- JSON文字列値の中にASCIIダブルクォート「"」を使わない。引用は必ず「」を使う
 - 人間（オーナー）の承認なしに直接変更を実行しない。提案形式のみとする
 - 確信度 medium 以上の根拠がある提案のみ生成する（推測だけによる提案は不可）
 - 過去に却下された提案と同じ内容・同じフィールドへの変更を繰り返さない
-- **最大8件まで。優先度の高いものから順に出すこと**
+- **最大5件まで。優先度の高いものから順に出すこと**
+- result・cause・nextAction は全フィールド必須。空文字列・省略は絶対に禁止
 
 ## 分析対象（全要素を網羅的にチェックすること）
 - タイトル: 文字数の最適化・主要KW含有
@@ -162,7 +164,7 @@ ${rejectedSection}
 2. **原因分析**（なぜその結果になっているか。データに基づく推論）
 3. **ネクストアクション**（具体的な変更内容と期待される効果）
 
-以下のJSON配列形式で**最大8件の改善提案（優先度順）**を返してください。コードブロックや説明文は不要、JSONのみ返してください。
+以下のJSON配列形式で**最大5件の改善提案（優先度順）**を返してください。コードブロックや説明文は不要、JSONのみ返してください。result・cause・nextAction は必ず内容を記載すること（空文字列禁止）。
 
 [
   {
@@ -185,8 +187,8 @@ ${rejectedSection}
 
   const message = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 4096,
-    system: "You are an ASO expert. Output ONLY a raw JSON array starting with [ and ending with ]. No markdown, no code blocks, no explanation.",
+    max_tokens: 8000,
+    system: "You are an ASO expert. Output ONLY a valid JSON array. No markdown, no code blocks, no explanation. CRITICAL: Never use ASCII double-quote characters (\") inside string values — use Japanese quotes 「」 instead.",
     messages: [{ role: "user", content: promptWithStart }],
   });
 
@@ -205,27 +207,54 @@ ${rejectedSection}
     proposed: string;
   };
 
-  // JSON 配列を堅牢に抽出（マークダウンコードブロック・改行・特殊文字を含む出力に対応）
+  // JSON 配列を堅牢に抽出 — ステートマシン方式（正規表現不使用）
   function extractProposals(raw: string): ProposalInput[] {
-    // ```json ... ``` フェンスを除去
-    const cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+    const cleaned = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
 
     const start = cleaned.indexOf("[");
-    const end = cleaned.lastIndexOf("]");
+    const end   = cleaned.lastIndexOf("]");
     if (start === -1 || end === -1 || end <= start) return [];
 
-    // 文字列リテラル内の未エスケープ改行をエスケープ
-    let jsonStr = cleaned.slice(start, end + 1);
-    // 各フィールド値内の literal newline を \n に変換（JSON文字列内のみ）
-    jsonStr = jsonStr.replace(/"((?:[^"\\]|\\.)*)"/g, (_match, p1) => {
-      return '"' + p1.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t') + '"';
-    });
+    const slice = cleaned.slice(start, end + 1);
+
+    // Step1: まずそのままパース
+    try {
+      const parsed = JSON.parse(slice);
+      if (Array.isArray(parsed)) return parsed;
+    } catch { /* 修復処理へ */ }
+
+    // Step2: ステートマシンで文字列内の未エスケープ改行/タブのみ修復
+    // regexと違い、ネスト・クォート混在でも安全
+    let fixed = "";
+    let inString = false;
+    let escaped  = false;
+    for (let i = 0; i < slice.length; i++) {
+      const ch = slice[i];
+      if (escaped) {
+        fixed += ch;
+        escaped = false;
+      } else if (ch === "\\") {
+        fixed += ch;
+        escaped = true;
+      } else if (ch === '"') {
+        fixed += ch;
+        inString = !inString;
+      } else if (inString && ch === "\n") {
+        fixed += "\\n";
+      } else if (inString && ch === "\r") {
+        fixed += "\\r";
+      } else if (inString && ch === "\t") {
+        fixed += "\\t";
+      } else {
+        fixed += ch;
+      }
+    }
 
     try {
-      const parsed = JSON.parse(jsonStr);
+      const parsed = JSON.parse(fixed);
       return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
-      console.error("[extractProposals] parse error:", (e as Error).message, "jsonStr length:", jsonStr.length);
+      console.error("[extractProposals] repair failed:", (e as Error).message, "len:", fixed.length);
       return [];
     }
   }
