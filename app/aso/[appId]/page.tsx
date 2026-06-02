@@ -134,7 +134,7 @@ export default async function AsoAppPage({
         <div className="space-y-10">
           {store === "ios" ? (
             <>
-              <StoreHealthDashboard appId={appId} iosId={app.iosId ?? null} googlePlayId={null} ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null} store="ios" />
+              <StoreHealthDashboard appId={appId} iosId={app.iosId ?? null} googlePlayId={null} ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null} store="ios" appPower={latestData.appMetrics?.appPower ?? null} keywords={latestData.keywords ?? []} />
               <StorePreview iosId={app.iosId} googlePlayId={null} ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null} store="ios" />
               <StoreAnalytics iosId={app.iosId} />
               <StoreImages appId={appId} iosId={app.iosId} googlePlayId={null} store="ios" />
@@ -157,7 +157,7 @@ export default async function AsoAppPage({
             </>
           ) : (
             <>
-              <StoreHealthDashboard appId={appId} iosId={null} googlePlayId={app.googlePlayId ?? null} ratingsAvg={latestData.androidAppMetrics?.ratingsAvg ?? null} store="android" />
+              <StoreHealthDashboard appId={appId} iosId={null} googlePlayId={app.googlePlayId ?? null} ratingsAvg={latestData.androidAppMetrics?.ratingsAvg ?? null} store="android" appPower={latestData.androidAppMetrics?.appPower ?? null} keywords={latestData.keywords ?? []} />
               <StorePreview iosId={null} googlePlayId={app.googlePlayId} ratingsAvg={latestData.androidAppMetrics?.ratingsAvg ?? null} store="android" />
               <StoreImages appId={appId} iosId={null} googlePlayId={app.googlePlayId} store="android" />
               <div>

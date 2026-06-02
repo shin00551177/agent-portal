@@ -134,18 +134,24 @@ function OverallScore({ cards }: { cards: ElementCard[] }) {
 
 // ─── Main export ─────────────────────────────────────────────────────────────
 
+type KwData = { keyword: string; rank: number | null };
+
 export async function StoreHealthDashboard({
   appId: _appId,
   iosId,
   googlePlayId,
   ratingsAvg,
   store,
+  appPower,
+  keywords,
 }: {
   appId: string;
   iosId: string | null;
   googlePlayId: string | null;
   ratingsAvg: number | null;
   store?: "ios" | "android";
+  appPower?: number | null;
+  keywords?: KwData[];
 }) {
   const [iosListing, androidListings, iosScreenshots, androidImages, iosIconUrl] = await Promise.allSettled([
     iosId ? fetchIosFullListing(iosId) : Promise.resolve(null),
@@ -203,11 +209,38 @@ export async function StoreHealthDashboard({
   const featureS  = googlePlayId ? boolScore(andHasFeature) : { score: 0, status: "unknown" as HealthStatus };
   const ratingS   = ratingScore(ratingsAvg);
 
+  // Apptweak: App Power スコア（0-10 → 0-100pt）
+  const appPowerScore = appPower != null
+    ? { score: Math.round(appPower * 10), status: (appPower >= 5 ? "good" : appPower >= 3 ? "warn" : "bad") as HealthStatus }
+    : { score: 0, status: "unknown" as HealthStatus };
+
+  // Apptweak: キーワードTop10圏内スコア
+  const kwList = keywords ?? [];
+  const top10Count = kwList.filter(k => k.rank != null && k.rank <= 10).length;
+  const top50Count = kwList.filter(k => k.rank != null && k.rank <= 50).length;
+  const kwScore = kwList.length > 0
+    ? { score: Math.round((top10Count / kwList.length) * 100), status: (top10Count >= 3 ? "good" : top10Count >= 1 ? "warn" : "bad") as HealthStatus }
+    : { score: 0, status: "unknown" as HealthStatus };
+
   const visualCards: ElementCard[] = [
     { label: "スクリーンショット（iOS）",     value: iosShotCount > 0 ? `${iosShotCount}枚` : "",   ...iosShotS,  hint: "最大10枚推奨",       best: "10枚・縦横混在・キャプション付き" },
     { label: "スクリーンショット（Android）", value: andShotCount > 0 ? `${andShotCount}枚` : "",   ...andShotS,  hint: "最大8枚",             best: "8枚・フィーチャーグラフィック必須" },
     { label: "フィーチャーグラフィック",      value: andHasFeature ? "設定済み" : "",                ...featureS,  hint: "Android必須 1024×500", best: "設定必須・訴求コピー入れる" },
     { label: "評価スコア",                    value: ratingsAvg != null ? `★ ${ratingsAvg.toFixed(1)}` : "", ...ratingS, hint: "業界平均 ★4.3",  best: "★4.5以上（ストア検索優遇）" },
+    {
+      label: "App Power（Apptweak）",
+      value: appPower != null ? `${appPower.toFixed(1)} / 10` : "",
+      ...appPowerScore,
+      hint: "ストア内露出力（Apptweak計測）",
+      best: "5.0以上（上位20%水準）",
+    },
+    {
+      label: "KWランクTop10",
+      value: kwList.length > 0 ? `${top10Count}語 / Top50: ${top50Count}語` : "",
+      ...kwScore,
+      hint: "Apptweakキーワード順位より",
+      best: "監視KWの30%以上がTop10圏内",
+    },
   ];
 
   // storeフィルタ: "ios"→iOSのみ、"android"→Androidのみ、undefined→全部
