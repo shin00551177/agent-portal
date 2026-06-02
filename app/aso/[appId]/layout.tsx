@@ -1,8 +1,11 @@
 export const dynamic = "force-dynamic";
 
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { db } from "@/lib/db";
 import Link from "next/link";
+import { AsoAppTabNav } from "./AppTabNav";
+import { StoreSwitcher } from "./StoreSwitcher";
 
 export default async function AsoAppLayout({
   children,
@@ -17,42 +20,38 @@ export default async function AsoAppLayout({
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="pb-8 border-b border-[#f0f0f0]">
-        <p className="text-[13px] text-[#6e6e73] mb-5">
-          <Link href="/aso" className="hover:text-[#1d1d1f] transition-colors">ASO管理</Link>
-          {" "}›{" "}
-          <span className="text-[#1d1d1f]">{app.name}</span>
-        </p>
-        <div className="flex items-center gap-5">
-          <div className="w-12 h-12 rounded-xl bg-[#f5f5f7] flex items-center justify-center">
-            <span className="text-[17px] font-semibold text-[#1d1d1f]">{app.name[0]}</span>
-          </div>
-          <div>
-            <h1 className="text-[28px] font-semibold text-[#1d1d1f] tracking-tight">{app.name}</h1>
-            <p className="text-[13px] text-[#6e6e73] mt-0.5">
-              {[app.googlePlayId && `Android: ${app.googlePlayId}`, app.iosId && `iOS: ${app.iosId}`]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <p className="text-[13px] text-[#1d1d1f] flex items-center gap-1.5">
-              {app.active
-                ? <><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block" />稼働中</>
-                : <span className="text-[#6e6e73]">停止中</span>
-              }
-            </p>
-            <Link
-              href={`/aso/${appId}/settings`}
-              className="text-[#6e6e73] hover:text-[#1d1d1f] transition-colors p-1.5 rounded-lg hover:bg-[#f5f5f7]"
-              aria-label="設定"
-            >
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-              </svg>
+      {/* Sticky header */}
+      <div className="sticky top-12 z-40 bg-white/95 backdrop-blur-md border-b border-[#f0f0f0] -mx-5 px-5 py-3">
+        <div className="max-w-[980px] mx-auto flex items-center justify-between gap-4">
+          {/* Breadcrumb + App name */}
+          <div className="flex items-center gap-3 min-w-0">
+            <Link href="/aso" className="text-[12px] text-[#86868b] hover:text-[#1d1d1f] transition-colors flex-shrink-0">
+              ASO
             </Link>
+            <span className="text-[#c7c7cc]">›</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-6 h-6 rounded-md bg-[#f5f5f7] flex items-center justify-center flex-shrink-0">
+                <span className="text-[10px] font-bold text-[#1d1d1f]">{app.name[0]}</span>
+              </div>
+              <span className="text-[14px] font-semibold text-[#1d1d1f] truncate">{app.name}</span>
+              <span className={`text-[11px] flex items-center gap-1 flex-shrink-0 ${app.active ? "text-emerald-600" : "text-[#86868b]"}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${app.active ? "bg-emerald-500" : "bg-[#c7c7cc]"}`} />
+                {app.active ? "稼働中" : "停止中"}
+              </span>
+            </div>
           </div>
+
+          {/* iOS / Android switcher */}
+          {(app.iosId || app.googlePlayId) && (
+            <Suspense>
+              <StoreSwitcher hasIos={!!app.iosId} hasAndroid={!!app.googlePlayId} />
+            </Suspense>
+          )}
+        </div>
+
+        {/* Tab nav */}
+        <div className="max-w-[980px] mx-auto mt-2">
+          <AsoAppTabNav appId={appId} />
         </div>
       </div>
 

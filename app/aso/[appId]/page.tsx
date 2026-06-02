@@ -81,20 +81,6 @@ export default async function AsoAppPage({
   return (
     <div>
 
-      {/* Store Health Dashboard */}
-      <section className="py-12 border-b border-[#f0f0f0]">
-        <div className="mb-6">
-          <h2 className="text-[24px] font-semibold text-[#1d1d1f] tracking-tight">ストア健全性</h2>
-          <p className="text-[13px] text-[#6e6e73] mt-1">全ストア要素のステータス一覧</p>
-        </div>
-        <StoreHealthDashboard
-          appId={appId}
-          iosId={app.iosId ?? null}
-          googlePlayId={app.googlePlayId ?? null}
-          ratingsAvg={currentMetrics?.ratingsAvg ?? null}
-        />
-      </section>
-
       {/* Stats */}
       <div className="py-8 border-b border-[#f0f0f0]">
         <div className="grid grid-cols-3 gap-0 divide-x divide-[#f0f0f0]">
@@ -151,6 +137,7 @@ export default async function AsoAppPage({
         iosContent={
           <section className="py-8 border-b border-[#f0f0f0]">
             <div className="space-y-10">
+              <StoreHealthDashboard appId={appId} iosId={app.iosId ?? null} googlePlayId={null} ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null} store="ios" />
               <StorePreview iosId={app.iosId} googlePlayId={null} ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null} store="ios" />
               <StoreAnalytics iosId={app.iosId} />
               <StoreImages appId={appId} iosId={app.iosId} googlePlayId={null} store="ios" />
@@ -176,6 +163,7 @@ export default async function AsoAppPage({
         androidContent={
           <section className="py-8 border-b border-[#f0f0f0]">
             <div className="space-y-10">
+              <StoreHealthDashboard appId={appId} iosId={null} googlePlayId={app.googlePlayId ?? null} ratingsAvg={latestData.androidAppMetrics?.ratingsAvg ?? null} store="android" />
               <StorePreview iosId={null} googlePlayId={app.googlePlayId} ratingsAvg={latestData.androidAppMetrics?.ratingsAvg ?? null} store="android" />
               <StoreImages appId={appId} iosId={null} googlePlayId={app.googlePlayId} store="android" />
               <div>
