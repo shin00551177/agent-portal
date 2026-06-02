@@ -14,7 +14,6 @@ import { AsoChatBot } from "@/components/AsoChatBot";
 import { StoreHealthDashboard } from "./StoreHealthDashboard";
 import { ReviewsSection } from "./ReviewsSection";
 import { PreviewVideosSection } from "./PreviewVideosSection";
-import { StoreTabsClient } from "./StoreTabsClient";
 
 export default async function AsoAppPage({
   params,
@@ -130,13 +129,11 @@ export default async function AsoAppPage({
       </section>
 
       {/* ストア別コンテンツ — スティッキー切り替え＋即時表示 */}
-      <StoreTabsClient
-        defaultStore={store}
-        hasIos={!!app.iosId}
-        hasAndroid={!!app.googlePlayId}
-        iosContent={
-          <section className="py-8 border-b border-[#f0f0f0]">
-            <div className="space-y-10">
+      {/* ストア別コンテンツ — searchParams.store で完全切り替え（データも正しく更新） */}
+      <section className="py-8 border-b border-[#f0f0f0]">
+        <div className="space-y-10">
+          {store === "ios" ? (
+            <>
               <StoreHealthDashboard appId={appId} iosId={app.iosId ?? null} googlePlayId={null} ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null} store="ios" />
               <StorePreview iosId={app.iosId} googlePlayId={null} ratingsAvg={latestData.appMetrics?.ratingsAvg ?? null} store="ios" />
               <StoreAnalytics iosId={app.iosId} />
@@ -157,12 +154,9 @@ export default async function AsoAppPage({
                 <p className="text-[13px] text-[#6e6e73] mb-4">App Store のレビューを確認し、AI返信案を生成できます</p>
                 <ReviewsSection appId={appId} platform="ios" />
               </div>
-            </div>
-          </section>
-        }
-        androidContent={
-          <section className="py-8 border-b border-[#f0f0f0]">
-            <div className="space-y-10">
+            </>
+          ) : (
+            <>
               <StoreHealthDashboard appId={appId} iosId={null} googlePlayId={app.googlePlayId ?? null} ratingsAvg={latestData.androidAppMetrics?.ratingsAvg ?? null} store="android" />
               <StorePreview iosId={null} googlePlayId={app.googlePlayId} ratingsAvg={latestData.androidAppMetrics?.ratingsAvg ?? null} store="android" />
               <StoreImages appId={appId} iosId={null} googlePlayId={app.googlePlayId} store="android" />
@@ -175,10 +169,10 @@ export default async function AsoAppPage({
                 <p className="text-[13px] text-[#6e6e73] mb-4">Google Play のレビューを確認し、AI返信案を生成できます</p>
                 <ReviewsSection appId={appId} platform="android" />
               </div>
-            </div>
-          </section>
-        }
-      />
+            </>
+          )}
+        </div>
+      </section>
 
       {/* Keywords */}
       <section className="py-12 border-b border-[#f0f0f0]">
