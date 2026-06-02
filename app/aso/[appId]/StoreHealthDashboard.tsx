@@ -139,11 +139,13 @@ export async function StoreHealthDashboard({
   iosId,
   googlePlayId,
   ratingsAvg,
+  store,
 }: {
   appId: string;
   iosId: string | null;
   googlePlayId: string | null;
   ratingsAvg: number | null;
+  store?: "ios" | "android";
 }) {
   const [iosListing, androidListings, iosScreenshots, androidImages, iosIconUrl] = await Promise.allSettled([
     iosId ? fetchIosFullListing(iosId) : Promise.resolve(null),
@@ -208,13 +210,27 @@ export async function StoreHealthDashboard({
     { label: "評価スコア",                    value: ratingsAvg != null ? `★ ${ratingsAvg.toFixed(1)}` : "", ...ratingS, hint: "業界平均 ★4.3",  best: "★4.5以上（ストア検索優遇）" },
   ];
 
-  const allCards = [...iosCards, ...androidCards, ...visualCards];
+  // storeフィルタ: "ios"→iOSのみ、"android"→Androidのみ、undefined→全部
+  const showIos     = !store || store === "ios";
+  const showAndroid = !store || store === "android";
+
+  const filteredIosCards     = showIos     ? iosCards     : [];
+  const filteredAndroidCards = showAndroid ? androidCards : [];
+
+  // ビジュアルカードもフィルタ
+  const filteredVisual = visualCards.filter(c => {
+    if (c.label.includes("iOS"))     return showIos;
+    if (c.label.includes("Android") || c.label.includes("フィーチャー")) return showAndroid;
+    return true; // 評価スコアは常時
+  });
+
+  const allCards = [...filteredIosCards, ...filteredAndroidCards, ...filteredVisual];
 
   return (
     <div className="space-y-6">
       <OverallScore cards={allCards} />
 
-      {iconUrl && (
+      {showIos && iconUrl && (
         <div className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={iconUrl} alt="App Icon" className="w-12 h-12 rounded-xl border border-[#f0f0f0] shadow-sm" />
@@ -225,36 +241,38 @@ export async function StoreHealthDashboard({
         </div>
       )}
 
-      {iosCards.length > 0 && (
+      {filteredIosCards.length > 0 && (
         <div>
           <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <span className="w-4 h-4 rounded bg-[#1d1d1f] inline-flex items-center justify-center text-white text-[8px] font-bold">A</span>
             App Store
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {iosCards.map((c) => <HealthCard key={c.label} card={c} />)}
+            {filteredIosCards.map((c) => <HealthCard key={c.label} card={c} />)}
           </div>
         </div>
       )}
 
-      {androidCards.length > 0 && (
+      {filteredAndroidCards.length > 0 && (
         <div>
           <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="#34a853"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85a.637.637 0 00-.83.22l-1.88 3.24A11.37 11.37 0 0012 8a11.37 11.37 0 00-4.47.91L5.65 5.67a.634.634 0 00-.86-.2c-.29.16-.39.54-.22.83L6.4 9.48A10.78 10.78 0 001 19h22a10.78 10.78 0 00-5.4-9.52z"/></svg>
             Google Play
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {androidCards.map((c) => <HealthCard key={c.label} card={c} />)}
+            {filteredAndroidCards.map((c) => <HealthCard key={c.label} card={c} />)}
           </div>
         </div>
       )}
 
-      <div>
-        <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest mb-3">ビジュアル・評価</p>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {visualCards.map((c) => <HealthCard key={c.label} card={c} />)}
+      {filteredVisual.length > 0 && (
+        <div>
+          <p className="text-[11px] font-semibold text-[#86868b] uppercase tracking-widest mb-3">ビジュアル・評価</p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {filteredVisual.map((c) => <HealthCard key={c.label} card={c} />)}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
