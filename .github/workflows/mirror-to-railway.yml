@@ -6,6 +6,7 @@ on:
 
 jobs:
   mirror:
+    if: github.repository == 'torilab-ai/op-agent-ASO-SNS'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
