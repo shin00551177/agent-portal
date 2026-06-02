@@ -1,0 +1,18 @@
+name: Mirror to Railway repo
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to shin00551177/agent-portal
+        run: |
+          git remote add mirror https://x-access-token:${{ secrets.MIRROR_TOKEN }}@github.com/shin00551177/agent-portal.git
+          git push mirror HEAD:main --force
