@@ -99,15 +99,19 @@ JSONのみ返してください。`;
   const message = await client.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 3000,
-    system: "SNSストラテジストとして、データに基づく仮説をJSON形式のみで返してください。",
+    system: "You are an SNS strategist. Output ONLY a raw JSON array. No markdown, no code blocks, no explanation.",
     messages: [{ role: "user", content: prompt }],
   });
 
-  const text = message.content[0].type === "text" ? message.content[0].text : "[]";
+  const rawText = message.content[0].type === "text" ? message.content[0].text.trim() : "[]";
+  const cleanedText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "");
+  const start = cleanedText.indexOf("[");
+  const end = cleanedText.lastIndexOf("]");
+  const jsonStr = start >= 0 && end > start ? cleanedText.slice(start, end + 1) : "[]";
   let items: Array<{ platform: string; hypothesis: string; reasoning: string; targetAudience?: string; format?: string; contentBrief?: string }> = [];
   try {
-    const m = text.match(/\[[\s\S]*\]/);
-    if (m) items = JSON.parse(m[0]);
+    const parsed = JSON.parse(jsonStr);
+    items = Array.isArray(parsed) ? parsed : [];
   } catch {
     return { appId, generated: 0, reason: "parse error" };
   }
