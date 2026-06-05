@@ -127,7 +127,7 @@ JSONのみ返してください。`;
     message = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 3000,
-      system: "SNSストラテジストとして、データに基づく戦略的な投稿仮説をJSON形式のみで返してください。",
+      system: "You are an SNS strategist. Output ONLY a raw JSON array. No markdown, no code blocks, no explanation.",
       messages: [{ role: "user", content: prompt }],
     });
   } catch (e) {
@@ -135,7 +135,13 @@ JSONのみ返してください。`;
     return NextResponse.json({ error: `Claude API error: ${msg}` }, { status: 500 });
   }
 
-  const text = message.content[0].type === "text" ? message.content[0].text : "[]";
+  const rawText = message.content[0].type === "text" ? message.content[0].text.trim() : "[]";
+  // コードブロックfenceを除去
+  const cleanedText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "");
+  const start = cleanedText.indexOf("[");
+  const end = cleanedText.lastIndexOf("]");
+  const jsonStr = start >= 0 && end > start ? cleanedText.slice(start, end + 1) : "[]";
+
   let items: Array<{
     platform: string;
     hypothesis: string;
@@ -146,19 +152,17 @@ JSONのみ返してください。`;
   }> = [];
 
   try {
-    const m = text.match(/\[[\s\S]*\]/);
-    if (m) {
-      const parsed = JSON.parse(m[0]);
-      // contentBriefが配列で返ってきた場合に文字列に変換
-      items = parsed.map((item: Record<string, unknown>) => ({
-        ...item,
-        contentBrief: Array.isArray(item.contentBrief)
-          ? (item.contentBrief as string[]).join("\n")
-          : (item.contentBrief ?? null),
-      }));
-    }
-  } catch {
-    return NextResponse.json({ error: "AI応答のパースに失敗しました" }, { status: 500 });
+    const parsed = JSON.parse(jsonStr);
+    // contentBriefが配列で返ってきた場合に文字列に変換
+    items = (Array.isArray(parsed) ? parsed : []).map((item: Record<string, unknown>) => ({
+      ...item,
+      contentBrief: Array.isArray(item.contentBrief)
+        ? (item.contentBrief as string[]).join("\n")
+        : (item.contentBrief ?? null),
+    }));
+  } catch (e) {
+    console.error("[hypotheses/generate] parse error:", (e as Error).message, "raw:", rawText.slice(0, 200));
+    return NextResponse.json({ error: "AI応答のパースに失敗しました", raw: rawText.slice(0, 300) }, { status: 500 });
   }
 
   const saved = await Promise.all(
