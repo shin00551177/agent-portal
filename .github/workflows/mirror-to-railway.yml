@@ -15,6 +15,10 @@ jobs:
           fetch-depth: 0
 
       - name: Push to shin00551177/agent-portal
+        env:
+          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
-          git remote add mirror https://x-access-token:${{ secrets.MIRROR_TOKEN }}@github.com/shin00551177/agent-portal.git
+          git config --global user.email "mirror@github.com"
+          git config --global user.name "Mirror Bot"
+          git remote add mirror https://${{ secrets.MIRROR_TOKEN }}@github.com/shin00551177/agent-portal.git
           git push mirror HEAD:main --force
