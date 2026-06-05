@@ -16,10 +16,10 @@ jobs:
 
       - name: Push to shin00551177/agent-portal
         env:
-          MIRROR_TOKEN: ${{ secrets.MIRROR_TOKEN }}
+          GH_TOKEN: ${{ secrets.MIRROR_TOKEN }}
         run: |
           git config --global user.email "mirror@github.com"
           git config --global user.name "Mirror Bot"
-          git config --global credential.helper ""
-          git remote add mirror "https://shin00551177:${MIRROR_TOKEN}@github.com/shin00551177/agent-portal.git"
+          gh auth setup-git
+          git remote add mirror https://github.com/shin00551177/agent-portal.git
           git push mirror HEAD:main --force
