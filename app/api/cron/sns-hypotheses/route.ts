@@ -98,7 +98,7 @@ JSONのみ返してください。`;
 
   const message = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 3000,
+    max_tokens: 6000,
     system: "You are an SNS strategist. Output ONLY a raw JSON array. No markdown, no code blocks, no explanation.",
     messages: [{ role: "user", content: prompt }],
   });
