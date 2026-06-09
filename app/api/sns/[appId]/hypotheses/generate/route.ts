@@ -159,7 +159,8 @@ JSONのみ返してください。`;
       contentBrief: Array.isArray(item.contentBrief)
         ? (item.contentBrief as string[]).join("\n")
         : (item.contentBrief ?? null),
-    }));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    })) as any;
   } catch (e) {
     console.error("[hypotheses/generate] parse error:", (e as Error).message, "raw:", rawText.slice(0, 200));
     return NextResponse.json({ error: "AI応答のパースに失敗しました", raw: rawText.slice(0, 300) }, { status: 500 });
