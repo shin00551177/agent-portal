@@ -83,22 +83,22 @@ ${learningsText ? `\n## 📚 蓄積された学び（必ず遵守すること）
 ## 運用プラットフォーム
 ${platformList}
 
-「今これを投稿すればバズる」仮説を${needed}件生成してください。
+「今これを投稿すればバズる」仮説を${needed}件生成してください。各フィールドは以下の文字数制限を厳守すること：
 [
   {
-    "platform": "プラットフォーム",
-    "hypothesis": "バズる仮説（1〜2文）",
-    "reasoning": "根拠（2〜4文）",
-    "targetAudience": "ターゲット層",
-    "format": "フォーマット",
-    "contentBrief": "Content-lab向け指示書（箇条書き）"
+    "platform": "プラットフォーム名",
+    "hypothesis": "バズる仮説（1〜2文、最大100文字）",
+    "reasoning": "根拠（2文以内、最大150文字）",
+    "targetAudience": "ターゲット層（最大50文字）",
+    "format": "フォーマット（最大50文字）",
+    "contentBrief": "Content-lab向け指示（箇条書き3行以内、最大200文字）"
   }
 ]
 JSONのみ返してください。`;
 
   const message = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 6000,
+    max_tokens: 3000,
     system: "You are an SNS strategist. Output ONLY a raw JSON array. No markdown, no code blocks, no explanation.",
     messages: [{ role: "user", content: prompt }],
   });
