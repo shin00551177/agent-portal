@@ -8,6 +8,16 @@ const client = new Anthropic();
 async function generateForApp(appId: string) {
   const appCtx = getAppContext(appId);
   const since14d = new Date(Date.now() - 14 * 86_400_000);
+  const expiryCutoff = new Date(Date.now() - 7 * 86_400_000);
+
+  // 1週間以上pendingの仮説を自動廃棄
+  const expired = await db.snsHypothesis.updateMany({
+    where: { appId, status: "pending", createdAt: { lt: expiryCutoff } },
+    data: { status: "expired" },
+  });
+  if (expired.count > 0) {
+    console.log(`[sns-cron] ${appId}: expired ${expired.count} stale pending hypotheses`);
+  }
 
   const [freqRecs, pendingCount, recentHits, pastHypotheses, rejectedHypotheses, learnings, accounts] = await Promise.all([
     db.snsFrequencyRecommendation.findMany({ where: { appId } }),
@@ -27,9 +37,9 @@ async function generateForApp(appId: string) {
     db.snsAccount.findMany({ where: { appId } }),
   ]);
 
-  // 目標pending数 = 推奨週投稿数の合計（最低3、最大7）
+  // 目標pending数 = 推奨週投稿数の合計（最低3、最大10）
   const targetPerWeek = freqRecs.reduce((sum, r) => sum + (r.adjustedFrequency ?? r.recommendedFrequency), 0);
-  const targetPending = Math.min(Math.max(targetPerWeek, 3), 7);
+  const targetPending = Math.min(Math.max(targetPerWeek, 3), 10);
 
   const needed = targetPending - pendingCount;
   if (needed <= 0) return { appId, generated: 0, reason: `already ${pendingCount} pending` };
