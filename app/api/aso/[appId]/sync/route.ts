@@ -52,7 +52,7 @@ export async function POST(
       ? fetchKeywordRankings(app.iosId, keywords, app.country, app.language)
       : Promise.resolve({}),
     !isRangeQuery
-      ? fetchAppMetrics(app.iosId, app.country)
+      ? fetchAppMetrics(app.iosId, app.country).catch((e) => { console.error("[sync] fetchAppMetrics failed:", (e as Error).message); return null; })
       : Promise.resolve(null),
     !isRangeQuery && app.googlePlayId
       ? fetchAndroidAppMetrics(app.googlePlayId, app.country).catch(() => null)
