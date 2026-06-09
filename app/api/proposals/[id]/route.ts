@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { writeAuditLog } from "@/lib/audit";
+import { isAuthenticated } from "@/lib/auth";
 
 // PATCH /api/proposals/[id]  — 意思決定（approve / reject / choose option）
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  if (!(await isAuthenticated())) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   const body = await req.json();
   const { decision, rejectionReason } = body as { decision: string; rejectionReason?: string };

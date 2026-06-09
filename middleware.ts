@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 async function sessionToken() {
-  const secret = process.env.SESSION_SECRET ?? "dev-secret";
-  const password = process.env.PORTAL_PASSWORD ?? "changeme";
+  const secret = process.env.SESSION_SECRET;
+  const password = process.env.PORTAL_PASSWORD;
+  if (!secret || !password) throw new Error("SESSION_SECRET and PORTAL_PASSWORD must be set");
   const data = new TextEncoder().encode(secret + password);
   const hash = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(hash))
