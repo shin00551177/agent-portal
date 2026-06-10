@@ -106,12 +106,19 @@ ${platformList}
 ]
 JSONのみ返してください。`;
 
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 3000,
-    system: "You are an SNS strategist. Output ONLY a raw JSON array. No markdown, no code blocks, no explanation.",
-    messages: [{ role: "user", content: prompt }],
-  });
+  let message;
+  try {
+    message = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 3000,
+      system: "You are an SNS strategist. Output ONLY a raw JSON array. No markdown, no code blocks, no explanation.",
+      messages: [{ role: "user", content: prompt }],
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error(`[sns-cron] Claude API error for ${appId}:`, msg);
+    return { appId, generated: 0, reason: `claude error: ${msg}` };
+  }
 
   const rawText = message.content[0].type === "text" ? message.content[0].text.trim() : "[]";
   const cleanedText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "");
@@ -161,7 +168,32 @@ export async function POST(req: NextRequest) {
   }
 
   const activeApps = await db.snsApp.findMany({ where: { active: true } });
-  const results = await Promise.all(activeApps.map((app) => generateForApp(app.id)));
+
+  // per-app isolation: one failure doesn't kill the rest
+  const results = await Promise.all(
+    activeApps.map((app) =>
+      generateForApp(app.id).catch((e: unknown) => ({
+        appId: app.id,
+        generated: 0,
+        reason: `unexpected error: ${e instanceof Error ? e.message : String(e)}`,
+      }))
+    )
+  );
+
+  const errors = results.filter((r) => r.generated === 0 && r.reason && !r.reason.startsWith("already"));
+  if (errors.length > 0) {
+    const token = process.env.SLACK_BOT_TOKEN;
+    const channel = process.env.SLACK_ASO_CHANNEL ?? "U099KVBA7PA";
+    if (token) {
+      const text = `🚨 *SNS Hypotheses Cron エラー*\n${errors.map((e) => `• ${e.appId}: ${e.reason}`).join("\n")}`;
+      await fetch("https://slack.com/api/chat.postMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ channel, text }),
+      }).catch(() => null);
+    }
+    console.error("[sns-cron] errors:", JSON.stringify(errors));
+  }
 
   return NextResponse.json({ results, timestamp: new Date().toISOString() });
 }
