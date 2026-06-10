@@ -28,13 +28,14 @@ export async function GET(
 
   const results: Array<{ hypothesisId: string; mediaId: string; insights: Record<string, number> }> = [];
   for (const h of posted) {
-    const mediaId = (h.metrics as { igMediaId?: string } | null)?.igMediaId;
+    const existing = (h.metrics as Record<string, unknown> | null) ?? {};
+    const mediaId = existing.igMediaId as string | undefined;
     if (!mediaId) continue;
     try {
       const insights = await getMediaInsights(mediaId);
       await db.snsHypothesis.update({
         where: { id: h.id },
-        data: { status: "measured", metrics: { igMediaId: mediaId, ...insights, measuredAt: new Date().toISOString() } },
+        data: { status: "measured", metrics: { ...existing, ...insights, measuredAt: new Date().toISOString() } },
       });
       results.push({ hypothesisId: h.id, mediaId, insights });
     } catch {

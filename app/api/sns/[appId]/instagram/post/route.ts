@@ -23,11 +23,11 @@ export async function POST(
 
   const body = await req.json().catch(() => ({})) as {
     hypothesisId?: string;
-    imageUrl?: string;
-    caption?: string;
+    imageUrl?: string;   // 省略時は自動生成済みアセットを使用
+    caption?: string;    // 同上
   };
-  if (!body.hypothesisId || !body.imageUrl || !body.caption) {
-    return NextResponse.json({ error: "hypothesisId, imageUrl, caption are required" }, { status: 400 });
+  if (!body.hypothesisId) {
+    return NextResponse.json({ error: "hypothesisId is required" }, { status: 400 });
   }
 
   // 承認ゲート: approved または briefed のみ投稿可能
@@ -39,19 +39,27 @@ export async function POST(
     return NextResponse.json({ error: `hypothesis status is "${hypothesis.status}" — must be approved or briefed` }, { status: 409 });
   }
 
+  // 自動生成済みアセットをデフォルトとし、bodyの明示指定があれば優先
+  const stored = (hypothesis.metrics as { generatedImageUrl?: string; generatedCaption?: string } | null) ?? {};
+  const imageUrl = body.imageUrl ?? stored.generatedImageUrl;
+  const caption = body.caption ?? stored.generatedCaption;
+  if (!imageUrl || !caption) {
+    return NextResponse.json({ error: "no assets available — generate assets first or pass imageUrl/caption" }, { status: 400 });
+  }
+
   try {
-    const { mediaId } = await publishImagePost(body.imageUrl, body.caption);
+    const { mediaId } = await publishImagePost(imageUrl, caption);
 
     await db.snsHypothesis.update({
       where: { id: hypothesis.id },
-      data: { status: "posted", postedAt: new Date(), metrics: { igMediaId: mediaId } },
+      data: { status: "posted", postedAt: new Date(), metrics: { ...stored, igMediaId: mediaId } },
     });
 
     await writeAuditLog({
       action: "instagram_post",
       targetTable: "SnsHypothesis",
       targetId: hypothesis.id,
-      afterValue: { mediaId, caption: body.caption.slice(0, 100) },
+      afterValue: { mediaId, caption: caption.slice(0, 100) },
       req,
     });
 
