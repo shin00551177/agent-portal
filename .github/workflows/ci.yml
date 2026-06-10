@@ -52,13 +52,15 @@ jobs:
             fi
             echo "✅ $f"
           done
+      - name: Install PyYAML
+        run: pip install pyyaml
       - name: Verify agent.yaml has required fields
         run: |
           python3 -c "
           import yaml, sys
           with open('agent.yaml') as f:
             d = yaml.safe_load(f)
-          required = ['name', 'owner', 'status', 'data_access', 'permissions', 'monitoring']
+          required = ['name', 'owner', 'status', 'data_access', 'kill_switch', 'approval_required']
           missing = [k for k in required if k not in d]
           if missing:
             print('❌ agent.yaml missing fields:', missing)

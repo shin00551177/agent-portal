@@ -3,7 +3,7 @@
  * Tests run offline — no DB, no external API.
  */
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import fs from "fs/promises";
 import path from "path";
 import yaml from "js-yaml";
