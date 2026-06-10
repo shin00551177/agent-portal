@@ -1,0 +1,67 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    name: TypeScript type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  build:
+    name: Next.js build check
+    runs-on: ubuntu-latest
+    env:
+      # Dummy values for build-time env validation (no real secrets)
+      DATABASE_URL: postgresql://user:pass@localhost:5432/db
+      SESSION_SECRET: ci-dummy-secret-at-least-40-chars-long-pad
+      PORTAL_PASSWORD: ci-dummy-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - run: npx next build
+
+  governance:
+    name: Governance check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify required governance files exist
+        run: |
+          for f in GOVERNANCE.md agent.yaml COMMON.md .env.example; do
+            if [ ! -f "$f" ]; then
+              echo "❌ Missing required governance file: $f"
+              exit 1
+            fi
+            echo "✅ $f"
+          done
+      - name: Verify agent.yaml has required fields
+        run: |
+          python3 -c "
+          import yaml, sys
+          with open('agent.yaml') as f:
+            d = yaml.safe_load(f)
+          required = ['name', 'owner', 'status', 'data_access', 'permissions', 'monitoring']
+          missing = [k for k in required if k not in d]
+          if missing:
+            print('❌ agent.yaml missing fields:', missing)
+            sys.exit(1)
+          print('✅ agent.yaml fields OK')
+          "
