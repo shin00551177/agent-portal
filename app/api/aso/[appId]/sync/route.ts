@@ -154,7 +154,7 @@ export async function POST(
           appId,
           date: reportDate,
           data: reportData,
-          downloads: isRangeQuery ? null : (metrics as Awaited<ReturnType<typeof fetchAppMetrics>>).downloads,
+          downloads: isRangeQuery ? null : ((metrics as Awaited<ReturnType<typeof fetchAppMetrics>> | null)?.downloads ?? null),
           store: "apple",
           country: app.country,
           slackSent: false,
