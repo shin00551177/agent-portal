@@ -26,6 +26,7 @@ export async function POST(
     include: { keywords: { where: { active: true } } },
   });
   if (!app) return NextResponse.json({ error: "app not found" }, { status: 404 });
+  if (!app.active) return NextResponse.json({ error: "agent disabled" }, { status: 503 });
   if (!app.iosId) return NextResponse.json({ error: "iosId not set" }, { status: 400 });
 
   const today = new Date().toISOString().slice(0, 10);
