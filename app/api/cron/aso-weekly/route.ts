@@ -57,7 +57,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const baseUrl = process.env.PORTAL_URL ?? req.nextUrl.origin;
+  // 自己呼び出しはコンテナ内ループバック経由（公開URL経由はRailway環境でfetch failedになる）
+  const baseUrl = `http://127.0.0.1:${process.env.PORT ?? 3000}`;
 
   // 旧スクリプト同様、Apptweakレートリミット配慮で直列実行。
   // per-app isolation: 1アプリの失敗で残りを止めない。
