@@ -26,6 +26,7 @@ export async function POST(
     include: { keywords: { where: { active: true } } },
   });
   if (!app) return NextResponse.json({ error: "app not found" }, { status: 404 });
+  if (!app.active) return NextResponse.json({ error: "agent disabled" }, { status: 503 });
   if (!app.iosId) return NextResponse.json({ error: "iosId not set" }, { status: 400 });
 
   const today = new Date().toISOString().slice(0, 10);
@@ -52,7 +53,7 @@ export async function POST(
       ? fetchKeywordRankings(app.iosId, keywords, app.country, app.language)
       : Promise.resolve({}),
     !isRangeQuery
-      ? fetchAppMetrics(app.iosId, app.country)
+      ? fetchAppMetrics(app.iosId, app.country).catch((e) => { console.error("[sync] fetchAppMetrics failed:", (e as Error).message); return null; })
       : Promise.resolve(null),
     !isRangeQuery && app.googlePlayId
       ? fetchAndroidAppMetrics(app.googlePlayId, app.country).catch(() => null)
@@ -154,7 +155,7 @@ export async function POST(
           appId,
           date: reportDate,
           data: reportData,
-          downloads: isRangeQuery ? null : (metrics as Awaited<ReturnType<typeof fetchAppMetrics>>).downloads,
+          downloads: isRangeQuery ? null : ((metrics as Awaited<ReturnType<typeof fetchAppMetrics>> | null)?.downloads ?? null),
           store: "apple",
           country: app.country,
           slackSent: false,

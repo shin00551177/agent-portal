@@ -1,0 +1,53 @@
+name: agent-portal
+type: business-automation
+product: Twomi
+owner: shinnosuke.h@aiavatar.work
+operator: Hori Shinnosuke
+status: active
+risk_level: high
+
+runtime:
+  mode: railway
+  stack: Next.js 16 (TypeScript)
+  network_policy: restricted
+    # egress allowlist: App Store Connect API, Google Play API, Apptweak, YouTube Data API,
+    # Google Custom Search, Anthropic API, Gemini API, Slack, Railway internal
+
+data_access:
+  level: 3
+  read_sources:
+    - App Store Connect API (app metadata, sales reports)
+    - Google Play Developer API (listings, metrics)
+    - Apptweak API (keyword rankings)
+    - YouTube Data API (content research)
+    - Google Custom Search API (trend research)
+  write_targets:
+    - App Store Connect (title, subtitle, keywords, description) — requires human approval
+    - Google Play Console (title, short description, description) — requires human approval
+    - Slack ASO channel (automated alerts)
+    - Internal PostgreSQL (proposals, audit log, ASO data)
+
+approval_required: true
+approval_mechanism: portal UI session (cookie-based auth)
+
+kill_switch:
+  env_var: AGENT_ENABLED
+  default: true
+
+external_apis:
+  - name: Apple App Store Connect
+    data_level: 3
+    access: read + write (metadata only)
+    approval_gate: required
+  - name: Google Play Developer
+    data_level: 3
+    access: read + write (metadata only)
+    approval_gate: required
+  - name: Anthropic Claude API
+    data_level: 2
+    access: inference only
+    approval_gate: none
+  - name: Slack
+    data_level: 1
+    access: post to designated channel only
+    approval_gate: none

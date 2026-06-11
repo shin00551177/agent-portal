@@ -3,12 +3,17 @@ import { db } from "@/lib/db";
 import { writeAuditLog } from "@/lib/audit";
 import { getEditableVersion, getLocalizationId, updateLocalization } from "@/lib/asc";
 import { updateListing } from "@/lib/gplay";
+import { isAuthenticated } from "@/lib/auth";
 
 // POST /api/proposals/[id]/execute  — 承認済み提案を実行する
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  if (!(await isAuthenticated())) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
 
   const proposal = await db.proposal.findUnique({ where: { id } });

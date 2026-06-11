@@ -1,0 +1,19 @@
+name: ASO Weekly Optimization
+
+on:
+  schedule:
+    # 毎週月曜 10:30 JST = 月曜 01:30 UTC
+    - cron: "30 1 * * 1"
+  workflow_dispatch: # 手動実行も可能
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run sync + analyze for all active ASO apps
+        run: |
+          curl -s --max-time 540 -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "${{ secrets.PORTAL_URL }}/api/cron/aso-weekly" | jq .

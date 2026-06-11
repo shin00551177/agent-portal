@@ -8,6 +8,16 @@ const client = new Anthropic();
 async function generateForApp(appId: string) {
   const appCtx = getAppContext(appId);
   const since14d = new Date(Date.now() - 14 * 86_400_000);
+  const expiryCutoff = new Date(Date.now() - 7 * 86_400_000);
+
+  // 1週間以上pendingの仮説を自動廃棄
+  const expired = await db.snsHypothesis.updateMany({
+    where: { appId, status: "pending", createdAt: { lt: expiryCutoff } },
+    data: { status: "expired" },
+  });
+  if (expired.count > 0) {
+    console.log(`[sns-cron] ${appId}: expired ${expired.count} stale pending hypotheses`);
+  }
 
   const [freqRecs, pendingCount, recentHits, pastHypotheses, rejectedHypotheses, learnings, accounts] = await Promise.all([
     db.snsFrequencyRecommendation.findMany({ where: { appId } }),
@@ -27,9 +37,9 @@ async function generateForApp(appId: string) {
     db.snsAccount.findMany({ where: { appId } }),
   ]);
 
-  // 目標pending数 = 推奨週投稿数の合計（最低3、最大7）
+  // 目標pending数 = 推奨週投稿数の合計（最低3、最大10）
   const targetPerWeek = freqRecs.reduce((sum, r) => sum + (r.adjustedFrequency ?? r.recommendedFrequency), 0);
-  const targetPending = Math.min(Math.max(targetPerWeek, 3), 7);
+  const targetPending = Math.min(Math.max(targetPerWeek, 3), 10);
 
   const needed = targetPending - pendingCount;
   if (needed <= 0) return { appId, generated: 0, reason: `already ${pendingCount} pending` };
@@ -83,25 +93,32 @@ ${learningsText ? `\n## 📚 蓄積された学び（必ず遵守すること）
 ## 運用プラットフォーム
 ${platformList}
 
-「今これを投稿すればバズる」仮説を${needed}件生成してください。
+「今これを投稿すればバズる」仮説を${needed}件生成してください。各フィールドは以下の文字数制限を厳守すること：
 [
   {
-    "platform": "プラットフォーム",
-    "hypothesis": "バズる仮説（1〜2文）",
-    "reasoning": "根拠（2〜4文）",
-    "targetAudience": "ターゲット層",
-    "format": "フォーマット",
-    "contentBrief": "Content-lab向け指示書（箇条書き）"
+    "platform": "プラットフォーム名",
+    "hypothesis": "バズる仮説（1〜2文、最大100文字）",
+    "reasoning": "根拠（2文以内、最大150文字）",
+    "targetAudience": "ターゲット層（最大50文字）",
+    "format": "フォーマット（最大50文字）",
+    "contentBrief": "Content-lab向け指示（箇条書き3行以内、最大200文字）"
   }
 ]
 JSONのみ返してください。`;
 
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 3000,
-    system: "You are an SNS strategist. Output ONLY a raw JSON array. No markdown, no code blocks, no explanation.",
-    messages: [{ role: "user", content: prompt }],
-  });
+  let message;
+  try {
+    message = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 3000,
+      system: "You are an SNS strategist. Output ONLY a raw JSON array. No markdown, no code blocks, no explanation.",
+      messages: [{ role: "user", content: prompt }],
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error(`[sns-cron] Claude API error for ${appId}:`, msg);
+    return { appId, generated: 0, reason: `claude error: ${msg}` };
+  }
 
   const rawText = message.content[0].type === "text" ? message.content[0].text.trim() : "[]";
   const cleanedText = rawText.replace(/```json\s*/gi, "").replace(/```\s*/g, "");
@@ -112,8 +129,10 @@ JSONのみ返してください。`;
   try {
     const parsed = JSON.parse(jsonStr);
     items = Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return { appId, generated: 0, reason: "parse error" };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error(`[sns-cron] parse error for ${appId}:`, msg, "| raw:", rawText.slice(0, 300));
+    return { appId, generated: 0, reason: `parse error: ${msg}`, raw: rawText.slice(0, 200) };
   }
 
   await Promise.all(
@@ -149,7 +168,32 @@ export async function POST(req: NextRequest) {
   }
 
   const activeApps = await db.snsApp.findMany({ where: { active: true } });
-  const results = await Promise.all(activeApps.map((app) => generateForApp(app.id)));
+
+  // per-app isolation: one failure doesn't kill the rest
+  const results = await Promise.all(
+    activeApps.map((app) =>
+      generateForApp(app.id).catch((e: unknown) => ({
+        appId: app.id,
+        generated: 0,
+        reason: `unexpected error: ${e instanceof Error ? e.message : String(e)}`,
+      }))
+    )
+  );
+
+  const errors = results.filter((r) => r.generated === 0 && r.reason && !r.reason.startsWith("already"));
+  if (errors.length > 0) {
+    const token = process.env.SLACK_BOT_TOKEN;
+    const channel = process.env.SLACK_ASO_CHANNEL ?? "U099KVBA7PA";
+    if (token) {
+      const text = `🚨 *SNS Hypotheses Cron エラー*\n${errors.map((e) => `• ${e.appId}: ${e.reason}`).join("\n")}`;
+      await fetch("https://slack.com/api/chat.postMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ channel, text }),
+      }).catch(() => null);
+    }
+    console.error("[sns-cron] errors:", JSON.stringify(errors));
+  }
 
   return NextResponse.json({ results, timestamp: new Date().toISOString() });
 }

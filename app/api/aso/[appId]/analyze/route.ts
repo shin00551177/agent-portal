@@ -186,8 +186,8 @@ ${rejectedSection}
   );
 
   const message = await client.messages.create({
-    model: "claude-sonnet-4-6",
-    max_tokens: 8000,
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 6000,
     system: "You are an ASO expert. Output ONLY a valid JSON array. No markdown, no code blocks, no explanation. CRITICAL: Never use ASCII double-quote characters (\") inside string values — use Japanese quotes 「」 instead.",
     messages: [{ role: "user", content: promptWithStart }],
   });
