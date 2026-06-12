@@ -14,7 +14,9 @@ runtime:
     # Google Custom Search, Anthropic API, Gemini API, Slack, Railway internal
 
 data_access:
-  level: 3
+  read_level: 2
+  write_level: 3
+  write_gate: approval_required
   read_sources:
     - App Store Connect API (app metadata, sales reports)
     - Google Play Developer API (listings, metrics)

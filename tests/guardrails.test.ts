@@ -37,8 +37,17 @@ describe("agent.yaml required fields (Fleet Review §3)", () => {
     expect(config.status).toBeTruthy();
   });
 
-  it("has data_access section", () => {
-    expect(config.data_access).toBeTruthy();
+  it("has data_access section with read_level <= 2", () => {
+    const da = config.data_access as Record<string, unknown>;
+    expect(da).toBeTruthy();
+    expect(Number(da.read_level)).toBeLessThanOrEqual(2);
+  });
+
+  it("write_level > 2 requires write_gate: approval_required", () => {
+    const da = config.data_access as Record<string, unknown>;
+    if (Number(da.write_level) > 2) {
+      expect(da.write_gate).toBe("approval_required");
+    }
   });
 
   it("has kill_switch defined", () => {

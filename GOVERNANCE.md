@@ -16,9 +16,8 @@
 - Business KPI: proposals_approved_and_executed / week
 
 ## Data Access
-- Data level: Level 2–3
-  - Level 2: aggregated app metrics (downloads, ratings, keyword rankings)
-  - Level 3: write access to App Store Connect and Google Play Console (metadata updates)
+- Read level: 2 (aggregated app metrics: downloads, ratings, keyword rankings)
+- Write level: 3 (App Store Connect and Google Play Console metadata updates) — requires human approval via portal UI before execution
 - External read sources: App Store Connect API, Google Play API, Apptweak API, YouTube Data API, Google Custom Search
 - External write targets: App Store Connect (title/subtitle/keywords/description), Google Play Console (title/short description/description), Slack (ASO alert channel)
 
