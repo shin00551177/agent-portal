@@ -45,16 +45,28 @@ export async function POST(
     const message = err instanceof Error ? err.message : String(err);
     // バージョン未作成による待機状態
     const isWaiting = err instanceof Error && (err as { waitingForVersion?: boolean }).waitingForVersion;
+    const status = isWaiting ? "approved" : "failed";
+    const result = {
+      error: message,
+      waitingForVersion: isWaiting ?? false,
+      pendingPayload: isWaiting ? (err as { payload?: unknown }).payload : undefined,
+    };
     await db.proposal.update({
       where: { id },
       data: {
-        status: isWaiting ? "approved" : "failed",  // waiting は approved に戻して再試行可能に
-        result: {
-          error: message,
-          waitingForVersion: isWaiting ?? false,
-          pendingPayload: isWaiting ? (err as { payload?: unknown }).payload : undefined,
-        } as never,
+        status,  // waiting は approved に戻して再試行可能に
+        result: result as never,
       },
+    });
+    await writeAuditLog({
+      action: isWaiting
+        ? `proposal_execution_waiting_for_version:${proposal.actionType}`
+        : `proposal_execution_failed:${proposal.actionType}`,
+      targetTable: "Proposal",
+      targetId: id,
+      beforeValue: { status: "executing" },
+      afterValue: { status, result },
+      req,
     });
     return NextResponse.json({ error: message }, { status: 500 });
   }

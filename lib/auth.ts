@@ -1,9 +1,14 @@
 import { cookies } from "next/headers";
 
+function requiredEnv(name: "SESSION_SECRET" | "PORTAL_PASSWORD"): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} must be set`);
+  return value;
+}
+
 async function sessionToken() {
-  const secret = process.env.SESSION_SECRET;
-  const password = process.env.PORTAL_PASSWORD;
-  if (!secret || !password) throw new Error("SESSION_SECRET and PORTAL_PASSWORD must be set");
+  const secret = requiredEnv("SESSION_SECRET");
+  const password = requiredEnv("PORTAL_PASSWORD");
   const data = new TextEncoder().encode(secret + password);
   const hash = await crypto.subtle.digest("SHA-256", data);
   return Array.from(new Uint8Array(hash))
@@ -49,5 +54,5 @@ export async function destroySession() {
 }
 
 export function verifyPassword(input: string): boolean {
-  return input === (process.env.PORTAL_PASSWORD ?? "changeme");
+  return input === requiredEnv("PORTAL_PASSWORD");
 }

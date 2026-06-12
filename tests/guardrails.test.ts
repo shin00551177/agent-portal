@@ -61,11 +61,26 @@ describe("Credential validation guard (COMMON.md §2)", () => {
     expect(content).toContain("PORTAL_PASSWORD");
     expect(content).toMatch(/throw new Error/);
     // Must NOT contain hardcoded fallback strings
-    expect(content).not.toMatch(/\|\|\s*["'`][a-zA-Z0-9]{8,}/);
+    expect(content).not.toMatch(/(\|\||\?\?)\s*["'`][a-zA-Z0-9_-]{6,}/);
+    expect(content).not.toMatch(/changeme|dev-secret/i);
   });
 });
 
-// ── 4. No hardcoded secrets in .env.example ─────────────────────────────────
+// ── 4. Proposal execution audit coverage ───────────────────────────────────
+// COMMON.md §3: Every state-changing write must be audited.
+describe("Proposal execution audit guard (COMMON.md §3)", () => {
+  it("execute route audits both success and failure state changes", async () => {
+    const content = await fs.readFile(
+      path.join(ROOT, "app/api/proposals/[id]/execute/route.ts"),
+      "utf-8",
+    );
+    expect(content).toContain("proposal_executed:");
+    expect(content).toContain("proposal_execution_failed:");
+    expect(content).toContain("proposal_execution_waiting_for_version:");
+  });
+});
+
+// ── 5. No hardcoded secrets in .env.example ─────────────────────────────────
 // COMMON.md §3: Never commit real credentials. .env.example must have empty values.
 describe("No hardcoded secrets (COMMON.md §3)", () => {
   it(".env.example has no values assigned (all lines are comments or blank)", async () => {
