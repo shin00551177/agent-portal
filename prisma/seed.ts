@@ -114,6 +114,14 @@ const TWOMI_YT_ACCOUNTS = [
   { username: "Twomi_official", url: "https://youtube.com/@Twomi_official",  memo: "Official / Shorts" },
 ];
 
+// Twomi の Instagram アカウント（データ追跡対象）。igUserId は初回同期時に
+// Meta token の管理アカウント一覧から username で自動解決される。
+const TWOMI_IG_ACCOUNTS = [
+  { username: "twomi_lifeme", url: "https://www.instagram.com/twomi_lifeme/", memo: "LifeMe" },
+  { username: "twomi_showmi", url: "https://www.instagram.com/twomi_showmi/", memo: "ShowMi" },
+  { username: "twomijp",      url: "https://www.instagram.com/twomijp/",      memo: "Official / JP" },
+];
+
 async function main() {
   for (const app of ASO_APPS) {
     await db.asoApp.upsert({ where: { id: app.id }, create: app, update: app });
@@ -157,6 +165,19 @@ async function main() {
     }
   }
   console.log(`✓ Twomi YouTube accounts (${TWOMI_YT_ACCOUNTS.length}件)`);
+
+  // Instagram 追跡アカウント
+  for (const acc of TWOMI_IG_ACCOUNTS) {
+    const existing = await db.snsAccount.findFirst({
+      where: { appId: "twomi", platform: "instagram", username: acc.username },
+    });
+    if (!existing) {
+      await db.snsAccount.create({
+        data: { appId: "twomi", platform: "instagram", username: acc.username, url: acc.url, memo: acc.memo },
+      });
+    }
+  }
+  console.log(`✓ Twomi Instagram accounts (${TWOMI_IG_ACCOUNTS.length}件)`);
 }
 
 main().catch(console.error).finally(() => db.$disconnect());
