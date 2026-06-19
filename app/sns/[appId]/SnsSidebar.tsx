@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Radar, Lightbulb, MessageCircle,
-  Brain, BarChart2, AtSign, Settings,
+  Brain, BarChart2, AtSign, Settings, MonitorPlay,
 } from "lucide-react";
 
 type NavItem = { href: string; label: string; icon: React.ElementType; badge?: number };
@@ -28,6 +28,7 @@ function makeGroups(appId: string, counts: { pending: number; unprocessedFb: num
         { href: `${base}/feedback`,   label: t.feedback,   icon: MessageCircle, badge: counts.unprocessedFb },
         { href: `${base}/learnings`,  label: t.learnings,  icon: Brain },
         { href: `${base}/frequency`,  label: t.frequency,  icon: BarChart2 },
+        { href: `${base}/youtube`,    label: "動画データ", icon: MonitorPlay },
       ],
     },
     {
