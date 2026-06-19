@@ -119,6 +119,7 @@ const TWOMI_YT_ACCOUNTS = [
 const TWOMI_IG_ACCOUNTS = [
   { username: "twomi_lifeme", url: "https://www.instagram.com/twomi_lifeme/", memo: "LifeMe" },
   { username: "twomi_showmi", url: "https://www.instagram.com/twomi_showmi/", memo: "ShowMi" },
+  { username: "twomi_lovemi", url: "https://www.instagram.com/twomi_lovemi/", memo: "LoveMi" },
   { username: "twomijp",      url: "https://www.instagram.com/twomijp/",      memo: "Official / JP" },
 ];
 

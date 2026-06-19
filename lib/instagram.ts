@@ -162,11 +162,11 @@ export async function getAccountMedia(igUserId: string, limit = 50): Promise<IgM
     // insights はメディア種別で対応指標が異なり、失敗し得るのでベストエフォート
     try {
       const isReel = m.media_product_type === "REELS";
-      const metric = isReel ? "reach,saved,shares,plays" : "reach,saved";
+      const metric = isReel ? "views,reach,saved,shares" : "reach,saved";
       const ins = await graphGet(`/${m.id}/insights`, { metric });
       for (const row of ins.data ?? []) {
         const v = row.values?.[0]?.value ?? 0;
-        if (row.name === "plays") stat.views = v;
+        if (row.name === "views") stat.views = v;
         else if (row.name === "reach") stat.reach = v;
         else if (row.name === "saved") stat.saved = v;
         else if (row.name === "shares") stat.shares = v;
