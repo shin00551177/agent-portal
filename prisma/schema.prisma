@@ -193,7 +193,36 @@ model SnsAccount {
   username  String
   url       String?
   memo      String?
+  // 外部プラットフォームの安定ID（データ追跡用）。初回同期時に解決して保存。
+  channelId    String?   // YouTube channelId（@handleから解決）
+  igUserId     String?   // Instagram Business/Creator ID（後続のIG追跡用）
+  lastSyncedAt DateTime? // 最終データ取得時刻
   createdAt DateTime @default(now())
+
+  videoStats SnsVideoStat[]
+}
+
+// 動画ごとの成果データ（時系列）。同期のたびに1行追加し、推移を追えるようにする。
+// 読み取り専用データ（GOVERNANCE: level-2 集計指標）。発信・実行は伴わない。
+model SnsVideoStat {
+  id          String      @id @default(cuid())
+  appId       String
+  accountId   String?
+  account     SnsAccount? @relation(fields: [accountId], references: [id])
+  platform    String      // "youtube" | "instagram"
+  videoId     String      // YouTube videoId / IG mediaId
+  title       String?
+  url         String?
+  thumbnail   String?
+  publishedAt DateTime?
+  views       Int         @default(0)
+  likes       Int         @default(0)
+  comments    Int         @default(0)
+  extra       Json?       // プラットフォーム固有指標（IG: reach/saved/shares 等）
+  fetchedAt   DateTime    @default(now())
+
+  @@index([appId, platform, videoId])
+  @@index([accountId, fetchedAt])
 }
 
 model SnsDraft {

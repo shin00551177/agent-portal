@@ -106,6 +106,14 @@ const SNS_APPS = [
   },
 ];
 
+// Twomi の YouTube チャンネル（データ追跡対象）。channelId は初回同期時に自動解決される。
+const TWOMI_YT_ACCOUNTS = [
+  { username: "twomi_lifemi",   url: "https://youtube.com/@twomi_lifemi",   memo: "LifeMe" },
+  { username: "twomi_showmi",   url: "https://youtube.com/@twomi_showmi",   memo: "ShowMi" },
+  { username: "twomi_lovemi",   url: "https://youtube.com/@twomi_lovemi",   memo: "LoveMi" },
+  { username: "Twomi_official", url: "https://youtube.com/@Twomi_official",  memo: "Official / Shorts" },
+];
+
 async function main() {
   for (const app of ASO_APPS) {
     await db.asoApp.upsert({ where: { id: app.id }, create: app, update: app });
@@ -136,6 +144,19 @@ async function main() {
     await db.snsApp.upsert({ where: { id: app.id }, create: app, update: app });
     console.log(`✓ SNS ${app.name}`);
   }
+
+  // YouTube 追跡アカウント（複合ユニーク制約がないため findFirst で冪等化）
+  for (const acc of TWOMI_YT_ACCOUNTS) {
+    const existing = await db.snsAccount.findFirst({
+      where: { appId: "twomi", platform: "youtube", username: acc.username },
+    });
+    if (!existing) {
+      await db.snsAccount.create({
+        data: { appId: "twomi", platform: "youtube", username: acc.username, url: acc.url, memo: acc.memo },
+      });
+    }
+  }
+  console.log(`✓ Twomi YouTube accounts (${TWOMI_YT_ACCOUNTS.length}件)`);
 }
 
 main().catch(console.error).finally(() => db.$disconnect());
