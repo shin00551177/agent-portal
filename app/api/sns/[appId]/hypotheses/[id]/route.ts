@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isAuthenticated } from "@/lib/auth";
 import { generatePostAssets } from "@/lib/snsAssets";
+import { pushIdeaToContentLab } from "@/lib/contentlab";
 
 export async function PATCH(
   req: NextRequest,
@@ -31,6 +32,14 @@ export async function PATCH(
   if (body.status === "approved") {
     generatePostAssets(id).catch((e) =>
       console.error(`[hypotheses] asset generation trigger failed for ${id}:`, e)
+    );
+  }
+
+  // Content-lab送信時に、ネタを Content-lab の制作パイプライン入口へ流し込む（fire-and-forget）。
+  // Content-lab 側で人間が動画生成(Higgsfield/Sora)へ進める。env 未設定時は no-op。
+  if (body.status === "briefed") {
+    pushIdeaToContentLab(updated).catch((e) =>
+      console.error(`[hypotheses] content-lab push trigger failed for ${id}:`, e)
     );
   }
 
