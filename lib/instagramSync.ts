@@ -18,7 +18,7 @@ export type InstagramSyncResult = {
 };
 
 export async function syncInstagramForApp(appId: string, maxMedia = 50): Promise<InstagramSyncResult[]> {
-  const accounts = await db.snsAccount.findMany({ where: { appId, platform: "instagram" } });
+  const accounts = await db.snsAccount.findMany({ where: { appId, platform: "instagram", active: true } });
   if (accounts.length === 0) return [];
 
   // トークンが管理する IG アカウント一覧を1度だけ取得し、username→igUserId を解決

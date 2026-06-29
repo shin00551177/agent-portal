@@ -197,6 +197,7 @@ model SnsAccount {
   channelId    String?   // YouTube channelId（@handleから解決）
   igUserId     String?   // Instagram Business/Creator ID（後続のIG追跡用）
   lastSyncedAt DateTime? // 最終データ取得時刻
+  active    Boolean  @default(true) // false=未連携/非活性（同期スキップ・データは保持）
   createdAt DateTime @default(now())
 
   videoStats SnsVideoStat[]

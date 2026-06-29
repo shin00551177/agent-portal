@@ -67,6 +67,6 @@ async function syncAccount(account: {
 
 /** appId 配下の全 YouTube アカウントを同期。アカウント単位で隔離（1件失敗が全体を止めない）。 */
 export async function syncYouTubeForApp(appId: string, maxVideos = 50): Promise<YouTubeSyncResult[]> {
-  const accounts = await db.snsAccount.findMany({ where: { appId, platform: "youtube" } });
+  const accounts = await db.snsAccount.findMany({ where: { appId, platform: "youtube", active: true } });
   return Promise.all(accounts.map((a) => syncAccount(a, maxVideos)));
 }

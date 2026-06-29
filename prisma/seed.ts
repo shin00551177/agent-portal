@@ -116,11 +116,13 @@ const TWOMI_YT_ACCOUNTS = [
 
 // Twomi の Instagram アカウント（データ追跡対象）。igUserId は初回同期時に
 // Meta token の管理アカウント一覧から username で自動解決される。
+// IG は公式 twomijp のみ運用。ジャンル別3アカウントは Meta Business 未連携で
+// igUserId 解決不可のため非活性（active=false）＝同期スキップ。連携できたら true に。
 const TWOMI_IG_ACCOUNTS = [
-  { username: "twomi_lifeme", url: "https://www.instagram.com/twomi_lifeme/", memo: "LifeMe" },
-  { username: "twomi_showmi", url: "https://www.instagram.com/twomi_showmi/", memo: "ShowMi" },
-  { username: "twomi_lovemi", url: "https://www.instagram.com/twomi_lovemi/", memo: "LoveMi" },
-  { username: "twomijp",      url: "https://www.instagram.com/twomijp/",      memo: "Official / JP" },
+  { username: "twomi_lifeme", url: "https://www.instagram.com/twomi_lifeme/", memo: "LifeMe", active: false },
+  { username: "twomi_showmi", url: "https://www.instagram.com/twomi_showmi/", memo: "ShowMi", active: false },
+  { username: "twomi_lovemi", url: "https://www.instagram.com/twomi_lovemi/", memo: "LoveMi", active: false },
+  { username: "twomijp",      url: "https://www.instagram.com/twomijp/",      memo: "Official / JP", active: true },
 ];
 
 async function main() {
@@ -174,7 +176,7 @@ async function main() {
     });
     if (!existing) {
       await db.snsAccount.create({
-        data: { appId: "twomi", platform: "instagram", username: acc.username, url: acc.url, memo: acc.memo },
+        data: { appId: "twomi", platform: "instagram", username: acc.username, url: acc.url, memo: acc.memo, active: acc.active },
       });
     }
   }
